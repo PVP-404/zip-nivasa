@@ -2,14 +2,19 @@ import React from 'react';
 import { Link, useLocation } from 'react-router-dom';
 import { motion } from 'framer-motion';
 
+// Dashboard-specific navigation links
 const navLinks = [
-  { name: 'Home', path: '/' },
-  { name: 'Services', path: '#services' },
-  { name: 'Contact', path: '#contact' },
+  { name: 'Dashboard', path: '/student-dashboard' }, // Example link, should be dynamic
+  { name: 'My Services', path: '/services' },
+  { name: 'Profile', path: '/profile' },
 ];
 
 const Header = () => {
   const location = useLocation();
+  
+  // This is a placeholder for a logged-in state.
+  // In a real app, you would get this from a state management solution (e.g., Redux, Context).
+  const isLoggedIn = true;
 
   return (
     <motion.header
@@ -34,23 +39,23 @@ const Header = () => {
               whileHover={{ scale: 1.05 }}
               transition={{ duration: 0.2 }}
             >
-              <a
-                href={link.path}
+              <Link
+                to={link.path}
                 className={`hover:text-indigo-600 transition duration-300 ${
-                  location.pathname === link.path ? 'font-semibold text-indigo-700' : ''
+                  location.pathname === link.path ? 'font-semibold text-indigo-700' : 'text-gray-600'
                 }`}
               >
                 {link.name}
-              </a>
+              </Link>
             </motion.li>
           ))}
-
+          
           <motion.li whileHover={{ scale: 1.05 }}>
             <Link
-              to="/login"
-              className="bg-indigo-600 text-white px-4 py-2 rounded-full hover:bg-indigo-700 shadow-md transition duration-300"
+              to="/"
+              className="bg-red-500 text-white px-4 py-2 rounded-full hover:bg-red-600 shadow-md transition duration-300"
             >
-              Login
+              Logout
             </Link>
           </motion.li>
         </ul>
