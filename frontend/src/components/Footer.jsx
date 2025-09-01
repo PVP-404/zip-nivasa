@@ -1,25 +1,95 @@
 import React from 'react';
 import { motion } from 'framer-motion';
+import { FaLinkedin, FaFacebook, FaInstagram, FaTwitter } from 'react-icons/fa';
 
 const Footer = () => {
   return (
     <motion.footer
-      id="contact"
-      className="bg-indigo-600 text-white text-center py-6 px-4"
-      initial={{ opacity: 0 }}
-      whileInView={{ opacity: 1 }}
-      transition={{ duration: 0.5 }}
+      className="bg-gray-900 text-gray-300 py-16 px-4 md:px-8"
+      initial={{ opacity: 0, y: 50 }}
+      whileInView={{ opacity: 1, y: 0 }}
+      transition={{ duration: 0.6 }}
+      viewport={{ once: true, amount: 0.3 }}
     >
-      <motion.div
-        whileHover={{ scale: 1.02 }}
-        className="text-lg font-medium tracking-wide"
-      >
-        © 2025 <span className="text-yellow-300">Zip-Nivasa</span>. Built to ease your move.
-      </motion.div>
+      <div className="max-w-7xl mx-auto grid grid-cols-1 md:grid-cols-4 gap-12">
+        {/* Company Info */}
+        <div className="flex flex-col items-center md:items-start text-center md:text-left">
+          <h3 className="text-3xl font-extrabold text-white mb-2">
+            Zip-Nivasa
+          </h3>
+          <p className="text-sm font-light text-gray-400 max-w-xs mb-4">
+            Simplifying property management and student living with smart, digital solutions.
+          </p>
+          <div className="flex space-x-4 text-white">
+            <motion.a 
+              href="https://linkedin.com" target="_blank" rel="noopener noreferrer" 
+              whileHover={{ scale: 1.2, color: "#0077B5" }} 
+              transition={{ type: "spring", stiffness: 400 }}
+            >
+              <FaLinkedin className="text-2xl" />
+            </motion.a>
+            <motion.a 
+              href="https://facebook.com" target="_blank" rel="noopener noreferrer" 
+              whileHover={{ scale: 1.2, color: "#1877F2" }} 
+              transition={{ type: "spring", stiffness: 400 }}
+            >
+              <FaFacebook className="text-2xl" />
+            </motion.a>
+            <motion.a 
+              href="https://instagram.com" target="_blank" rel="noopener noreferrer" 
+              whileHover={{ scale: 1.2, color: "#E4405F" }} 
+              transition={{ type: "spring", stiffness: 400 }}
+            >
+              <FaInstagram className="text-2xl" />
+            </motion.a>
+            <motion.a 
+              href="https://twitter.com" target="_blank" rel="noopener noreferrer" 
+              whileHover={{ scale: 1.2, color: "#1DA1F2" }} 
+              transition={{ type: "spring", stiffness: 400 }}
+            >
+              <FaTwitter className="text-2xl" />
+            </motion.a>
+          </div>
+        </div>
 
-      <p className="text-sm mt-2 text-indigo-200">
-        All-in-one platform for students and migrants — PG, Mess, Laundry & More.
-      </p>
+        {/* Quick Links */}
+        <div className="text-center md:text-left">
+          <h4 className="text-xl font-semibold text-white mb-4">Quick Links</h4>
+          <ul className="space-y-2">
+            <li><a href="/about" className="hover:text-white transition-colors duration-200">About Us</a></li>
+            <li><a href="/services" className="hover:text-white transition-colors duration-200">Our Services</a></li>
+            <li><a href="/faq" className="hover:text-white transition-colors duration-200">FAQ</a></li>
+            <li><a href="/blog" className="hover:text-white transition-colors duration-200">Blog</a></li>
+          </ul>
+        </div>
+
+        {/* Legal */}
+        <div className="text-center md:text-left">
+          <h4 className="text-xl font-semibold text-white mb-4">Legal</h4>
+          <ul className="space-y-2">
+            <li><a href="/privacy-policy" className="hover:text-white transition-colors duration-200">Privacy Policy</a></li>
+            <li><a href="/terms-of-service" className="hover:text-white transition-colors duration-200">Terms of Service</a></li>
+            <li><a href="/disclaimer" className="hover:text-white transition-colors duration-200">Disclaimer</a></li>
+          </ul>
+        </div>
+
+        {/* Contact Info */}
+        <div className="text-center md:text-left">
+          <h4 className="text-xl font-semibold text-white mb-4">Contact</h4>
+          <p className="text-sm mb-2">Email: contact@zipnivasa.com</p>
+          <p className="text-sm">Phone: +91 98765 43210</p>
+          <p className="text-sm mt-4 text-gray-400">
+            123, Tech Park Rd, <br />
+            Bangalore, Karnataka, India
+          </p>
+        </div>
+      </div>
+
+      <div className="border-t border-gray-700 mt-12 pt-8 text-center text-gray-500">
+        <p className="text-sm">
+          © {new Date().getFullYear()} Zip-Nivasa. All rights reserved.
+        </p>
+      </div>
     </motion.footer>
   );
 };
