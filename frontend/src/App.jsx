@@ -1,16 +1,16 @@
 import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
 
+// Public Pages
 import Home from './pages/Home';
 import Login from './pages/Login';
 import Register from './pages/Register';
+import AboutUs from './pages/AboutUs';
 
+// Dashboards
 import StudentDashboard from './pages/dashboard/StudentDashboard';
 import PGOwnerDashboard from './pages/dashboard/PGOwnerDashboard';
 import LaundryDashboard from './pages/dashboard/LaundryDashboard';
 import ServiceDashboard from './pages/dashboard/ServiceDashboard';
-
-// Import About Us page
-import AboutUs from './pages/AboutUs';
 
 function App() {
   return (

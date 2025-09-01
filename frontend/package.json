@@ -10,11 +10,10 @@
     "preview": "vite preview"
   },
   "dependencies": {
-<<<<<<< HEAD
-=======
+
     "@tailwindcss/vite": "^4.1.11",
     "chart.js": "^4.5.0",
->>>>>>> f32129b367702886f605db29fe1c68418115b203
+
     "framer-motion": "^12.23.12",
     "react": "^19.1.0",
     "react-chartjs-2": "^5.3.0",
