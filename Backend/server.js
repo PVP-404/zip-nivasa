@@ -1,23 +1,32 @@
-// server.js
-const express = require("express");
+import express from "express";
+import dotenv from "dotenv";
+import mongoose from "mongoose";
+import cors from "cors";
+import morgan from "morgan";
+import pgRoutes from "./routes/pgRoutes.js";
+import connectDB from "./config/db.js";
+
+// Load environment variables
+dotenv.config();
+
 const app = express();
 
-// Middleware to parse JSON
-app.use(express.json());
+// Middleware
+app.use(express.json());   // Parse JSON bodies
+app.use(cors());           // Enable CORS for frontend
+app.use(morgan("dev"));    // Log HTTP requests
 
-// Test route
+// Database connection
+connectDB();
+
+// Routes
+app.use("/api/pgs", pgRoutes);
+
+// Health check route
 app.get("/", (req, res) => {
-  res.send("Hello, Node.js backend!");
-});
-
-// Example POST route
-app.post("/data", (req, res) => {
-  const data = req.body;
-  res.json({ message: "Data received", data });
+  res.send("API is running...");
 });
 
 // Start server
-const PORT = 5000;
-app.listen(PORT, () => {
-  console.log(`Server running on http://localhost:${PORT}`);
-});
+const PORT = process.env.PORT || 5000;
+app.listen(PORT, () => console.log(`🚀 Server running on port ${PORT}`));
