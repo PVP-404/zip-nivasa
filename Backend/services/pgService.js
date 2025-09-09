@@ -2,7 +2,7 @@ import Pg from "../models/pgModel.js";
 
 // Fetch all PGs
 export const getAllPGs = async () => {
-  return await PG.find({});
+  return await Pg.find({});
 };
 
 // Add new PG

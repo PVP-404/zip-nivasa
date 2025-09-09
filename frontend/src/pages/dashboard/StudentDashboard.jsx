@@ -1,15 +1,15 @@
-import React from 'react';
-import { motion } from 'framer-motion';
-import { Link } from 'react-router-dom';
-import Header from '../../components/Header';
-import Footer from '../../components/Footer';
+import React from "react";
+import { motion } from "framer-motion";
+import { Link } from "react-router-dom";
+import Header from "../../components/Header";
+import Footer from "../../components/Footer";
 
 const cards = [
   {
     title: "Find a PG / Hostel",
     description: "Search for the perfect accommodation that fits your needs.",
     icon: "🏠",
-    path: "/services/pg",
+    path: "/dashboard/student/pgs", // Updated path to PG list page
   },
   {
     title: "Order Laundry Services",

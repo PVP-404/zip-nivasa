@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { motion } from "framer-motion";
 import { Doughnut } from "react-chartjs-2";
 import { Chart as ChartJS, ArcElement, Tooltip, Legend } from "chart.js";
@@ -38,6 +38,22 @@ const PGOwnerDashboard = () => {
     totalBeds: "",
     pricePerMonth: "",
   });
+  const [properties, setProperties] = useState([]);
+
+  // Fetch properties from backend
+  const fetchProperties = async () => {
+    try {
+      const res = await fetch("http://localhost:5000/api/pgs");
+      const data = await res.json();
+      setProperties(data);
+    } catch (err) {
+      console.error("Error fetching properties:", err);
+    }
+  };
+
+  useEffect(() => {
+    fetchProperties();
+  }, []);
 
   // handle input change
   const handleChange = (e) => {
@@ -56,8 +72,11 @@ const PGOwnerDashboard = () => {
       const data = await res.json();
       console.log("PG saved:", data);
 
+      // Update properties state to reflect UI
+      setProperties((prev) => [...prev, data]);
+
       setShowForm(false); // close form after submit
-      setFormData({ name: "", address: "", totalBeds: "" }); // reset
+      setFormData({ name: "", address: "", totalBeds: "", pricePerMonth: "" }); // reset
     } catch (err) {
       console.error("Error saving PG:", err);
     }
@@ -173,14 +192,21 @@ const PGOwnerDashboard = () => {
             <h2 className="text-2xl font-bold text-gray-800">My Properties</h2>
           </div>
           <ul className="space-y-4">
-            <li className="flex justify-between items-center p-4 bg-gray-100 rounded-lg transition duration-200 hover:bg-gray-200 cursor-pointer">
-              <span className="font-semibold text-gray-800">Sunrise PG - 101, Main Street</span>
-              <span className="text-sm text-gray-500">8/10 Beds Occupied</span>
-            </li>
-            <li className="flex justify-between items-center p-4 bg-gray-100 rounded-lg transition duration-200 hover:bg-gray-200 cursor-pointer">
-              <span className="font-semibold text-gray-800">Sunset Hostel - 204, Park Avenue</span>
-              <span className="text-sm text-gray-500">12/15 Beds Occupied</span>
-            </li>
+            {properties.length > 0 ? (
+              properties.map((pg) => (
+                <li
+                  key={pg._id}
+                  className="flex justify-between items-center p-4 bg-gray-100 rounded-lg transition duration-200 hover:bg-gray-200 cursor-pointer"
+                >
+                  <span className="font-semibold text-gray-800">{pg.name} - {pg.address}</span>
+                  <span className="text-sm text-gray-500">
+                    {pg.occupiedBeds || 0}/{pg.totalBeds} Beds Occupied
+                  </span>
+                </li>
+              ))
+            ) : (
+              <li className="text-gray-500">No properties found.</li>
+            )}
           </ul>
         </div>
 
@@ -209,19 +235,19 @@ const PGOwnerDashboard = () => {
             <li className="flex items-center p-3 rounded-lg bg-gray-100 transition duration-200 hover:bg-gray-200">
               <div className="w-2 h-2 bg-blue-500 rounded-full mr-4"></div>
               <span>
-                <strong className="font-semibold">New Tenant Added:</strong> A new tenant was added to Sunrise PG.
+                <strong className="font-semibold">New Tenant Added:</strong> A new tenant was added to a property.
               </span>
             </li>
             <li className="flex items-center p-3 rounded-lg bg-gray-100 transition duration-200 hover:bg-gray-200">
               <div className="w-2 h-2 bg-green-500 rounded-full mr-4"></div>
               <span>
-                <strong className="font-semibold">Payment Received:</strong> Payment received from Jane Doe for July rent.
+                <strong className="font-semibold">Payment Received:</strong> Payment received from a tenant.
               </span>
             </li>
             <li className="flex items-center p-3 rounded-lg bg-gray-100 transition duration-200 hover:bg-gray-200">
               <div className="w-2 h-2 bg-red-500 rounded-full mr-4"></div>
               <span>
-                <strong className="font-semibold">Service Request:</strong> Maintenance request from John Smith for a leaky faucet.
+                <strong className="font-semibold">Service Request:</strong> Maintenance request submitted by a tenant.
               </span>
             </li>
           </ul>

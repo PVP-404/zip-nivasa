@@ -38,7 +38,7 @@ const pgSchema = new mongoose.Schema(
       default: [],
     },
     images: {
-      type: [String], // URLs or file paths
+      type: [String],
       default: [],
     },
     isActive: {

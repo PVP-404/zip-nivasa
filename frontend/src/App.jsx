@@ -11,6 +11,7 @@ import StudentDashboard from './pages/dashboard/StudentDashboard';
 import PGOwnerDashboard from './pages/dashboard/PGOwnerDashboard';
 import LaundryDashboard from './pages/dashboard/LaundryDashboard';
 import ServiceDashboard from './pages/dashboard/ServiceDashboard';
+import PGList from "./pages/dashboard/PGList";
 
 function App() {
   return (
@@ -27,6 +28,7 @@ function App() {
         <Route path="/dashboard/pgowner" element={<PGOwnerDashboard />} />
         <Route path="/dashboard/laundry" element={<LaundryDashboard />} />
         <Route path="/dashboard/service" element={<ServiceDashboard />} />
+        <Route path="/dashboard/student/pgs" element={<PGList />} />
       </Routes>
     </Router>
   );

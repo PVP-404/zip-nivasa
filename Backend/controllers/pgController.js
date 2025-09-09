@@ -1,5 +1,6 @@
 import { getAllPGs, addPG } from "../services/pgService.js";
 
+// GET all PGs
 export const fetchPGs = async (req, res) => {
   try {
     const pgs = await getAllPGs();
@@ -9,6 +10,7 @@ export const fetchPGs = async (req, res) => {
   }
 };
 
+// POST a new PG
 export const createPG = async (req, res) => {
   try {
     const newPG = await addPG(req.body);
