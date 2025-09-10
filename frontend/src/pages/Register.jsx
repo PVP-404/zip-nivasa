@@ -1,124 +1,319 @@
-import React from 'react';
-import { useLocation, Link } from 'react-router-dom';
-import { motion } from 'framer-motion';
+import React, { useState } from "react";
+import { motion } from "framer-motion";
+import { FaUserPlus, FaSignInAlt, FaCheckCircle, FaSpinner } from "react-icons/fa";
 
 const Register = () => {
-  const query = new URLSearchParams(useLocation().search);
-  const role = query.get("role") || "user";
-  const roleName = role.charAt(0).toUpperCase() + role.slice(1);
+  const [role, setRole] = useState("student");
+  const [isLoading, setIsLoading] = useState(false);
+  const [isSuccess, setIsSuccess] = useState(false);
+  const [formData, setFormData] = useState({
+    name: "",
+    email: "",
+    password: "",
+    phone: "",
+    collegeName: "",
+    course: "",
+    year: "",
+    city: "",
+    pgName: "",
+    pgLocation: "",
+    pgCapacity: "",
+    pgFacilities: "",
+    messName: "",
+    messLocation: "",
+    messCapacity: "",
+    messType: "",
+  });
+
+  const handleChange = (e) => {
+    setFormData({ ...formData, [e.target.name]: e.target.value });
+  };
+
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    setIsLoading(true);
+    setIsSuccess(false);
+
+    try {
+      await new Promise((resolve) => setTimeout(resolve, 2000));
+      console.log("Register Data:", { role, ...formData });
+      setIsSuccess(true);
+    } catch (error) {
+      console.error("Registration failed:", error);
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  if (isSuccess) {
+    return (
+      <div className="flex justify-center items-center min-h-screen bg-gray-50 p-6 text-gray-800">
+        <motion.div
+          initial={{ opacity: 0, scale: 0.8 }}
+          animate={{ opacity: 1, scale: 1 }}
+          transition={{ duration: 0.5 }}
+          className="text-center bg-white p-10 rounded-3xl shadow-xl w-full max-w-lg border border-gray-200"
+        >
+          <FaCheckCircle className="text-8xl text-green-500 mx-auto mb-6" />
+          <h2 className="text-3xl font-bold mb-4">Registration Successful! 🎉</h2>
+          <p className="text-gray-600">
+            Welcome to Zip Nivasa. You can now log in to your account.
+          </p>
+          <motion.button
+            whileHover={{ scale: 1.05 }}
+            whileTap={{ scale: 0.95 }}
+            className="mt-8 bg-blue-500 text-white font-semibold py-3 px-6 rounded-full hover:bg-blue-600 transition-all duration-300"
+            onClick={() => window.location.reload()}
+          >
+            Go to Login
+          </motion.button>
+        </motion.div>
+      </div>
+    );
+  }
 
   return (
-    // Gradient Background
-    <div className="min-h-screen bg-gradient-to-br from-purple-100 to-indigo-200 flex items-center justify-center p-4 font-sans">
+    <div className="flex justify-center items-center min-h-screen bg-gray-50 p-6 lg:p-12">
       <motion.div
-        className="bg-white p-10 rounded-3xl shadow-2xl w-full max-w-md border border-gray-100 transform hover:shadow-3xl transition-all duration-300 relative overflow-hidden"
-        initial={{ y: 50, opacity: 0, scale: 0.95 }}
-        animate={{ y: 0, opacity: 1, scale: 1 }}
-        transition={{ duration: 0.6, ease: "easeOut" }}
+        initial={{ opacity: 0, y: 40, scale: 0.9 }}
+        animate={{ opacity: 1, y: 0, scale: 1 }}
+        transition={{ duration: 0.7, ease: "easeOut" }}
+        className="flex flex-col lg:flex-row bg-white rounded-3xl shadow-xl overflow-hidden max-w-5xl w-full"
       >
-        {/* Decorative background shapes */}
-        <div className="absolute top-0 left-0 -ml-10 -mt-10 w-48 h-48 bg-indigo-200 rounded-full opacity-20 filter blur-xl"></div>
-        <div className="absolute bottom-0 right-0 -mr-10 -mb-10 w-48 h-48 bg-purple-200 rounded-full opacity-20 filter blur-xl"></div>
-
-        <div className="text-center mb-8 relative z-10">
-          {/* Logo or Icon Placeholder */}
-          <div className="mb-4">
-            <svg className="mx-auto h-12 w-12 text-indigo-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 11c0 1.657-1.5 3-3 3s-3-1.343-3-3m5 0c0 1.657 1.5 3 3 3s3-1.343 3-3m-6 0h-2m8 0h-2m-3-4a6 6 0 00-6 6v7h12v-7a6 6 0 00-6-6z" />
-            </svg>
+        {/* Left Side: Image Section */}
+        <div className="lg:w-1/2 relative">
+          <img
+            src="https://img.freepik.com/free-vector/student-dormitory-concept-illustration_114360-12745.jpg"
+            alt="Zip Nivasa Registration"
+            className="w-full h-80 lg:h-full object-cover"
+          />
+          <div className="absolute inset-0 bg-blue-100 bg-opacity-40 flex flex-col items-center justify-center text-center p-6">
+            <h3 className="text-2xl font-bold text-blue-700 mb-3">Your Journey Starts Here!</h3>
+            <p className="text-gray-700 max-w-sm">
+              Join our community to find the best PGs, Mess services, or grow your business with Zip Nivasa.
+            </p>
           </div>
-          <h2 className="text-4xl font-extrabold text-gray-800 tracking-tight">
-            Join Our Community
-          </h2>
-          <p className="text-gray-500 mt-2 text-lg">
-            Register as a <strong className="text-indigo-600">{roleName}</strong> and unlock your potential.
-          </p>
         </div>
 
-        <form className="space-y-6 relative z-10">
-          {/* Conditional rendering for the new field */}
-          {role === 'messowner' && (
-            <div>
-              <label htmlFor="messName" className="block text-sm font-semibold text-gray-700 mb-1">
-                Mess Name
-              </label>
-              <input
-                type="text"
-                id="messName"
-                placeholder="Enter your mess name"
-                className="mt-1 w-full p-3 rounded-xl border border-gray-300 focus:outline-none focus:ring-4 focus:ring-indigo-100 focus:border-indigo-500 transition-all duration-200 shadow-sm"
-                aria-label="Mess Name"
-              />
-            </div>
-          )}
+        {/* Right Side: Registration Form */}
+        <div className="lg:w-1/2 p-10 bg-gray-50">
+          <div className="text-center mb-8">
+            <FaUserPlus className="text-5xl text-blue-500 mx-auto mb-3" />
+            <h2 className="text-3xl font-extrabold text-gray-800 mb-1">
+              Create Your Account
+            </h2>
+            <p className="text-gray-600 text-sm">
+              Register as Student, PG Owner, or Mess Owner.
+            </p>
+          </div>
 
-          <div>
-            <label htmlFor="fullName" className="block text-sm font-semibold text-gray-700 mb-1">
-              Full Name
-            </label>
-            <input
+          {/* Role Tabs */}
+          <div className="mb-6 flex bg-gray-200 rounded-xl overflow-hidden border border-gray-300">
+            {["student", "pgowner", "messowner"].map((r) => (
+              <button
+                key={r}
+                type="button"
+                onClick={() => setRole(r)}
+                className={`flex-1 py-2 px-3 text-sm font-semibold transition-all duration-300 ${
+                  role === r
+                    ? "bg-blue-500 text-white shadow-md"
+                    : "text-gray-600 hover:bg-gray-300"
+                }`}
+              >
+                {r === "student" ? "Student" : r === "pgowner" ? "PG Owner" : "Mess Owner"}
+              </button>
+            ))}
+          </div>
+
+          {/* Form */}
+          <form onSubmit={handleSubmit} className="space-y-3">
+            {/* Common */}
+            <motion.input
+              whileFocus={{ scale: 1.01 }}
               type="text"
-              id="fullName"
-              placeholder="Your Full Name"
-              className="mt-1 w-full p-3 rounded-xl border border-gray-300 focus:outline-none focus:ring-4 focus:ring-indigo-100 focus:border-indigo-500 transition-all duration-200 shadow-sm"
-              aria-label="Full Name"
+              name="name"
+              placeholder="Full Name"
+              value={formData.name}
+              onChange={handleChange}
+              className="w-full bg-white border border-gray-300 rounded-lg p-3 focus:outline-none focus:ring-2 focus:ring-blue-400"
+              required
             />
-          </div>
-          <div>
-            <label htmlFor="email" className="block text-sm font-semibold text-gray-700 mb-1">
-              Email Address
-            </label>
-            <input
+            <motion.input
+              whileFocus={{ scale: 1.01 }}
               type="email"
-              id="email"
-              placeholder="you@example.com"
-              className="mt-1 w-full p-3 rounded-xl border border-gray-300 focus:outline-none focus:ring-4 focus:ring-indigo-100 focus:border-indigo-500 transition-all duration-200 shadow-sm"
-              aria-label="Email Address"
+              name="email"
+              placeholder="Email"
+              value={formData.email}
+              onChange={handleChange}
+              className="w-full bg-white border border-gray-300 rounded-lg p-3 focus:outline-none focus:ring-2 focus:ring-blue-400"
+              required
             />
-          </div>
-          <div>
-            <label htmlFor="password" className="block text-sm font-semibold text-gray-700 mb-1">
-              Password
-            </label>
-            <input
+            <motion.input
+              whileFocus={{ scale: 1.01 }}
               type="password"
-              id="password"
-              placeholder="Create a strong password"
-              className="mt-1 w-full p-3 rounded-xl border border-gray-300 focus:outline-none focus:ring-4 focus:ring-indigo-100 focus:border-indigo-500 transition-all duration-200 shadow-sm"
-              aria-label="Password"
+              name="password"
+              placeholder="Password"
+              value={formData.password}
+              onChange={handleChange}
+              className="w-full bg-white border border-gray-300 rounded-lg p-3 focus:outline-none focus:ring-2 focus:ring-blue-400"
+              required
             />
-          </div>
-          <div>
-            <label htmlFor="confirmPassword" className="block text-sm font-semibold text-gray-700 mb-1">
-              Confirm Password
-            </label>
-            <input
-              type="password"
-              id="confirmPassword"
-              placeholder="Re-enter your password"
-              className="mt-1 w-full p-3 rounded-xl border border-gray-300 focus:outline-none focus:ring-4 focus:ring-indigo-100 focus:border-indigo-500 transition-all duration-200 shadow-sm"
-              aria-label="Confirm Password"
+            <motion.input
+              whileFocus={{ scale: 1.01 }}
+              type="tel"
+              name="phone"
+              placeholder="Phone Number"
+              value={formData.phone}
+              onChange={handleChange}
+              className="w-full bg-white border border-gray-300 rounded-lg p-3 focus:outline-none focus:ring-2 focus:ring-blue-400"
+              required
             />
-          </div>
-          <motion.button
-            type="submit"
-            className="w-full py-3 bg-gradient-to-r from-indigo-600 to-purple-700 text-white font-bold rounded-xl hover:from-indigo-700 hover:to-purple-800 transition-all duration-300 shadow-lg transform hover:-translate-y-1 hover:scale-102 focus:outline-none focus:ring-4 focus:ring-indigo-300"
-            whileHover={{ scale: 1.02 }}
-            whileTap={{ scale: 0.98 }}
-          >
-            Register Now
-          </motion.button>
-        </form>
 
-        <p className="mt-8 text-center text-gray-500 relative z-10">
-          Already have an account?{' '}
-          <Link
-            to={`/login?role=${role}`}
-            className="text-indigo-600 font-bold hover:underline hover:text-indigo-700 transition-colors duration-200"
-          >
-            Log in here
-          </Link>
-        </p>
+            {/* Student */}
+            {role === "student" && (
+              <div className="space-y-3">
+                <motion.input
+                  type="text"
+                  name="collegeName"
+                  placeholder="College Name"
+                  value={formData.collegeName}
+                  onChange={handleChange}
+                  className="w-full bg-white border border-gray-300 rounded-lg p-3 focus:outline-none focus:ring-2 focus:ring-blue-400"
+                  required
+                />
+                <motion.input
+                  type="text"
+                  name="course"
+                  placeholder="Course (e.g. BSc CS)"
+                  value={formData.course}
+                  onChange={handleChange}
+                  className="w-full bg-white border border-gray-300 rounded-lg p-3 focus:outline-none focus:ring-2 focus:ring-blue-400"
+                  required
+                />
+                <motion.input
+                  type="text"
+                  name="year"
+                  placeholder="Year (e.g. 2nd Year)"
+                  value={formData.year}
+                  onChange={handleChange}
+                  className="w-full bg-white border border-gray-300 rounded-lg p-3 focus:outline-none focus:ring-2 focus:ring-blue-400"
+                />
+                <motion.input
+                  type="text"
+                  name="city"
+                  placeholder="City of Stay"
+                  value={formData.city}
+                  onChange={handleChange}
+                  className="w-full bg-white border border-gray-300 rounded-lg p-3 focus:outline-none focus:ring-2 focus:ring-blue-400"
+                />
+              </div>
+            )}
+
+            {/* PG Owner */}
+            {role === "pgowner" && (
+              <div className="space-y-3">
+                <motion.input
+                  type="text"
+                  name="pgName"
+                  placeholder="PG Name"
+                  value={formData.pgName}
+                  onChange={handleChange}
+                  className="w-full bg-white border border-gray-300 rounded-lg p-3 focus:outline-none focus:ring-2 focus:ring-blue-400"
+                  required
+                />
+                <motion.input
+                  type="text"
+                  name="pgLocation"
+                  placeholder="PG Location"
+                  value={formData.pgLocation}
+                  onChange={handleChange}
+                  className="w-full bg-white border border-gray-300 rounded-lg p-3 focus:outline-none focus:ring-2 focus:ring-blue-400"
+                  required
+                />
+                <motion.input
+                  type="number"
+                  name="pgCapacity"
+                  placeholder="Total Beds"
+                  value={formData.pgCapacity}
+                  onChange={handleChange}
+                  className="w-full bg-white border border-gray-300 rounded-lg p-3 focus:outline-none focus:ring-2 focus:ring-blue-400"
+                />
+                <motion.input
+                  type="text"
+                  name="pgFacilities"
+                  placeholder="Facilities (WiFi, Laundry...)"
+                  value={formData.pgFacilities}
+                  onChange={handleChange}
+                  className="w-full bg-white border border-gray-300 rounded-lg p-3 focus:outline-none focus:ring-2 focus:ring-blue-400"
+                />
+              </div>
+            )}
+
+            {/* Mess Owner */}
+            {role === "messowner" && (
+              <div className="space-y-3">
+                <motion.input
+                  type="text"
+                  name="messName"
+                  placeholder="Mess Name"
+                  value={formData.messName}
+                  onChange={handleChange}
+                  className="w-full bg-white border border-gray-300 rounded-lg p-3 focus:outline-none focus:ring-2 focus:ring-blue-400"
+                  required
+                />
+                <motion.input
+                  type="text"
+                  name="messLocation"
+                  placeholder="Mess Location"
+                  value={formData.messLocation}
+                  onChange={handleChange}
+                  className="w-full bg-white border border-gray-300 rounded-lg p-3 focus:outline-none focus:ring-2 focus:ring-blue-400"
+                  required
+                />
+                <motion.input
+                  type="number"
+                  name="messCapacity"
+                  placeholder="Capacity (e.g. 50)"
+                  value={formData.messCapacity}
+                  onChange={handleChange}
+                  className="w-full bg-white border border-gray-300 rounded-lg p-3 focus:outline-none focus:ring-2 focus:ring-blue-400"
+                />
+                <select
+                  name="messType"
+                  value={formData.messType}
+                  onChange={handleChange}
+                  className="w-full bg-white border border-gray-300 rounded-lg p-3 text-gray-700 focus:outline-none focus:ring-2 focus:ring-blue-400"
+                >
+                  <option value="">Select Food Type</option>
+                  <option value="veg">Veg</option>
+                  <option value="nonveg">Non-Veg</option>
+                  <option value="both">Both</option>
+                </select>
+              </div>
+            )}
+
+            {/* Submit */}
+            <motion.button
+              whileHover={{ scale: 1.05 }}
+              whileTap={{ scale: 0.97 }}
+              type="submit"
+              disabled={isLoading}
+              className={`w-full py-3 rounded-lg font-bold text-white shadow-md transition-all duration-300 flex items-center justify-center gap-2
+                ${isLoading ? "bg-gray-400 cursor-not-allowed" : "bg-blue-500 hover:bg-blue-600"}`}
+            >
+              {isLoading ? (
+                <>
+                  <FaSpinner className="animate-spin" />
+                  Processing...
+                </>
+              ) : (
+                <>
+                  <FaSignInAlt /> Create Account
+                </>
+              )}
+            </motion.button>
+          </form>
+        </div>
       </motion.div>
     </div>
   );
