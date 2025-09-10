@@ -180,7 +180,7 @@ const StudentDashboard = () => {
                   <div key={index} className="flex justify-between items-center p-3 bg-gray-50 rounded-lg hover:bg-gray-100 transition-colors">
                     <div>
                       <h4 className="font-semibold">{mess.name}</h4>
-                      <p className="text-xs text-gray-500">{mess.distance} away</p>
+                      <p className="text-xs text-gray-500">{mess.distance} Away</p>
                     </div>
                     <div className="text-right">
                       <p className="text-sm font-bold text-yellow-500">{mess.rating} ★</p>
