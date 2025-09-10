@@ -243,8 +243,8 @@ const Home = () => {
           </p>
           <div className="flex flex-col sm:flex-row justify-center items-center gap-4 sm:gap-6 mt-6 sm:mt-10">
             {[
-              { label: "List a PG / Home", to: "/register?role=homeowner" },
-              { label: "List a Mess Service", to: "/register?role=messowner" },
+              { label: "List a PG / Home", to: "/login" },
+              { label: "List a Mess Service", to: "/login" },
             ].map((btn, i) => (
               <Link key={i} to={btn.to} className="w-full sm:w-auto">
                 <motion.button
