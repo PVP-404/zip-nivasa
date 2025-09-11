@@ -255,7 +255,7 @@ const MessOwnerDashboard = () => {
             <h2 className="text-2xl font-bold text-gray-800 mb-4">Inquiries & Leads</h2>
             {inquiries.length === 0 ? (
               <div className="text-center py-12 text-gray-500">
-                <p>No new inquiries at the moment. Keep your profile updated to attract more customers.</p>
+                <p>No new inquiries at the moment. Keep your profile Updated to attract more customers.</p>
               </div>
             ) : (
               <div className="space-y-4">
