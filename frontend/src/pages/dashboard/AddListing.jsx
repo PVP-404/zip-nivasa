@@ -371,7 +371,7 @@ const AddListing = () => {
             transition={{ duration: 0.8 }}
             className="text-gray-600 mb-6"
           >
-            List your accommodation on **Zip Nivasa** and connect with students and migrants.
+            List your accommodation on Zip Nivasa and connect with students and migrants.
           </motion.p>
           <div className="w-full bg-white p-8 rounded-2xl shadow-2xl border border-gray-200">
             <div className="flex justify-between items-center mb-8">
