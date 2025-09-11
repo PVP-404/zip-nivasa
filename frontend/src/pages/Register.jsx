@@ -3,7 +3,7 @@ import { motion } from "framer-motion";
 import { FaUserPlus, FaSignInAlt, FaCheckCircle, FaSpinner } from "react-icons/fa";
 
 const Register = () => {
-  const [role, setRole] = useState("student");
+  const [role, setRole] = useState("tenant");
   const [isLoading, setIsLoading] = useState(false);
   const [isSuccess, setIsSuccess] = useState(false);
   const [formData, setFormData] = useState({
@@ -103,13 +103,13 @@ const Register = () => {
               Create Your Account
             </h2>
             <p className="text-gray-600 text-sm">
-              Register as Student, PG Owner, or Mess Owner.
+              Register as Tenant, PG Owner, or Mess Owner.
             </p>
           </div>
 
           {/* Role Tabs */}
           <div className="mb-6 flex bg-gray-200 rounded-xl overflow-hidden border border-gray-300">
-            {["student", "pgowner", "messowner"].map((r) => (
+            {["tenant", "pgowner", "messowner"].map((r) => (
               <button
                 key={r}
                 type="button"
@@ -120,7 +120,7 @@ const Register = () => {
                     : "text-gray-600 hover:bg-gray-300"
                 }`}
               >
-                {r === "student" ? "Student" : r === "pgowner" ? "PG Owner" : "Mess Owner"}
+                {r === "tenant" ? "Tenant" : r === "pgowner" ? "PG Owner" : "Mess Owner"}
               </button>
             ))}
           </div>
@@ -169,8 +169,8 @@ const Register = () => {
               required
             />
 
-            {/* Student */}
-            {role === "student" && (
+            {/* Tenant */}
+            {role === "tenant" && (
               <div className="space-y-3">
                 <motion.input
                   type="text"
@@ -179,7 +179,6 @@ const Register = () => {
                   value={formData.collegeName}
                   onChange={handleChange}
                   className="w-full bg-white border border-gray-300 rounded-lg p-3 focus:outline-none focus:ring-2 focus:ring-blue-400"
-                  required
                 />
                 <motion.input
                   type="text"
@@ -188,7 +187,6 @@ const Register = () => {
                   value={formData.course}
                   onChange={handleChange}
                   className="w-full bg-white border border-gray-300 rounded-lg p-3 focus:outline-none focus:ring-2 focus:ring-blue-400"
-                  required
                 />
                 <motion.input
                   type="text"

@@ -9,7 +9,7 @@ const Header = () => {
 
   // Simulated authentication state and role
   const isLoggedIn = true; // Replace with real auth check
-  const userRole = 'student'; // 'student' | 'owner' | 'service' | null
+  const userRole = 'owner'; // 'student' | 'owner' | 'service' | null
 
   // Public (not logged in)
   const publicNavLinks = [

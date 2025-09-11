@@ -1,4 +1,4 @@
-import React from 'react';
+ import React from 'react';
 import { useLocation, useNavigate, Link } from 'react-router-dom';
 import { motion } from 'framer-motion';
 
@@ -15,13 +15,11 @@ const loginBanner = "https://cdn-icons-png.flaticon.com/512/5087/5087579.png";
 
 const Login = () => {
   const query = new URLSearchParams(useLocation().search);
-  const role = query.get("role") || "student";
-
+  const role = query.get("role") || "messowner";
   const navigate = useNavigate();
 
   const handleLogin = (e) => {
     e.preventDefault();
-    
     // Navigate based on role
     switch (role.toLowerCase()) {
       case 'student':
@@ -46,7 +44,6 @@ const Login = () => {
 
   return (
     <div className="min-h-screen flex flex-col md:flex-row items-center justify-center bg-gradient-to-r from-sky-50 via-indigo-50 to-purple-50">
-      
       {/* Left Image Section */}
       <div className="hidden md:block md:w-1/2 h-screen relative">
         <img
@@ -78,7 +75,9 @@ const Login = () => {
 
           <form onSubmit={handleLogin} className="space-y-6">
             <div>
-              <label htmlFor="email" className="block text-sm font-medium text-gray-700">Email Address</label>
+              <label htmlFor="email" className="block text-sm font-medium text-gray-700">
+                Email Address
+              </label>
               <input
                 type="email"
                 id="email"
@@ -87,8 +86,11 @@ const Login = () => {
                 required
               />
             </div>
+
             <div>
-              <label htmlFor="password" className="block text-sm font-medium text-gray-700">Password</label>
+              <label htmlFor="password" className="block text-sm font-medium text-gray-700">
+                Password
+              </label>
               <input
                 type="password"
                 id="password"
@@ -100,13 +102,12 @@ const Login = () => {
 
             <div className="flex items-center justify-between">
               <label className="flex items-center">
-                <input
-                  type="checkbox"
-                  className="h-4 w-4 text-sky-600 border-gray-300 rounded"
-                />
+                <input type="checkbox" className="h-4 w-4 text-sky-600 border-gray-300 rounded" />
                 <span className="ml-2 text-sm text-gray-600">Remember me</span>
               </label>
-              <Link to="#" className="text-sm text-sky-600 hover:underline">Forgot Password?</Link>
+              <Link to="#" className="text-sm text-sky-600 hover:underline">
+                Forgot Password?
+              </Link>
             </div>
 
             <button
