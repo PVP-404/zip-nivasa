@@ -15,7 +15,7 @@ const loginBanner = "https://cdn-icons-png.flaticon.com/512/5087/5087579.png";
 
 const Login = () => {
   const query = new URLSearchParams(useLocation().search);
-  const role = query.get("role") || "messowner";
+  const role = query.get("role") || "student";
   const navigate = useNavigate();
 
   const handleLogin = (e) => {
