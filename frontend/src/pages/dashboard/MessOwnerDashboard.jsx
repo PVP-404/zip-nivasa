@@ -7,7 +7,7 @@ import Sidebar from "../../components/Sidebar";
 
 // Dummy data to simulate API responses
 const mockSubscribers = [
-  { id: "s1", name: "Anil Kumar", plan: "Lunch & Dinner", status: "Active", joined: "2024-05-10" },
+  { id: "s1", name: "Anil Kumble", plan: "Lunch & Dinner", status: "Active", joined: "2024-05-10" },
   { id: "s2", name: "Priya Sharma", plan: "Breakfast & Lunch", status: "Active", joined: "2024-06-01" },
   { id: "s3", name: "Rahul Singh", plan: "Dinner Only", status: "Active", joined: "2024-06-15" },
   { id: "s4", name: "Sonia Patel", plan: "All Meals", status: "Active", joined: "2024-07-20" },
