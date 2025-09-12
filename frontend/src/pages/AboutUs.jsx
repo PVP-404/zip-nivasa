@@ -1,17 +1,15 @@
+
 import React from "react";
 // Import icons for Mission, Vision, and Values
 import { FaBullseye, FaLightbulb, FaHandshake } from "react-icons/fa";
-
 // Import shared components
 import Header from "../components/Header";
 import Footer from "../components/Footer";
-
 const AboutUs = () => {
   return (
     <div className="bg-gray-50 min-h-screen font-sans flex flex-col">
       {/* Global Header */}
       <Header />
-
       {/* Hero Section */}
       <header className="bg-blue-900 text-white text-center py-20 px-4 md:px-8">
         <div className="max-w-4xl mx-auto">
@@ -29,7 +27,6 @@ const AboutUs = () => {
           </a>
         </div>
       </header>
-
       {/* Main Content */}
       <main className="flex-grow max-w-6xl mx-auto py-16 px-4 md:px-8">
         {/* Our Story Section */}
@@ -62,7 +59,6 @@ const AboutUs = () => {
             </div>
           </div>
         </section>
-
         {/* Mission, Vision & Values Section */}
         <section className="text-center mb-20">
           <h2 className="text-4xl font-bold text-blue-950 mb-2">
@@ -106,7 +102,6 @@ const AboutUs = () => {
             </div>
           </div>
         </section>
-
         {/* Team Section */}
         <section className="text-center mb-20">
           <h2 className="text-4xl font-bold text-blue-950 mb-2">Meet Our Team</h2>
@@ -145,11 +140,10 @@ const AboutUs = () => {
               <h3 className="text-xl font-semibold text-blue-950">
                 Pratik Warikari
               </h3>
-              <p className="text-gray-500">UI/UX Designer</p>
+              <p className="text-gray-500">Full-Stack Developer</p>
             </div>
           </div>
         </section>
-
         {/* Call to Action Section */}
         <section className="bg-blue-500 text-white rounded-3xl p-12 text-center shadow-xl">
           <h2 className="text-3xl md:text-4xl font-bold mb-4">
@@ -163,11 +157,9 @@ const AboutUs = () => {
           </button>
         </section>
       </main>
-
       {/* Global Footer */}
       <Footer />
     </div>
   );
 };
-
 export default AboutUs;
