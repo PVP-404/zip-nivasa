@@ -29,8 +29,7 @@ const Header = () => {
   // PG Owner
   const ownerNavLinks = [
     { name: 'Dashboard', path: '/owner-dashboard' },
-    { name: 'My Properties', path: '/owner/properties' },
-    { name: 'Bookings', path: '/owner/bookings' },
+    { name: 'Payments', path: '/owner/Payments' },
     { name: 'Analytics', path: '/owner/analytics' },
   ];
 
