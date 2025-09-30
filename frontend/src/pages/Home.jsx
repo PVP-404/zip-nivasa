@@ -4,8 +4,6 @@ import { Link } from "react-router-dom";
 import { motion } from "framer-motion";
 import {
   FaSearch,
-  FaHome,
-  FaUtensils,
   FaBuilding,
   FaCheckCircle,
   FaComments,
@@ -69,8 +67,9 @@ const Home = () => {
                 {link === "accommodations" ? "Find Accommodations" : "Find Mess"}
               </Link>
             ))}
+            {/* 🔹 Navbar Login goes to Login page for student */}
             <Link
-              to="/login"
+              to="/login?role=student"
               className="bg-blue-600 text-white font-medium py-2 px-4 md:px-6 rounded-full shadow-md hover:bg-blue-700 hover:shadow-lg transition-all"
             >
               Login
@@ -243,8 +242,8 @@ const Home = () => {
           </p>
           <div className="flex flex-col sm:flex-row justify-center items-center gap-4 sm:gap-6 mt-6 sm:mt-10">
             {[
-              { label: "List a PG / Home", to: "/login" },
-              { label: "List a Mess Service", to: "/login" },
+              { label: "List a PG / Home", to: "/login?role=pgowner" },
+              { label: "List a Mess Service", to: "/login?role=pgowner" },
             ].map((btn, i) => (
               <Link key={i} to={btn.to} className="w-full sm:w-auto">
                 <motion.button
@@ -293,8 +292,12 @@ const Home = () => {
             <h4 className="text-base sm:text-lg font-semibold text-white mb-3 sm:mb-4">
               Contact
             </h4>
-            <p className="text-xs sm:text-sm text-gray-400">📍 Pune, Maharashtra</p>
-            <p className="text-xs sm:text-sm text-gray-400">📧 info@zipnivasa.com</p>
+            <p className="text-xs sm:text-sm text-gray-400">
+              📍 Pune, Maharashtra
+            </p>
+            <p className="text-xs sm:text-sm text-gray-400">
+              📧 info@zipnivasa.com
+            </p>
           </div>
           <div>
             <h4 className="text-base sm:text-lg font-semibold text-white mb-3 sm:mb-4">
