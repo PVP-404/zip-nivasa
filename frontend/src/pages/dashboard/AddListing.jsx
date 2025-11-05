@@ -93,14 +93,71 @@ const AddListing = () => {
     }
   };
 
-  const handleSubmit = (e) => {
-    e.preventDefault();
-    if (validateStep(currentStep)) {
-      console.log("Final form data submitted:", formData);
-      alert("Listing submitted successfully! Thank you for adding your property to Zip Nivasa.");
-      // In a real application, you would send this data to an API
+  const handleSubmit = async (e) => {
+  e.preventDefault();
+  if (validateStep(currentStep)) {
+    try {
+      // Create FormData to handle file uploads
+      const submitData = new FormData();
+      
+      // Append all text fields
+      submitData.append('title', formData.title);
+      submitData.append('propertyType', formData.propertyType);
+      submitData.append('location', formData.location);
+      submitData.append('address', formData.address);
+      submitData.append('monthlyRent', formData.monthlyRent);
+      submitData.append('deposit', formData.deposit);
+      submitData.append('occupancyType', formData.occupancyType);
+      submitData.append('description', formData.description);
+      
+      // Append amenities as JSON string
+      submitData.append('amenities', JSON.stringify(formData.amenities));
+      
+      // Append image files
+      formData.images.forEach((image) => {
+        submitData.append('images', image);
+      });
+
+      // Make API call to backend
+      const response = await fetch('http://localhost:5000/api/pgs/add', {
+        method: 'POST',
+        body: submitData,
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.message || 'Failed to submit listing');
+      }
+
+      const result = await response.json();
+      console.log('Listing created:', result);
+      
+      alert('Listing submitted successfully! Thank you for adding your property to Zip Nivasa.');
+      
+      // Reset form
+      setFormData({
+        title: "",
+        propertyType: "",
+        location: "",
+        address: "",
+        monthlyRent: "",
+        deposit: "",
+        occupancyType: "",
+        amenities: [],
+        description: "",
+        images: [],
+      });
+      setCurrentStep(1);
+      
+      // Optional: Redirect to listings page
+      // window.location.href = '/dashboard/listings';
+      
+    } catch (error) {
+      console.error('Error submitting listing:', error);
+      alert(`Failed to submit listing: ${error.message}`);
     }
-  };
+  }
+};
 
   const occupancyOptions = [
     { value: "single", label: "Single" },

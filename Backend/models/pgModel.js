@@ -10,11 +10,12 @@ const pgSchema = new mongoose.Schema(
     deposit: { type: Number, required: true },
     occupancyType: { type: String, required: true },
     amenities: { type: [String], default: [] },
-    description: { type: String },
+    description: { type: String, required: true },
     images: { type: [String], default: [] },
     owner: { type: String },
   },
   { timestamps: true }
 );
 
-export default mongoose.model("PG", pgSchema);
+const PG = mongoose.model("PG", pgSchema);
+export default PG;

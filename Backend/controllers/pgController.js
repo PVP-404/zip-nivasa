@@ -2,10 +2,34 @@ import * as pgService from "../services/pgService.js";
 
 export const addPG = async (req, res) => {
   try {
-    const pg = await pgService.createPG(req.body);
-    res.status(201).json(pg);
+    let amenities = req.body.amenities;
+    if (typeof amenities === "string") {
+      try {
+        amenities = JSON.parse(amenities);
+      } catch {
+        amenities = [];
+      }
+    }
+
+    const images = req.files ? req.files.map(file => `/uploads/${file.filename}`) : [];
+
+    const pgData = {
+      ...req.body,
+      amenities,
+      images,
+    };
+
+    const pg = await pgService.createPG(pgData);
+    res.status(201).json({
+      message: "PG listing added successfully",
+      listing: pg,
+    });
   } catch (err) {
-    res.status(500).json({ message: "Failed to add PG listing", error: err.message });
+    console.error("Error adding PG:", err);
+    res.status(500).json({
+      message: "Failed to add PG listing",
+      error: err.message,
+    });
   }
 };
 
@@ -14,6 +38,10 @@ export const fetchPGs = async (req, res) => {
     const pgs = await pgService.getAllPGs();
     res.status(200).json(pgs);
   } catch (err) {
-    res.status(500).json({ message: "Failed to fetch PG listings", error: err.message });
+    console.error("Error fetching PGs:", err);
+    res.status(500).json({
+      message: "Failed to fetch PG listings",
+      error: err.message,
+    });
   }
 };
