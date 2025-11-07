@@ -119,7 +119,7 @@ const AddListing = () => {
       });
 
       // Make API call to backend
-      const response = await fetch('http://localhost:5000/api/pgs/add', {
+      const response = await fetch('http://localhost:5000/api/pgs', {
         method: 'POST',
         body: submitData,
       });

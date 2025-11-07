@@ -1,8 +1,11 @@
 import * as pgService from "../services/pgService.js";
 
+// ✅ Add new PG Listing
 export const addPG = async (req, res) => {
   try {
     let amenities = req.body.amenities;
+
+    // ✅ If amenities comes as string → convert to array
     if (typeof amenities === "string") {
       try {
         amenities = JSON.parse(amenities);
@@ -11,7 +14,10 @@ export const addPG = async (req, res) => {
       }
     }
 
-    const images = req.files ? req.files.map(file => `/uploads/${file.filename}`) : [];
+    // ✅ Uploaded images (multer)
+    const images = req.files
+      ? req.files.map((file) => `/uploads/${file.filename}`)
+      : [];
 
     const pgData = {
       ...req.body,
@@ -20,6 +26,7 @@ export const addPG = async (req, res) => {
     };
 
     const pg = await pgService.createPG(pgData);
+
     res.status(201).json({
       message: "PG listing added successfully",
       listing: pg,
@@ -33,6 +40,7 @@ export const addPG = async (req, res) => {
   }
 };
 
+// ✅ Fetch all PG Listings
 export const fetchPGs = async (req, res) => {
   try {
     const pgs = await pgService.getAllPGs();

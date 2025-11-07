@@ -9,10 +9,18 @@ const pgSchema = new mongoose.Schema(
     monthlyRent: { type: Number, required: true },
     deposit: { type: Number, required: true },
     occupancyType: { type: String, required: true },
+
     amenities: { type: [String], default: [] },
     description: { type: String, required: true },
     images: { type: [String], default: [] },
+
     owner: { type: String },
+
+    // ✅ Added fields because dashboard uses them
+    views: { type: Number, default: 0 },
+    inquiries: { type: Number, default: 0 },
+    beds: { type: Number, default: 1 },
+    available: { type: Boolean, default: true }
   },
   { timestamps: true }
 );
