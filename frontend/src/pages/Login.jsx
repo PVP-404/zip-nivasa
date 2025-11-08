@@ -47,6 +47,8 @@ const Login = () => {
 
       localStorage.setItem("token", data.token);
       localStorage.setItem("role", data.user.role);
+      localStorage.setItem("username", data.user.name);
+
 
       switch (data.user.role) {
         case "tenant":

@@ -12,7 +12,6 @@ import AboutUs from "./pages/AboutUs";
 import StudentDashboard from "./pages/dashboard/StudentDashboard";
 import PGOwnerDashboard from "./pages/dashboard/PGOwnerDashboard";
 import LaundryDashboard from "./pages/dashboard/LaundryDashboard";
-import ServiceDashboard from "./pages/dashboard/ServiceDashboard";
 import MessOwnerDashboard from "./pages/dashboard/MessOwnerDashboard";
 
 // Other Pages
@@ -27,13 +26,13 @@ function App() {
   return (
     <Router>
       <Routes>
-        {/* Public Routes */}
+        {/* ✅ Public Routes */}
         <Route path="/" element={<Home />} />
         <Route path="/login" element={<Login />} />
         <Route path="/register" element={<Register />} />
         <Route path="/about" element={<AboutUs />} />
 
-        {/* Student Dashboard */}
+        {/* ✅ Student Dashboard */}
         <Route
           path="/dashboard/student"
           element={
@@ -43,7 +42,7 @@ function App() {
           }
         />
 
-        {/* PG Owner Dashboard */}
+        {/* ✅ PG Owner Dashboard */}
         <Route
           path="/dashboard/pgowner"
           element={
@@ -53,7 +52,7 @@ function App() {
           }
         />
 
-        {/* Mess Owner Dashboard */}
+        {/* ✅ Mess Owner Dashboard */}
         <Route
           path="/dashboard/messowner"
           element={
@@ -63,7 +62,7 @@ function App() {
           }
         />
 
-        {/* Laundry Owner Dashboard */}
+        {/* ✅ Laundry Owner Dashboard */}
         <Route
           path="/dashboard/laundry"
           element={
@@ -73,17 +72,7 @@ function App() {
           }
         />
 
-        {/* Service Provider Dashboard */}
-        <Route
-          path="/dashboard/service"
-          element={
-            <RoleProtectedRoute allowedRoles={["service"]}>
-              <ServiceDashboard />
-            </RoleProtectedRoute>
-          }
-        />
-
-        {/* Add Listing PG (Only PG Owner) */}
+        {/* ✅ Add PG listing (only PG Owner) */}
         <Route
           path="/dashboard/add-listing"
           element={
@@ -93,7 +82,7 @@ function App() {
           }
         />
 
-        {/* Add Listing Mess (Only Mess Owner) */}
+        {/* ✅ Add Mess listing (only Mess Owner) */}
         <Route
           path="/dashboard/add-mess"
           element={
@@ -103,7 +92,7 @@ function App() {
           }
         />
 
-        {/* Fallback */}
+        {/* ✅ Fallback */}
         <Route path="*" element={<h1>404 - Page Not Found</h1>} />
       </Routes>
     </Router>

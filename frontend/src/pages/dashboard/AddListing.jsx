@@ -119,10 +119,14 @@ const AddListing = () => {
       });
 
       // Make API call to backend
-      const response = await fetch('http://localhost:5000/api/pgs', {
-        method: 'POST',
-        body: submitData,
-      });
+      const response = await fetch("http://localhost:5000/api/pgs", {
+  method: 'POST',
+  headers: {
+    Authorization: `Bearer ${localStorage.getItem("token")}`,
+  },
+  body: submitData,
+});
+
 
       if (!response.ok) {
         const errorData = await response.json();

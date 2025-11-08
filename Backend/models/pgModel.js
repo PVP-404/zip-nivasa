@@ -6,17 +6,18 @@ const pgSchema = new mongoose.Schema(
     propertyType: { type: String, required: true },
     location: { type: String, required: true },
     address: { type: String, required: true },
+
     monthlyRent: { type: Number, required: true },
     deposit: { type: Number, required: true },
     occupancyType: { type: String, required: true },
 
     amenities: { type: [String], default: [] },
     description: { type: String, required: true },
+
     images: { type: [String], default: [] },
 
-    owner: { type: String },
+    owner: { type: mongoose.Schema.Types.ObjectId, ref: "User", required: true },
 
-    // ✅ Added fields because dashboard uses them
     views: { type: Number, default: 0 },
     inquiries: { type: Number, default: 0 },
     beds: { type: Number, default: 1 },
@@ -25,5 +26,4 @@ const pgSchema = new mongoose.Schema(
   { timestamps: true }
 );
 
-const PG = mongoose.model("PG", pgSchema);
-export default PG;
+export default mongoose.model("PG", pgSchema);

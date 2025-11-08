@@ -1,5 +1,6 @@
 import PG from "../models/pgModel.js";
 
+
 // ✅ Create PG listing
 export const createPG = async (data) => {
   const pg = new PG(data);

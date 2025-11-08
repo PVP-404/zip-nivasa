@@ -1,55 +1,71 @@
-import * as pgService from "../services/pgService.js";
+// Backend/controllers/pgController.js
+import PG from "../models/pgModel.js";
+import User from "../models/User.js";
 
-// ✅ Add new PG Listing
-export const addPG = async (req, res) => {
+// ✅ CREATE PG LISTING
+export const createPG = async (req, res) => {
   try {
-    let amenities = req.body.amenities;
+    const userId = req.user.id;
 
-    // ✅ If amenities comes as string → convert to array
-    if (typeof amenities === "string") {
-      try {
-        amenities = JSON.parse(amenities);
-      } catch {
-        amenities = [];
-      }
+    const user = await User.findById(userId);
+    if (!user || user.role !== "pgowner") {
+      return res
+        .status(403)
+        .json({ success: false, message: "Unauthorized" });
     }
 
-    // ✅ Uploaded images (multer)
-    const images = req.files
-      ? req.files.map((file) => `/uploads/${file.filename}`)
-      : [];
-
-    const pgData = {
-      ...req.body,
+    const {
+      title,
+      propertyType,
+      location,
+      address,
+      monthlyRent,
+      deposit,
+      occupancyType,
       amenities,
+      description,
+    } = req.body;
+
+    const images = req.files?.map((file) => `/uploads/pgs/${file.filename}`) || [];
+
+    const pg = new PG({
+      title,
+      propertyType,
+      location,
+      address,
+      monthlyRent,
+      deposit,
+      occupancyType,
+      amenities: JSON.parse(amenities),
+      description,
       images,
-    };
-
-    const pg = await pgService.createPG(pgData);
-
-    res.status(201).json({
-      message: "PG listing added successfully",
-      listing: pg,
+      owner: userId,
+      beds: 1,
     });
-  } catch (err) {
-    console.error("Error adding PG:", err);
-    res.status(500).json({
-      message: "Failed to add PG listing",
-      error: err.message,
+
+    await pg.save();
+
+    res.json({
+      success: true,
+      message: "PG listing created successfully",
+      pg,
     });
+  } catch (error) {
+    console.log(error);
+    res.status(500).json({ success: false, message: "Server Error" });
   }
 };
 
-// ✅ Fetch all PG Listings
-export const fetchPGs = async (req, res) => {
+// ✅ FETCH PGs by logged-in owner
+export const getPGsByOwner = async (req, res) => {
   try {
-    const pgs = await pgService.getAllPGs();
-    res.status(200).json(pgs);
-  } catch (err) {
-    console.error("Error fetching PGs:", err);
-    res.status(500).json({
-      message: "Failed to fetch PG listings",
-      error: err.message,
-    });
+    const userId = req.user.id;
+
+    const pgs = await PG.find({ owner: userId }).sort({ createdAt: -1 });
+
+    res.json({ success: true, pgs });
+  } catch (error) {
+    console.log(error);
+    res.status(500).json({ success: false, message: "Error fetching PGs" });
   }
 };

@@ -1,25 +1,15 @@
 import express from "express";
-import multer from "multer";
-import { addPG, fetchPGs } from "../controllers/pgController.js";
+import { protect } from "../middleware/auth.js";
+import upload from "../middleware/upload.js";
+
+import { createPG, getPGsByOwner } from "../controllers/pgController.js";
 
 const router = express.Router();
 
-// ✅ Configure Multer Uploads
-const storage = multer.diskStorage({
-  destination: (req, file, cb) => {
-    cb(null, "uploads/");
-  },
-  filename: (req, file, cb) => {
-    cb(null, `${Date.now()}-${file.originalname}`);
-  }
-});
+// ✅ Create PG listing
+router.post("/", protect, upload.array("images", 10), createPG);
 
-const upload = multer({ storage });
-
-// ✅ Add PG route
-router.post("/", upload.array("images"), addPG);
-
-// ✅ Fetch all PGs
-router.get("/", fetchPGs);
+// ✅ Get PG listings of logged-in owner
+router.get("/owner", protect, getPGsByOwner);
 
 export default router;

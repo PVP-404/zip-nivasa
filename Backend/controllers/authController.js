@@ -1,4 +1,3 @@
-// Backend/controllers/authController.js
 import bcrypt from "bcryptjs";
 import jwt from "jsonwebtoken";
 
@@ -8,13 +7,14 @@ import PGOwner from "../models/PGOwner.js";
 import MessOwner from "../models/MessOwner.js";
 import LaundryOwner from "../models/LaundryOwner.js";
 
-// --- helper: require JWT secret early
+// ✅ Ensure JWT Secret exists
 const ensureJwt = () => {
-  if (!process.env.JWT_SECRET || String(process.env.JWT_SECRET).trim() === "") {
+  if (!process.env.JWT_SECRET || process.env.JWT_SECRET.trim() === "") {
     throw new Error("JWT_SECRET is not set in environment");
   }
 };
 
+// ✅ REGISTER USER
 export const register = async (req, res) => {
   try {
     ensureJwt();
@@ -22,61 +22,60 @@ export const register = async (req, res) => {
     const { role, email, password, name, phone, ...roleBody } = req.body;
 
     if (!role || !email || !password || !name || !phone) {
-      return res
-        .status(400)
-        .json({ success: false, message: "name, email, phone, password and role are required" });
+      return res.status(400).json({
+        success: false,
+        message: "name, email, phone, password and role are required",
+      });
     }
 
-    // prevent duplicate users BEFORE creating role docs (avoid orphan docs)
+    // Check duplicate
     const already = await User.findOne({ email });
     if (already) {
-      return res.status(409).json({ success: false, message: "Email already registered" });
+      return res.status(409).json({
+        success: false,
+        message: "Email already registered",
+      });
     }
 
-    // create the role-specific document
+    // Create role-specific document
     let roleDoc = null;
     let roleModelName = null;
 
     switch (role) {
-      case "tenant": {
-        // must include professionType
+      case "tenant":
         if (!roleBody.professionType || !["student", "job"].includes(roleBody.professionType)) {
           return res.status(400).json({
             success: false,
-            message: "professionType must be 'student' or 'job' for tenant",
+            message: "professionType must be 'student' or 'job'",
           });
         }
         roleDoc = await Tenant.create(roleBody);
         roleModelName = "Tenant";
         break;
-      }
 
-      case "pgowner": {
+      case "pgowner":
         roleDoc = await PGOwner.create(roleBody);
         roleModelName = "PGOwner";
         break;
-      }
 
-      case "messowner": {
+      case "messowner":
         roleDoc = await MessOwner.create(roleBody);
         roleModelName = "MessOwner";
         break;
-      }
 
-      case "laundry": {
+      case "laundry":
         roleDoc = await LaundryOwner.create(roleBody);
         roleModelName = "LaundryOwner";
         break;
-      }
 
       default:
         return res.status(400).json({ success: false, message: "Invalid role" });
     }
 
-    // hash password
+    // Hash password
     const hashedPassword = await bcrypt.hash(password, 10);
 
-    // create main user
+    // Create main user
     const user = await User.create({
       name,
       email,
@@ -87,16 +86,8 @@ export const register = async (req, res) => {
       roleModel: roleModelName,
     });
 
-    // back-link userId into role doc (optional but neat)
-    if (roleDoc && user?._id) {
-      const ModelMap = {
-        Tenant,
-        PGOwner,
-        MessOwner,
-        LaundryOwner,
-      };
-      await ModelMap[roleModelName].findByIdAndUpdate(roleDoc._id, { userId: user._id });
-    }
+    // Backlink userId in role model
+    await roleDoc.updateOne({ userId: user._id });
 
     return res.json({
       success: true,
@@ -105,42 +96,23 @@ export const register = async (req, res) => {
       role: user.role,
     });
   } catch (error) {
-    console.error("REGISTER ERROR:", error?.message || error);
-    const msg =
-      error?.message === "JWT_SECRET is not set in environment"
-        ? error.message
-        : "Server error";
-    return res.status(500).json({ success: false, message: msg });
+    console.error("REGISTER ERROR:", error);
+    return res.status(500).json({ success: false, message: "Server error" });
   }
 };
 
+// ✅ LOGIN USER
 export const login = async (req, res) => {
   try {
     ensureJwt();
 
     const { email, password } = req.body;
 
-    if (!email || !password) {
-      return res
-        .status(400)
-        .json({ success: false, message: "email and password are required" });
-    }
-
     const user = await User.findOne({ email });
-    if (!user) {
-      return res.json({ success: false, message: "Invalid email" });
-    }
-
-    if (!user.password) {
-      return res
-        .status(500)
-        .json({ success: false, message: "User has no password stored" });
-    }
+    if (!user) return res.json({ success: false, message: "Invalid email" });
 
     const match = await bcrypt.compare(password, user.password);
-    if (!match) {
-      return res.json({ success: false, message: "Invalid password" });
-    }
+    if (!match) return res.json({ success: false, message: "Invalid password" });
 
     const token = jwt.sign(
       { id: user._id, role: user.role },
@@ -160,11 +132,39 @@ export const login = async (req, res) => {
       },
     });
   } catch (error) {
-    console.error("LOGIN ERROR:", error?.message || error);
-    const msg =
-      error?.message === "JWT_SECRET is not set in environment"
-        ? error.message
-        : "Server error";
-    return res.status(500).json({ success: false, message: msg });
+    console.error("LOGIN ERROR:", error);
+    return res.status(500).json({ success: false, message: "Server error" });
+  }
+};
+
+// ✅ GET LOGGED-IN USER PROFILE
+export const getMe = async (req, res) => {
+  try {
+    const user = await User.findById(req.user.id).select("-password");
+    if (!user)
+      return res.status(404).json({ success: false, message: "User not found" });
+
+    let roleData = null;
+
+    switch (user.role) {
+      case "tenant": roleData = await Tenant.findById(user.roleId); break;
+      case "pgowner": roleData = await PGOwner.findById(user.roleId); break;
+      case "messowner": roleData = await MessOwner.findById(user.roleId); break;
+      case "laundry": roleData = await LaundryOwner.findById(user.roleId); break;
+    }
+
+    return res.json({
+      success: true,
+      user: {
+        id: user._id,
+        name: user.name,
+        email: user.email,
+        role: user.role,
+        profile: roleData,
+      },
+    });
+  } catch (error) {
+    console.error("ME ERROR:", error);
+    return res.status(500).json({ success: false, message: "Server error" });
   }
 };
