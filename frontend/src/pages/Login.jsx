@@ -1,5 +1,6 @@
- import React from 'react';
-import { useLocation, useNavigate, Link } from 'react-router-dom';
+// frontend/src/pages/Login.jsx
+import React, { useState } from 'react';
+import { useNavigate, useLocation, Link } from 'react-router-dom';
 import { motion } from 'framer-motion';
 
 const roleImages = {
@@ -10,117 +11,128 @@ const roleImages = {
   service: 'https://images.pexels.com/photos/6209271/pexels-photo-6209271.jpeg',
 };
 
-// Common login banner image
 const loginBanner = "https://cdn-icons-png.flaticon.com/512/5087/5087579.png";
 
 const Login = () => {
   const query = new URLSearchParams(useLocation().search);
-  const role = query.get("role") || "student";
-  const navigate = useNavigate();
+  const roleParam = query.get("role") || "student";
 
-  const handleLogin = (e) => {
+  const navigate = useNavigate();
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
+
+  const handleLogin = async (e) => {
     e.preventDefault();
-    // Navigate based on role
-    switch (role.toLowerCase()) {
-      case 'student':
-        navigate('/dashboard/student');
-        break;
-      case 'pgowner':
-        navigate('/dashboard/pgowner');
-        break;
-      case 'messowner':
-        navigate('/dashboard/messowner');
-        break;
-      case 'laundry':
-        navigate('/dashboard/laundry');
-        break;
-      case 'service':
-        navigate('/dashboard/service');
-        break;
-      default:
-        navigate('/');
+
+    try {
+      const res = await fetch("http://localhost:5000/api/auth/login", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ email, password }),
+      });
+
+      // handle non-JSON or 500 gracefully
+      let data;
+      try {
+        data = await res.json();
+      } catch {
+        alert("Server error");
+        return;
+      }
+
+      if (!data?.success) {
+        alert(data?.message || "Login failed");
+        return;
+      }
+
+      localStorage.setItem("token", data.token);
+      localStorage.setItem("role", data.user.role);
+
+      switch (data.user.role) {
+        case "tenant":
+          navigate("/dashboard/student");
+          break;
+        case "pgowner":
+          navigate("/dashboard/pgowner");
+          break;
+        case "messowner":
+          navigate("/dashboard/messowner");
+          break;
+        case "laundry":
+          navigate("/dashboard/laundry");
+          break;
+        case "service":
+          navigate("/dashboard/service");
+          break;
+        default:
+          navigate("/");
+      }
+    } catch (error) {
+      alert("Login failed. Please try again.");
     }
   };
 
   return (
     <div className="min-h-screen flex flex-col md:flex-row items-center justify-center bg-gradient-to-r from-sky-50 via-indigo-50 to-purple-50">
-      {/* Left Image Section */}
+      {/* LEFT IMAGE */}
       <div className="hidden md:block md:w-1/2 h-screen relative">
         <img
-          src={roleImages[role.toLowerCase()] || roleImages['student']}
-          alt="User Login"
+          src={roleImages[roleParam.toLowerCase()] || roleImages.student}
           className="w-full h-full object-cover rounded-l-3xl"
+          alt="Role"
         />
         <div className="absolute inset-0 bg-sky-700 bg-opacity-30 flex items-center justify-center">
-          <img
-            src={loginBanner}
-            alt="Login Banner"
-            className="w-40 h-40 md:w-56 md:h-56 object-contain drop-shadow-lg"
-          />
+          <img src={loginBanner} className="w-40 h-40 md:w-56 md:h-56" alt="Banner"/>
         </div>
       </div>
 
-      {/* Right Login Form Section */}
+      {/* LOGIN FORM */}
       <motion.div
         className="w-full md:w-1/2 flex items-center justify-center p-8"
         initial={{ opacity: 0, scale: 0.95 }}
         animate={{ opacity: 1, scale: 1 }}
         transition={{ duration: 0.6 }}
       >
-        <div className="bg-white p-10 rounded-3xl shadow-xl border border-gray-100 w-full max-w-md">
+        <div className="bg-white p-10 rounded-3xl shadow-xl border w-full max-w-md">
           <h2 className="text-4xl font-bold text-gray-800 text-center mb-2">Login</h2>
-          <p className="text-gray-500 text-center mb-8">
-            Please enter your details to continue.
-          </p>
+          <p className="text-gray-500 text-center mb-8">Enter your details to continue</p>
 
           <form onSubmit={handleLogin} className="space-y-6">
             <div>
-              <label htmlFor="email" className="block text-sm font-medium text-gray-700">
-                Email Address
-              </label>
+              <label className="block text-sm text-gray-600 mb-1">Email</label>
               <input
                 type="email"
-                id="email"
+                className="w-full p-3 border rounded-lg"
                 placeholder="you@example.com"
-                className="mt-1 w-full p-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-sky-400 transition-all"
+                value={email}
+                onChange={(e)=>setEmail(e.target.value)}
                 required
               />
             </div>
 
             <div>
-              <label htmlFor="password" className="block text-sm font-medium text-gray-700">
-                Password
-              </label>
+              <label className="block text-sm text-gray-600 mb-1">Password</label>
               <input
                 type="password"
-                id="password"
+                className="w-full p-3 border rounded-lg"
                 placeholder="********"
-                className="mt-1 w-full p-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-sky-400 transition-all"
+                value={password}
+                onChange={(e)=>setPassword(e.target.value)}
                 required
               />
-            </div>
-
-            <div className="flex items-center justify-between">
-              <label className="flex items-center">
-                <input type="checkbox" className="h-4 w-4 text-sky-600 border-gray-300 rounded" />
-                <span className="ml-2 text-sm text-gray-600">Remember me</span>
-              </label>
-              <Link to="#" className="text-sm text-sky-600 hover:underline">
-                Forgot Password?
-              </Link>
             </div>
 
             <button
               type="submit"
-              className="w-full py-3 bg-gradient-to-r from-sky-500 to-indigo-600 text-white font-bold rounded-lg shadow-md hover:scale-105 transition-transform duration-300"
+              className="w-full py-3 bg-gradient-to-r from-sky-500 to-indigo-600 text-white rounded-lg shadow-md"
             >
               Login
             </button>
           </form>
 
           <p className="text-center text-gray-500 mt-8">
-            New to Zip-Nivasa?{' '}
-            <Link to={`/register?role=${role}`} className="text-sky-600 font-semibold hover:underline">
+            New to Zip-Nivasa?{" "}
+            <Link className="text-sky-600" to={`/register?role=${roleParam}`}>
               Create an account
             </Link>
           </p>

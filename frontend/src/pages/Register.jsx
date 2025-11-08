@@ -1,320 +1,319 @@
 import React, { useState } from "react";
 import { motion } from "framer-motion";
-import { FaUserPlus, FaSignInAlt, FaCheckCircle, FaSpinner } from "react-icons/fa";
+import { FaUserPlus, FaSignInAlt, FaCheckCircle, FaSpinner, FaSchool, FaBriefcase, FaBuilding, FaUtensils, FaMapMarkerAlt, FaKey } from "react-icons/fa"; // Added more descriptive icons
+
+// --- Helper Component: Custom Input Field ---
+const CustomInput = ({ name, placeholder, value, onChange, type = "text", required = true, className = "", children }) => (
+    <motion.div 
+        className="relative"
+        initial={{ opacity: 0, y: 5 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.2 }}
+    >
+        <input
+            name={name}
+            placeholder={placeholder}
+            type={type}
+            value={value}
+            onChange={onChange}
+            className={`w-full border border-gray-300 p-3 rounded-xl shadow-sm focus:border-blue-500 focus:ring-2 focus:ring-blue-100 transition-all duration-200 placeholder-gray-400 ${className}`}
+            required={required}
+        />
+        {children}
+    </motion.div>
+);
+
+// --- Helper Component: Role Tab Button ---
+const RoleTab = ({ roleKey, currentRole, setRole, icon: Icon, label }) => (
+    <motion.button
+        key={roleKey}
+        onClick={() => setRole(roleKey)}
+        className={`flex-1 flex flex-col items-center justify-center p-3 sm:p-4 transition-all duration-300 ease-in-out border-b-4 rounded-t-lg ${
+            currentRole === roleKey
+                ? "bg-white text-blue-600 border-blue-600 shadow-inner-lg shadow-blue-50/50" // Highlighting active tab
+                : "bg-gray-50 text-gray-700 border-transparent hover:bg-gray-100 hover:text-blue-500"
+        }`}
+        whileHover={{ scale: currentRole === roleKey ? 1.0 : 1.02 }}
+        whileTap={{ scale: 0.98 }}
+    >
+        <Icon className="text-2xl mb-1" />
+        <span className="text-xs sm:text-sm font-bold uppercase tracking-wider">{label}</span>
+    </motion.button>
+);
+
 
 const Register = () => {
-  const [role, setRole] = useState("tenant");
-  const [isLoading, setIsLoading] = useState(false);
-  const [isSuccess, setIsSuccess] = useState(false);
-  const [formData, setFormData] = useState({
-    name: "",
-    email: "",
-    password: "",
-    phone: "",
-    collegeName: "",
-    course: "",
-    year: "",
-    city: "",
-    pgName: "",
-    pgLocation: "",
-    pgCapacity: "",
-    pgFacilities: "",
-    messName: "",
-    messLocation: "",
-    messCapacity: "",
-    messType: "",
-  });
+    // ... (State declarations are the same) ...
+    const [role, setRole] = useState("tenant");
+    const [isLoading, setIsLoading] = useState(false);
+    const [isSuccess, setIsSuccess] = useState(false);
 
-  const handleChange = (e) => {
-    setFormData({ ...formData, [e.target.name]: e.target.value });
-  };
+    const [errors, setErrors] = useState({
+        password: "",
+    });
 
-  const handleSubmit = async (e) => {
-    e.preventDefault();
-    setIsLoading(true);
-    setIsSuccess(false);
+    const [formData, setFormData] = useState({
+        name: "", email: "", password: "", phone: "", professionType: "",
+        collegeName: "", course: "", year: "", city: "",
+        companyName: "", workLocation: "", jobRole: "",
+        pgName: "", pgLocation: "", pgCapacity: "", pgFacilities: "",
+        messName: "", messLocation: "", messCapacity: "", messType: "",
+    });
 
-    try {
-      await new Promise((resolve) => setTimeout(resolve, 2000));
-      console.log("Register Data:", { role, ...formData });
-      setIsSuccess(true);
-    } catch (error) {
-      console.error("Registration failed:", error);
-    } finally {
-      setIsLoading(false);
-    }
-  };
+    const validatePassword = (value) => {
+        const regex =
+            /^(?=.*[A-Z])(?=.*[a-z])(?=.*\d)(?=.*[!@#$%^&*()_+\-={}[\]:";'<>,.?/]).{6,}$/;
 
-  if (isSuccess) {
-    return (
-      <div className="flex justify-center items-center min-h-screen bg-gray-50 p-6 text-gray-800">
-        <motion.div
-          initial={{ opacity: 0, scale: 0.8 }}
-          animate={{ opacity: 1, scale: 1 }}
-          transition={{ duration: 0.5 }}
-          className="text-center bg-white p-10 rounded-3xl shadow-xl w-full max-w-lg border border-gray-200"
-        >
-          <FaCheckCircle className="text-8xl text-green-500 mx-auto mb-6" />
-          <h2 className="text-3xl font-bold mb-4">Registration Successful! 🎉</h2>
-          <p className="text-gray-600">
-            Welcome to Zip Nivasa. You can now log in to your account.
-          </p>
-          <motion.button
-            whileHover={{ scale: 1.05 }}
-            whileTap={{ scale: 0.95 }}
-            className="mt-8 bg-blue-500 text-white font-semibold py-3 px-6 rounded-full hover:bg-blue-600 transition-all duration-300"
-            onClick={() => window.location.reload()}
-          >
-            Go to Login
-          </motion.button>
-        </motion.div>
-      </div>
-    );
-  }
+        if (!regex.test(value)) {
+            setErrors({
+                ...errors,
+                password:
+                    "Password must contain 6+ characters, 1 uppercase, 1 lowercase, 1 number, 1 special character.",
+            });
+        } else {
+            setErrors({ ...errors, password: "" });
+        }
+    };
 
-  return (
-    <div className="flex justify-center items-center min-h-screen bg-gray-50 p-6 lg:p-12">
-      <motion.div
-        initial={{ opacity: 0, y: 40, scale: 0.9 }}
-        animate={{ opacity: 1, y: 0, scale: 1 }}
-        transition={{ duration: 0.7, ease: "easeOut" }}
-        className="flex flex-col lg:flex-row bg-white rounded-3xl shadow-xl overflow-hidden max-w-5xl w-full"
-      >
-        {/* Left Side: Image Section */}
-        <div className="lg:w-1/2 relative">
-          <img
-            src="https://img.freepik.com/free-vector/student-dormitory-concept-illustration_114360-12745.jpg"
-            alt="Zip Nivasa Registration"
-            className="w-full h-80 lg:h-full object-cover"
-          />
-          <div className="absolute inset-0 bg-blue-100 bg-opacity-40 flex flex-col items-center justify-center text-center p-6">
-            <h3 className="text-2xl font-bold text-blue-700 mb-3">Your Journey Starts Here!</h3>
-            <p className="text-gray-700 max-w-sm">
-              Join our community to find the best PGs, Mess services, or grow your business with Zip Nivasa.
-            </p>
-          </div>
-        </div>
+    const handleChange = (e) => {
+        const { name, value } = e.target;
 
-        {/* Right Side: Registration Form */}
-        <div className="lg:w-1/2 p-10 bg-gray-50">
-          <div className="text-center mb-8">
-            <FaUserPlus className="text-5xl text-blue-500 mx-auto mb-3" />
-            <h2 className="text-3xl font-extrabold text-gray-800 mb-1">
-              Create Your Account
-            </h2>
-            <p className="text-gray-600 text-sm">
-              Register as Tenant, PG Owner, or Mess Owner.
-            </p>
-          </div>
+        if (name === "password") {
+            validatePassword(value);
+        }
 
-          {/* Role Tabs */}
-          <div className="mb-6 flex bg-gray-200 rounded-xl overflow-hidden border border-gray-300">
-            {["tenant", "pgowner", "messowner"].map((r) => (
-              <button
-                key={r}
-                type="button"
-                onClick={() => setRole(r)}
-                className={`flex-1 py-2 px-3 text-sm font-semibold transition-all duration-300 ${
-                  role === r
-                    ? "bg-blue-500 text-white shadow-md"
-                    : "text-gray-600 hover:bg-gray-300"
-                }`}
-              >
-                {r === "tenant" ? "Tenant" : r === "pgowner" ? "PG Owner" : "Mess Owner"}
-              </button>
-            ))}
-          </div>
+        setFormData({ ...formData, [name]: value });
+    };
 
-          {/* Form */}
-          <form onSubmit={handleSubmit} className="space-y-3">
-            {/* Common */}
-            <motion.input
-              whileFocus={{ scale: 1.01 }}
-              type="text"
-              name="name"
-              placeholder="Full Name"
-              value={formData.name}
-              onChange={handleChange}
-              className="w-full bg-white border border-gray-300 rounded-lg p-3 focus:outline-none focus:ring-2 focus:ring-blue-400"
-              required
-            />
-            <motion.input
-              whileFocus={{ scale: 1.01 }}
-              type="email"
-              name="email"
-              placeholder="Email"
-              value={formData.email}
-              onChange={handleChange}
-              className="w-full bg-white border border-gray-300 rounded-lg p-3 focus:outline-none focus:ring-2 focus:ring-blue-400"
-              required
-            />
-            <motion.input
-              whileFocus={{ scale: 1.01 }}
-              type="password"
-              name="password"
-              placeholder="Password"
-              value={formData.password}
-              onChange={handleChange}
-              className="w-full bg-white border border-gray-300 rounded-lg p-3 focus:outline-none focus:ring-2 focus:ring-blue-400"
-              required
-            />
-            <motion.input
-              whileFocus={{ scale: 1.01 }}
-              type="tel"
-              name="phone"
-              placeholder="Phone Number"
-              value={formData.phone}
-              onChange={handleChange}
-              className="w-full bg-white border border-gray-300 rounded-lg p-3 focus:outline-none focus:ring-2 focus:ring-blue-400"
-              required
-            />
+    // ✅ API CALL
+    const handleSubmit = async (e) => {
+        e.preventDefault();
 
-            {/* Tenant */}
-            {role === "tenant" && (
-              <div className="space-y-3">
-                <motion.input
-                  type="text"
-                  name="collegeName"
-                  placeholder="College Name"
-                  value={formData.collegeName}
-                  onChange={handleChange}
-                  className="w-full bg-white border border-gray-300 rounded-lg p-3 focus:outline-none focus:ring-2 focus:ring-blue-400"
-                />
-                <motion.input
-                  type="text"
-                  name="course"
-                  placeholder="Course (e.g. BSc CS)"
-                  value={formData.course}
-                  onChange={handleChange}
-                  className="w-full bg-white border border-gray-300 rounded-lg p-3 focus:outline-none focus:ring-2 focus:ring-blue-400"
-                />
-                <motion.input
-                  type="text"
-                  name="year"
-                  placeholder="Year (e.g. 2nd Year)"
-                  value={formData.year}
-                  onChange={handleChange}
-                  className="w-full bg-white border border-gray-300 rounded-lg p-3 focus:outline-none focus:ring-2 focus:ring-blue-400"
-                />
-                <motion.input
-                  type="text"
-                  name="city"
-                  placeholder="City of Stay"
-                  value={formData.city}
-                  onChange={handleChange}
-                  className="w-full bg-white border border-gray-300 rounded-lg p-3 focus:outline-none focus:ring-2 focus:ring-blue-400"
-                />
-              </div>
-            )}
+        if (errors.password) {
+            alert("Please fix password issue before submitting.");
+            return;
+        }
 
-            {/* PG Owner */}
-            {role === "pgowner" && (
-              <div className="space-y-3">
-                <motion.input
-                  type="text"
-                  name="pgName"
-                  placeholder="PG Name"
-                  value={formData.pgName}
-                  onChange={handleChange}
-                  className="w-full bg-white border border-gray-300 rounded-lg p-3 focus:outline-none focus:ring-2 focus:ring-blue-400"
-                  required
-                />
-                <motion.input
-                  type="text"
-                  name="pgLocation"
-                  placeholder="PG Location"
-                  value={formData.pgLocation}
-                  onChange={handleChange}
-                  className="w-full bg-white border border-gray-300 rounded-lg p-3 focus:outline-none focus:ring-2 focus:ring-blue-400"
-                  required
-                />
-                <motion.input
-                  type="number"
-                  name="pgCapacity"
-                  placeholder="Total Beds"
-                  value={formData.pgCapacity}
-                  onChange={handleChange}
-                  className="w-full bg-white border border-gray-300 rounded-lg p-3 focus:outline-none focus:ring-2 focus:ring-blue-400"
-                />
-                <motion.input
-                  type="text"
-                  name="pgFacilities"
-                  placeholder="Facilities (WiFi, Laundry...)"
-                  value={formData.pgFacilities}
-                  onChange={handleChange}
-                  className="w-full bg-white border border-gray-300 rounded-lg p-3 focus:outline-none focus:ring-2 focus:ring-blue-400"
-                />
-              </div>
-            )}
+        setIsLoading(true);
 
-            {/* Mess Owner */}
-            {role === "messowner" && (
-              <div className="space-y-3">
-                <motion.input
-                  type="text"
-                  name="messName"
-                  placeholder="Mess Name"
-                  value={formData.messName}
-                  onChange={handleChange}
-                  className="w-full bg-white border border-gray-300 rounded-lg p-3 focus:outline-none focus:ring-2 focus:ring-blue-400"
-                  required
-                />
-                <motion.input
-                  type="text"
-                  name="messLocation"
-                  placeholder="Mess Location"
-                  value={formData.messLocation}
-                  onChange={handleChange}
-                  className="w-full bg-white border border-gray-300 rounded-lg p-3 focus:outline-none focus:ring-2 focus:ring-blue-400"
-                  required
-                />
-                <motion.input
-                  type="number"
-                  name="messCapacity"
-                  placeholder="Capacity (e.g. 50)"
-                  value={formData.messCapacity}
-                  onChange={handleChange}
-                  className="w-full bg-white border border-gray-300 rounded-lg p-3 focus:outline-none focus:ring-2 focus:ring-blue-400"
-                />
-                <select
-                  name="messType"
-                  value={formData.messType}
-                  onChange={handleChange}
-                  className="w-full bg-white border border-gray-300 rounded-lg p-3 text-gray-700 focus:outline-none focus:ring-2 focus:ring-blue-400"
+        try {
+            const res = await fetch("http://localhost:5000/api/auth/register", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ role, ...formData }),
+            });
+
+            const data = await res.json();
+
+            if (!res.ok) throw new Error(data.message || "Registration failed on the server.");
+
+            setIsSuccess(true);
+        } catch (error) {
+            alert("Registration failed: " + error.message);
+        } finally {
+            setIsLoading(false);
+        }
+    };
+    
+    // --- SUCCESS SCREEN (Enhanced) ---
+    if (isSuccess) {
+        return (
+            <div className="flex justify-center items-center min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 p-6 text-gray-800">
+                <motion.div
+                    initial={{ opacity: 0, scale: 0.8 }}
+                    animate={{ opacity: 1, scale: 1 }}
+                    transition={{ type: "spring", stiffness: 100 }}
+                    className="text-center bg-white p-12 rounded-3xl shadow-2xl max-w-md border border-green-200"
                 >
-                  <option value="">Select Food Type</option>
-                  <option value="veg">Veg</option>
-                  <option value="nonveg">Non-Veg</option>
-                  <option value="both">Both</option>
-                </select>
-              </div>
-            )}
+                    <FaCheckCircle className="text-8xl text-green-500 mx-auto mb-6 drop-shadow-lg" />
+                    <h2 className="text-4xl font-extrabold text-gray-800 mb-3">Welcome Aboard!</h2>
+                    <p className="text-gray-600 text-lg">Your **{role}** account has been created successfully. Redirecting to login...</p>
 
-            {/* Submit */}
-            <motion.button
-              whileHover={{ scale: 1.05 }}
-              whileTap={{ scale: 0.97 }}
-              type="submit"
-              disabled={isLoading}
-              className={`w-full py-3 rounded-lg font-bold text-white shadow-md transition-all duration-300 flex items-center justify-center gap-2
-                ${isLoading ? "bg-gray-400 cursor-not-allowed" : "bg-blue-500 hover:bg-blue-600"}`}
+                    <motion.button
+                        className="mt-10 bg-blue-600 text-white px-8 py-4 text-lg font-semibold rounded-full shadow-lg hover:bg-blue-700 transition duration-300"
+                        onClick={() => (window.location.href = "/login")}
+                        whileHover={{ scale: 1.05, boxShadow: "0 10px 20px rgba(0, 0, 0, 0.2)" }}
+                        whileTap={{ scale: 0.95 }}
+                    >
+                        <FaSignInAlt className="inline mr-2" /> Go to Login
+                    </motion.button>
+                </motion.div>
+            </div>
+        );
+    }
+
+    // --- REGISTRATION FORM (Enhanced) ---
+    return (
+        <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 flex justify-center items-center p-4 sm:p-6">
+            <motion.div
+                initial={{ opacity: 0, y: 40 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.8 }}
+                className="flex flex-col lg:flex-row bg-white shadow-3xl rounded-3xl max-w-6xl w-full overflow-hidden border border-gray-100"
             >
-              {isLoading ? (
-                <>
-                  <FaSpinner className="animate-spin" />
-                  Processing...
-                </>
-              ) : (
-                <>
-                  <FaSignInAlt /> Create Account
-                </>
-              )}
-            </motion.button>
-          </form>
+                {/* LEFT IMAGE/MOTIVATION */}
+                <div className="lg:w-2/5 relative hidden lg:block">
+                    <img
+                        src="https://img.freepik.com/premium-photo/modern-students-dormitory-room-with-cozy-interior-designed-wooden-desk-chair-computer-books_1097268-24.jpg"
+                        alt="Accommodation and food services visual"
+                        className="w-full h-full object-cover"
+                    />
+                    <div className="absolute inset-0 bg-blue-900 bg-opacity-60 flex items-center justify-center p-8">
+                        <div className="text-center">
+                            <h3 className="text-4xl font-extrabold text-white leading-snug mb-4 drop-shadow-md">
+                                Connecting Tenants & Providers
+                            </h3>
+                            <p className="text-blue-100 text-lg font-light italic">
+                                Simplify your life with **Zip Nivasa**.
+                            </p>
+                        </div>
+                    </div>
+                </div>
+
+                {/* RIGHT FORM */}
+                <div className="lg:w-3/5 p-6 sm:p-10 lg:p-12 overflow-y-auto max-h-[95vh]">
+                    <div className="text-center mb-10">
+                        <FaUserPlus className="text-5xl text-blue-600 mx-auto mb-2 drop-shadow-sm" />
+                        <h2 className="text-3xl sm:text-4xl font-extrabold text-gray-900">
+                            Create Your Account
+                        </h2>
+                        <p className="text-gray-500 mt-1">Select your role to get started.</p>
+                    </div>
+
+                    {/* ROLE TABS */}
+                    <div className="flex bg-gray-50 rounded-xl shadow-inner border border-gray-100 mb-8 p-1">
+                        <RoleTab roleKey="tenant" currentRole={role} setRole={setRole} icon={FaSchool} label="Tenant" />
+                        <RoleTab roleKey="pgowner" currentRole={role} setRole={setRole} icon={FaBuilding} label="PG Owner" />
+                        <RoleTab roleKey="messowner" currentRole={role} setRole={setRole} icon={FaUtensils} label="Mess Owner" />
+                    </div>
+
+                    {/* FORM FIELDS */}
+                    <form onSubmit={handleSubmit} className="space-y-4 sm:space-y-6">
+                        {/* COMMON FIELDS */}
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                            <CustomInput name="name" placeholder="Full Name" value={formData.name} onChange={handleChange} />
+                            <CustomInput type="email" name="email" placeholder="Email Address" value={formData.email} onChange={handleChange} />
+                        </div>
+
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                            <div>
+                                <CustomInput type="password" name="password" placeholder="Password" value={formData.password} onChange={handleChange} />
+                                {errors.password && (
+                                    <p className="text-red-500 text-xs mt-1 font-medium">{errors.password}</p>
+                                )}
+                            </div>
+                            <CustomInput type="tel" name="phone" placeholder="Phone Number" value={formData.phone} onChange={handleChange} />
+                        </div>
+
+
+                        {/* DYNAMIC SECTIONS */}
+                        <motion.div key={role} initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.4 }}>
+                            
+                            {/* TENANT SECTION */}
+                            {role === "tenant" && (
+                                <motion.div className="space-y-4 pt-2 border-t border-gray-200">
+                                    <h3 className="text-lg font-semibold text-gray-700 pt-3">Tenant Details</h3>
+                                    <CustomInput name="city" placeholder="Target City" value={formData.city} onChange={handleChange} required={true} />
+                                    
+                                    {/* Profession Type Select */}
+                                    <select
+                                        name="professionType"
+                                        value={formData.professionType}
+                                        onChange={handleChange}
+                                        className="w-full border border-gray-300 p-3 rounded-xl bg-white shadow-sm focus:border-blue-500 focus:ring-2 focus:ring-blue-100 transition-all duration-200"
+                                        required={true}
+                                    >
+                                        <option value="" disabled className="text-gray-400">Select Profession Type</option>
+                                        <option value="student">Student</option>
+                                        <option value="job">Working Professional</option>
+                                    </select>
+
+                                    {/* Conditional Fields based on Profession */}
+                                    <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                                        {formData.professionType === "student" && (
+                                            <>
+                                                <CustomInput name="collegeName" placeholder="College Name" value={formData.collegeName} onChange={handleChange} />
+                                                <CustomInput name="course" placeholder="Course/Degree" value={formData.course} onChange={handleChange} />
+                                                <CustomInput name="year" placeholder="Year of Study" value={formData.year} onChange={handleChange} type="number" />
+                                            </>
+                                        )}
+                                        {formData.professionType === "job" && (
+                                            <>
+                                                <CustomInput name="companyName" placeholder="Company Name" value={formData.companyName} onChange={handleChange} />
+                                                <CustomInput name="workLocation" placeholder="Work Location" value={formData.workLocation} onChange={handleChange} />
+                                                <CustomInput name="jobRole" placeholder="Job Role" value={formData.jobRole} onChange={handleChange} />
+                                            </>
+                                        )}
+                                    </div>
+                                </motion.div>
+                            )}
+
+                            {/* PG OWNER */}
+                            {role === "pgowner" && (
+                                <motion.div className="space-y-4 pt-2 border-t border-gray-200">
+                                    <h3 className="text-lg font-semibold text-gray-700 pt-3">PG/Hostel Details</h3>
+                                    <CustomInput name="pgName" placeholder="PG/Hostel Name" onChange={handleChange} />
+                                    <CustomInput name="pgLocation" placeholder="Location/Full Address" onChange={handleChange} />
+                                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                        <CustomInput name="pgCapacity" placeholder="Max Capacity (No. of beds)" onChange={handleChange} type="number" />
+                                        <CustomInput name="pgFacilities" placeholder="Key Facilities (e.g., Wi-Fi, Laundry, Gym)" onChange={handleChange} />
+                                    </div>
+                                </motion.div>
+                            )}
+
+                            {/* MESS OWNER */}
+                            {role === "messowner" && (
+                                <motion.div className="space-y-4 pt-2 border-t border-gray-200">
+                                    <h3 className="text-lg font-semibold text-gray-700 pt-3">Mess Service Details</h3>
+                                    <CustomInput name="messName" placeholder="Mess Name" onChange={handleChange} />
+                                    <CustomInput name="messLocation" placeholder="Location/Service Area" onChange={handleChange} />
+                                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                        <CustomInput name="messCapacity" placeholder="Subscription Capacity (Est.)" onChange={handleChange} type="number" />
+                                        <select
+                                            name="messType"
+                                            value={formData.messType}
+                                            onChange={handleChange}
+                                            className="w-full border border-gray-300 p-3 rounded-xl bg-white shadow-sm focus:border-blue-500 focus:ring-2 focus:ring-blue-100 transition-all duration-200"
+                                            required={true}
+                                        >
+                                            <option value="" disabled className="text-gray-400">Select Food Type</option>
+                                            <option value="veg">Veg Only</option>
+                                            <option value="nonveg">Non-Veg Only</option>
+                                            <option value="both">Both Veg & Non-Veg</option>
+                                        </select>
+                                    </div>
+                                </motion.div>
+                            )}
+                        </motion.div>
+
+
+                        {/* SUBMIT BUTTON */}
+                        <motion.button
+                            type="submit"
+                            disabled={isLoading || !!errors.password} // Disable if loading or password error exists
+                            className={`w-full py-4 text-lg font-bold rounded-xl flex justify-center gap-3 items-center transition duration-300 shadow-lg mt-8 ${
+                                isLoading || errors.password 
+                                    ? "bg-blue-400 cursor-not-allowed" 
+                                    : "bg-blue-600 hover:bg-blue-700 text-white"
+                            }`}
+                            whileHover={!(isLoading || errors.password) ? { scale: 1.01, boxShadow: "0 8px 15px rgba(37, 99, 235, 0.4)" } : {}}
+                            whileTap={!(isLoading || errors.password) ? { scale: 0.99 } : {}}
+                        >
+                            {isLoading ? <FaSpinner className="animate-spin text-xl" /> : <FaUserPlus className="text-xl" />}
+                            {isLoading ? "Processing Registration..." : "Create Account"}
+                        </motion.button>
+
+                        <p className="text-center text-sm text-gray-500 pt-2">
+                            Already have an account?
+                            <a href="/login" className="text-blue-600 hover:text-blue-800 font-semibold ml-1 transition duration-200">
+                                Log In here
+                            </a>
+                        </p>
+                    </form>
+                </div>
+            </motion.div>
         </div>
-      </motion.div>
-    </div>
-  );
+    );
 };
 
 export default Register;
