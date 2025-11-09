@@ -11,7 +11,6 @@ import authRoutes from "./routes/authRoutes.js";
 
 dotenv.config();
 
-// Fix __dirname
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
@@ -23,22 +22,21 @@ app.use(cors());
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
-// ✅ Serving uploaded images
+// ✅ Serve Uploaded Files
 app.use("/uploads", express.static(path.join(__dirname, "uploads")));
 
-// ✅ Connect DB
+// ✅ Connect MongoDB
 connectDB();
 
 // ✅ API Routes
-app.use("/api/auth", authRoutes);  // Authentication (register, login)
-app.use("/api/pgs", pgRoutes);     // PG listings
+app.use("/api/auth", authRoutes);
+app.use("/api/pgs", pgRoutes);
 
-// ✅ Root Route
+// ✅ Root Test Route
 app.get("/", (req, res) => {
   res.send("Zip Nivasa Backend Running ✅");
 });
 
-// ✅ Start Server
 app.listen(PORT, () => {
   console.log(`✅ Server running on port ${PORT}`);
 });

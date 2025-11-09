@@ -1,4 +1,4 @@
-// frontend/src/App.jsx
+// ✅ frontend/src/App.jsx
 
 import { BrowserRouter as Router, Routes, Route } from "react-router-dom";
 
@@ -14,6 +14,16 @@ import PGOwnerDashboard from "./pages/dashboard/PGOwnerDashboard";
 import LaundryDashboard from "./pages/dashboard/LaundryDashboard";
 import MessOwnerDashboard from "./pages/dashboard/MessOwnerDashboard";
 
+// PG Pages
+import AllPGs from "./pages/pgs/AllPGs";
+import PGDetails from "./pages/pgs/PGDetails";
+
+// Tenant Pages
+import MyBookings from "./pages/tenant/MyBookings";
+import Payments from "./pages/tenant/Payments";
+import Complaints from "./pages/tenant/Complaints";
+import Profile from "./pages/tenant/Profile";
+
 // Other Pages
 import AddListing from "./pages/dashboard/AddListing";
 import AddMessListing from "./pages/dashboard/AddMessListing";
@@ -26,11 +36,16 @@ function App() {
   return (
     <Router>
       <Routes>
+
         {/* ✅ Public Routes */}
         <Route path="/" element={<Home />} />
         <Route path="/login" element={<Login />} />
         <Route path="/register" element={<Register />} />
         <Route path="/about" element={<AboutUs />} />
+
+        {/* ✅ PG LISTING PAGES (Public) */}
+        <Route path="/pgs/all" element={<AllPGs />} />
+        <Route path="/services/pg/:id" element={<PGDetails />} />
 
         {/* ✅ Student Dashboard */}
         <Route
@@ -38,6 +53,43 @@ function App() {
           element={
             <RoleProtectedRoute allowedRoles={["tenant"]}>
               <StudentDashboard />
+            </RoleProtectedRoute>
+          }
+        />
+
+        {/* ✅ Student Additional Pages */}
+        <Route
+          path="/dashboard/student/bookings"
+          element={
+            <RoleProtectedRoute allowedRoles={["tenant"]}>
+              <MyBookings />
+            </RoleProtectedRoute>
+          }
+        />
+
+        <Route
+          path="/dashboard/student/payments"
+          element={
+            <RoleProtectedRoute allowedRoles={["tenant"]}>
+              <Payments />
+            </RoleProtectedRoute>
+          }
+        />
+
+        <Route
+          path="/dashboard/student/complaints"
+          element={
+            <RoleProtectedRoute allowedRoles={["tenant"]}>
+              <Complaints />
+            </RoleProtectedRoute>
+          }
+        />
+
+        <Route
+          path="/dashboard/student/profile"
+          element={
+            <RoleProtectedRoute allowedRoles={["tenant"]}>
+              <Profile />
             </RoleProtectedRoute>
           }
         />
@@ -72,7 +124,7 @@ function App() {
           }
         />
 
-        {/* ✅ Add PG listing (only PG Owner) */}
+        {/* ✅ Add PG listing (PG Owner Only) */}
         <Route
           path="/dashboard/add-listing"
           element={
@@ -82,7 +134,7 @@ function App() {
           }
         />
 
-        {/* ✅ Add Mess listing (only Mess Owner) */}
+        {/* ✅ Add Mess listing (Mess Owner Only) */}
         <Route
           path="/dashboard/add-mess"
           element={

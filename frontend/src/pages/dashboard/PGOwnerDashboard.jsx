@@ -54,9 +54,12 @@ const PGOwnerDashboard = () => {
   // ✅ Fetch PG listings for this owner
   const fetchListings = async () => {
     try {
-      const res = await fetch("http://localhost:5000/api/pgs/owner", {
-        headers: { Authorization: `Bearer ${token}` },
-      });
+      const res = await fetch("http://localhost:5000/api/pgs/owner/list", {
+  headers: {
+    Authorization: `Bearer ${localStorage.getItem("token")}`,
+  },
+});
+
 
       const data = await res.json();
       if (data.pgs) setListings(data.pgs);
