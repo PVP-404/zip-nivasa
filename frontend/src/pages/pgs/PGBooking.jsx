@@ -78,7 +78,7 @@ const PGBooking = () => {
         </div>
       </main>
 
-      <Footer />
+      <Footer/>
     </>
   );
 };
