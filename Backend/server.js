@@ -8,6 +8,7 @@ import connectDB from "./config/db.js";
 // Routes
 import pgRoutes from "./routes/pgRoutes.js";
 import authRoutes from "./routes/authRoutes.js";
+import messageRoutes from "./routes/messageRoutes.js";
 
 dotenv.config();
 
@@ -31,6 +32,7 @@ connectDB();
 // ✅ API Routes
 app.use("/api/auth", authRoutes);
 app.use("/api/pgs", pgRoutes);
+app.use("/api/messages", messageRoutes);
 
 // ✅ Root Test Route
 app.get("/", (req, res) => {
