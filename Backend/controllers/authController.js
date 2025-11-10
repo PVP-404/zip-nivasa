@@ -7,6 +7,7 @@ import PGOwner from "../models/PGOwner.js";
 import MessOwner from "../models/MessOwner.js";
 import LaundryOwner from "../models/LaundryOwner.js";
 
+
 // ✅ Ensure JWT Secret exists
 const ensureJwt = () => {
   if (!process.env.JWT_SECRET || process.env.JWT_SECRET.trim() === "") {
@@ -165,6 +166,18 @@ export const getMe = async (req, res) => {
     });
   } catch (error) {
     console.error("ME ERROR:", error);
+    return res.status(500).json({ success: false, message: "Server error" });
+  }
+};
+
+export const getUserPublic = async (req, res) => {
+  try {
+    const user = await User.findById(req.params.id)
+      .select("name phone role");
+    if (!user) return res.status(404).json({ success: false, message: "User not found" });
+    return res.json({ success: true, user });
+  } catch (err) {
+    console.error("getUserPublic error:", err);
     return res.status(500).json({ success: false, message: "Server error" });
   }
 };

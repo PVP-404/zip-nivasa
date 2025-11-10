@@ -65,16 +65,22 @@ export const getAllPGs = async (req, res) => {
   }
 };
 
-// ✅ PUBLIC – FETCH SINGLE PG
+// ✅ UPDATED — FETCH SINGLE PG WITH OWNER INFO
 export const getPGById = async (req, res) => {
   try {
-    const pg = await PG.findById(req.params.id);
+    const pg = await PG.findById(req.params.id)
+      .populate("owner", "name email phone role");
 
     if (!pg) {
       return res.status(404).json({ success: false, message: "PG not found" });
     }
 
-    res.json({ success: true, pg });
+    res.json({
+      success: true,
+      pg,
+      ownerDetails: pg.owner
+    });
+
   } catch (error) {
     console.log(error);
     res.status(500).json({ success: false, message: "Error fetching PG" });

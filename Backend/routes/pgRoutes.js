@@ -15,10 +15,9 @@ const router = express.Router();
 router.get("/", getAllPGs);
 
 // ✅ OWNER – Get PGs of logged-in owner
-// ✅ NOTE: MUST COME BEFORE “/:id”
 router.get("/owner/list", protect, getPGsByOwner);
 
-// ✅ PUBLIC – Get PG by ID (keep this at the bottom)
+// ✅ PUBLIC – Get single PG
 router.get("/:id", getPGById);
 
 // ✅ OWNER – Create PG Listing

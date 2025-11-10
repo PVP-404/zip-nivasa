@@ -46,8 +46,13 @@ const Login = () => {
       }
 
       localStorage.setItem("token", data.token);
-      localStorage.setItem("role", data.user.role);
-      localStorage.setItem("username", data.user.name);
+localStorage.setItem("userId", data.user.id);
+localStorage.setItem("role", data.user.role);
+localStorage.setItem("username", data.user.name);
+
+console.log("LOGIN RESPONSE:", data);
+
+
 
 
       switch (data.user.role) {

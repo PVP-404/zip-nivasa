@@ -32,6 +32,11 @@ import AddMessListing from "./pages/dashboard/AddMessListing";
 import ProtectedRoute from "./components/ProtectedRoute";
 import RoleProtectedRoute from "./components/RoleProtectedRoute";
 
+// ✅ Chat Pages
+import ChatPageWrapper from "./pages/chat/ChatPageWrapper";
+import ChatList from "./pages/chat/ChatList";      // ✅ FIXED IMPORT
+import Inbox from "./pages/chat/Inbox";            // ✅ KEEP if required
+
 function App() {
   return (
     <Router>
@@ -43,9 +48,39 @@ function App() {
         <Route path="/register" element={<Register />} />
         <Route path="/about" element={<AboutUs />} />
 
-        {/* ✅ PG LISTING PAGES (Public) */}
+        {/* ✅ PG LISTING - Public */}
         <Route path="/pgs/all" element={<AllPGs />} />
         <Route path="/services/pg/:id" element={<PGDetails />} />
+
+        {/* ✅ Chat Route */}
+        <Route 
+          path="/chat/:id" 
+          element={
+            <ProtectedRoute>
+              <ChatPageWrapper />
+            </ProtectedRoute>
+          }
+        />
+
+        {/* ✅ Chat List for all roles */}
+        <Route 
+          path="/messages" 
+          element={
+            <ProtectedRoute>
+              <ChatList />
+            </ProtectedRoute>
+          }
+        />
+
+        {/* ✅ Inbox (Optional — keep if needed) */}
+        <Route 
+          path="/inbox" 
+          element={
+            <ProtectedRoute>
+              <Inbox />
+            </ProtectedRoute>
+          }
+        />
 
         {/* ✅ Student Dashboard */}
         <Route
@@ -57,7 +92,7 @@ function App() {
           }
         />
 
-        {/* ✅ Student Additional Pages */}
+        {/* ✅ Student Pages */}
         <Route
           path="/dashboard/student/bookings"
           element={
@@ -114,7 +149,7 @@ function App() {
           }
         />
 
-        {/* ✅ Laundry Owner Dashboard */}
+        {/* ✅ Laundry Dashboard */}
         <Route
           path="/dashboard/laundry"
           element={
@@ -124,7 +159,7 @@ function App() {
           }
         />
 
-        {/* ✅ Add PG listing (PG Owner Only) */}
+        {/* ✅ Owner Add Listing */}
         <Route
           path="/dashboard/add-listing"
           element={
@@ -134,7 +169,6 @@ function App() {
           }
         />
 
-        {/* ✅ Add Mess listing (Mess Owner Only) */}
         <Route
           path="/dashboard/add-mess"
           element={

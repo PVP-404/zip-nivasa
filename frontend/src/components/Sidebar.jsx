@@ -77,6 +77,11 @@ const Sidebar = () => {
         label: "Profile",
         path: "/student/profile",
       },
+      {
+  icon: <Icon d="M4 4h16v16H4z" />,
+  label: "Messages",
+  path: "/messages",
+},
     ],
 
     pgowner: [
@@ -90,6 +95,11 @@ const Sidebar = () => {
         label: "Add PG",
         path: "/dashboard/add-listing",
       },
+      {
+  icon: <Icon d="M4 4h16v16H4z" />,
+  label: "Messages",
+  path: "/messages",
+}
     ],
 
     messowner: [
