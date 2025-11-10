@@ -3,6 +3,8 @@ import { useNavigate } from "react-router-dom";
 import Header from "../../components/Header";
 import Footer from "../../components/Footer";
 import Sidebar from "../../components/Sidebar";
+import { ToastContainer, toast } from "react-toastify";
+import "react-toastify/dist/ReactToastify.css";
 
 const PGOwnerDashboard = () => {
   const navigate = useNavigate();
@@ -89,9 +91,12 @@ const PGOwnerDashboard = () => {
   // ✅ Fetch conversation thread
   const fetchChat = async (pgId, tenantId) => {
     try {
-      const res = await fetch(`http://localhost:5000/api/messages/${pgId}/${tenantId}`, {
-        headers: { Authorization: `Bearer ${token}` },
-      });
+      const res = await fetch(
+        `http://localhost:5000/api/messages/${pgId}/${tenantId}`,
+        {
+          headers: { Authorization: `Bearer ${token}` },
+        }
+      );
       const data = await res.json();
       if (data.success) setChatMessages(data.messages);
     } catch (err) {
@@ -101,56 +106,52 @@ const PGOwnerDashboard = () => {
 
   // ✅ Send reply
   const handleReplySend = async () => {
-  if (!replyMessage.trim()) return;
-  try {
-    const res = await fetch("http://localhost:5000/api/messages/reply", {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        Authorization: `Bearer ${token}`,
-      },
-      body: JSON.stringify({
-        pgId: selectedInquiry.pgId._id,
-        tenantId: selectedInquiry.senderId._id,
-        replyText: replyMessage,
-      }),
-    });
-    const data = await res.json();
-    if (data.success) {
-      setReplyMessage("");
-      await fetchChat(selectedInquiry.pgId._id, selectedInquiry.senderId._id);
-    } else {
-      alert(data.message);
+    if (!replyMessage.trim()) return toast.warn("Enter message first");
+    try {
+      const res = await fetch("http://localhost:5000/api/messages/reply", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify({
+          pgId: selectedInquiry.pgId._id,
+          tenantId: selectedInquiry.senderId._id,
+          replyText: replyMessage,
+        }),
+      });
+      const data = await res.json();
+      if (data.success) {
+        toast.success("Reply sent!");
+        setReplyMessage("");
+        await fetchChat(selectedInquiry.pgId._id, selectedInquiry.senderId._id);
+      } else toast.error(data.message);
+    } catch (err) {
+      console.error("Error sending reply:", err);
+      toast.error("Server error");
     }
-  } catch (err) {
-    console.error("Error sending reply:", err);
-  }
-};
+  };
 
-
-  // ✅ Loading screen
-  if (loading)
-    return (
-      <div className="flex flex-col min-h-screen bg-gray-50">
-        <Header />
-        <div className="flex flex-1 items-center justify-center">
-          <div className="w-16 h-16 border-4 border-indigo-600 border-t-transparent animate-spin rounded-full"></div>
-        </div>
-        <Footer />
-      </div>
-    );
-
-  // ✅ Error screen
-  if (error)
-    return (
-      <div className="flex flex-col min-h-screen bg-gray-50">
-        <Header />
-        <div className="flex flex-1 items-center justify-center">
-          <div className="text-center text-red-600">{error}</div>
-        </div>
-        <Footer />
-      </div>
-    );
+  // ✅ Mark as contacted
+  const handleMarkContacted = async (id) => {
+    try {
+      const res = await fetch(
+        `http://localhost:5000/api/messages/mark/${id}`,
+        {
+          method: "PUT",
+          headers: { Authorization: `Bearer ${token}` },
+        }
+      );
+      const data = await res.json();
+      if (data.success) {
+        toast.success("Marked as contacted!");
+        fetchInquiries();
+      } else toast.error("Failed to update status");
+    } catch (err) {
+      console.error(err);
+      toast.error("Server error");
+    }
+  };
 
   // ✅ Helper to format timestamps
   const formatTime = (ts) => {
@@ -165,42 +166,67 @@ const PGOwnerDashboard = () => {
 
   const unreadCount = inquiries.filter((i) => !i.isRead).length;
 
+  // ✅ Loading / Error
+  if (loading)
+    return (
+      <div className="flex flex-col min-h-screen bg-gray-50">
+        <Header />
+        <div className="flex flex-1 items-center justify-center">
+          <div className="w-16 h-16 border-4 border-indigo-600 border-t-transparent animate-spin rounded-full"></div>
+        </div>
+        <Footer />
+      </div>
+    );
+
+  if (error)
+    return (
+      <div className="flex flex-col min-h-screen bg-gray-50">
+        <Header />
+        <div className="flex flex-1 items-center justify-center">
+          <p className="text-red-600">{error}</p>
+        </div>
+        <Footer />
+      </div>
+    );
+
   return (
     <div className="flex flex-col min-h-screen bg-gray-50">
       <Header username={user?.name} userRole={user?.role} />
       <div className="flex flex-1">
         <Sidebar />
         <main className="flex-1 container mx-auto px-6 py-8 max-w-7xl">
-          {/* ✅ Welcome Section */}
-          <div className="mb-8">
-            <div className="flex justify-between items-start">
-              <div>
-                <h1 className="text-3xl font-bold text-gray-900 mb-2">
-                  Welcome Back, {user?.name}
-                </h1>
-                <p className="text-gray-600">
-                  Here's what's happening with your properties today
-                </p>
-              </div>
-              <div className="bg-white rounded-lg shadow-sm px-4 py-2 border border-gray-200">
-                <p className="text-xs text-gray-500">Last updated</p>
-                <p className="text-sm font-semibold text-gray-700">
-                  {new Date().toLocaleDateString("en-US", {
-                    month: "short",
-                    day: "numeric",
-                    year: "numeric",
-                  })}
-                </p>
-              </div>
+          {/* ✅ Welcome */}
+          <div className="mb-8 flex justify-between items-start">
+            <div>
+              <h1 className="text-3xl font-bold text-gray-900 mb-1">
+                Welcome Back, {user?.name}
+              </h1>
+              <p className="text-gray-600">
+                Here's what's happening with your properties today
+              </p>
+            </div>
+            <div className="bg-white px-4 py-2 rounded shadow-sm border text-sm text-gray-600">
+              <p className="text-xs text-gray-500">Last updated</p>
+              <p className="text-sm font-semibold text-gray-700">
+                {new Date().toLocaleDateString("en-US", {
+                  month: "short",
+                  day: "numeric",
+                  year: "numeric",
+                })}
+              </p>
             </div>
           </div>
 
-          {/* ✅ Stats Cards */}
+          {/* ✅ Cards */}
           <section className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
             <div className="bg-white p-6 rounded-lg shadow-sm border border-gray-200">
               <div className="flex justify-between mb-2">
                 <div className="bg-blue-50 p-3 rounded-lg">
-                  <svg className="w-6 h-6 text-blue-600" fill="currentColor" viewBox="0 0 20 20">
+                  <svg
+                    className="w-6 h-6 text-blue-600"
+                    fill="currentColor"
+                    viewBox="0 0 20 20"
+                  >
                     <path d="M4 4a2 2 0 012-2h8a2 2 0 012 2v12H4V4z" />
                   </svg>
                 </div>
@@ -215,7 +241,11 @@ const PGOwnerDashboard = () => {
             <div className="bg-white p-6 rounded-lg shadow-sm border border-gray-200">
               <div className="flex justify-between mb-2">
                 <div className="bg-green-50 p-3 rounded-lg">
-                  <svg className="w-6 h-6 text-green-600" fill="currentColor" viewBox="0 0 20 20">
+                  <svg
+                    className="w-6 h-6 text-green-600"
+                    fill="currentColor"
+                    viewBox="0 0 20 20"
+                  >
                     <path d="M10 2l8 8H2l8-8z" />
                   </svg>
                 </div>
@@ -232,7 +262,11 @@ const PGOwnerDashboard = () => {
             <div className="bg-white p-6 rounded-lg shadow-sm border border-gray-200 relative">
               <div className="flex justify-between mb-2">
                 <div className="bg-purple-50 p-3 rounded-lg">
-                  <svg className="w-6 h-6 text-purple-600" fill="currentColor" viewBox="0 0 20 20">
+                  <svg
+                    className="w-6 h-6 text-purple-600"
+                    fill="currentColor"
+                    viewBox="0 0 20 20"
+                  >
                     <path d="M2 4h16v12H2z" />
                   </svg>
                 </div>
@@ -259,7 +293,6 @@ const PGOwnerDashboard = () => {
             >
               Listings
             </button>
-
             <button
               onClick={() => setActiveTab("inquiries")}
               className={`relative px-6 py-2.5 rounded-md font-medium ${
@@ -302,12 +335,25 @@ const PGOwnerDashboard = () => {
                           {formatTime(inq.createdAt)}
                         </p>
                       </div>
-                      <button
-                        onClick={() => handleOpenChat(inq)}
-                        className="px-4 py-2 bg-indigo-600 text-white rounded-md hover:bg-indigo-700 text-sm"
-                      >
-                        💬 Reply
-                      </button>
+                      <div className="flex gap-2">
+                        <button
+                          onClick={() => handleOpenChat(inq)}
+                          className="px-4 py-2 bg-indigo-600 text-white rounded-md hover:bg-indigo-700 text-sm"
+                        >
+                          💬 Reply
+                        </button>
+                        <button
+                          onClick={() => handleMarkContacted(inq._id)}
+                          className={`px-3 py-2 rounded-md text-sm ${
+                            inq.isContacted
+                              ? "bg-green-100 text-green-600 cursor-not-allowed"
+                              : "bg-gray-200 text-gray-700 hover:bg-green-100 hover:text-green-600"
+                          }`}
+                          disabled={inq.isContacted}
+                        >
+                          {inq.isContacted ? "✅ Contacted" : "Mark Contacted"}
+                        </button>
+                      </div>
                     </div>
                     <p className="mt-3 text-gray-700 bg-gray-50 p-3 rounded-lg border text-sm">
                       {inq.message}
@@ -343,7 +389,9 @@ const PGOwnerDashboard = () => {
                   <div
                     key={msg._id}
                     className={`mb-3 flex ${
-                      msg.senderId._id === user._id ? "justify-end" : "justify-start"
+                      msg.senderId._id === user._id
+                        ? "justify-end"
+                        : "justify-start"
                     }`}
                   >
                     <div
@@ -381,6 +429,8 @@ const PGOwnerDashboard = () => {
           </div>
         </div>
       )}
+
+      <ToastContainer position="top-right" autoClose={2000} />
     </div>
   );
 };

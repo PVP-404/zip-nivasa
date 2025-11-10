@@ -38,7 +38,7 @@ export const createPG = async (req, res) => {
       description,
       images,
       owner: userId,
-      beds: 1
+      beds: 1,
     });
 
     await pg.save();
@@ -65,10 +65,11 @@ export const getAllPGs = async (req, res) => {
   }
 };
 
-// ✅ PUBLIC – FETCH SINGLE PG
+// ✅ PUBLIC – FETCH SINGLE PG (✅ FIXED: Populate Owner)
 export const getPGById = async (req, res) => {
   try {
-    const pg = await PG.findById(req.params.id);
+    const pg = await PG.findById(req.params.id)
+      .populate("owner", "name email _id"); // ✅ FIX
 
     if (!pg) {
       return res.status(404).json({ success: false, message: "PG not found" });
