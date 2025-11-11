@@ -114,14 +114,67 @@ const AddMessListing = () => {
     }
   };
 
-  const handleSubmit = (e) => {
-    e.preventDefault();
-    if (validateStep(currentStep)) {
-      console.log("Final form data submitted:", formData);
-      alert("Mess listing submitted successfully! Thank you for adding your mess to Zip Nivasa.");
-      // In a real application, you would send this data to an API
+  const handleSubmit = async (e) => {
+  e.preventDefault();
+  if (validateStep(currentStep)) {
+    try {
+      const token = localStorage.getItem("token");
+      const formDataToSend = new FormData();
+
+      formDataToSend.append("messName", formData.messName);
+      formDataToSend.append("location", formData.location);
+      formDataToSend.append("address", formData.address);
+      formDataToSend.append("contactNumber", formData.contactNumber);
+      formDataToSend.append("description", formData.description);
+
+      formData.images.forEach((image) => {
+        formDataToSend.append("images", image);
+      });
+
+      formDataToSend.append("subscriptions", JSON.stringify(formData.subscriptions));
+      formDataToSend.append("dailyMenu", JSON.stringify(formData.dailyMenu));
+
+      const res = await fetch("http://localhost:5000/api/mess", {
+        method: "POST",
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+        body: formDataToSend,
+      });
+
+      const data = await res.json();
+      if (data.success) {
+        alert("Mess listing created successfully!");
+        console.log("Saved Mess:", data.mess);
+        setFormData({
+          messName: "",
+          location: "",
+          address: "",
+          contactNumber: "",
+          description: "",
+          images: [],
+          subscriptions: [{ planName: "Monthly", price: "" }],
+          dailyMenu: {
+            monday: { lunch: "", dinner: "" },
+            tuesday: { lunch: "", dinner: "" },
+            wednesday: { lunch: "", dinner: "" },
+            thursday: { lunch: "", dinner: "" },
+            friday: { lunch: "", dinner: "" },
+            saturday: { lunch: "", dinner: "" },
+            sunday: { lunch: "", dinner: "" },
+          },
+        });
+        setCurrentStep(1);
+      } else {
+        alert(data.message || "Something went wrong");
+      }
+    } catch (error) {
+      console.error("Error submitting mess listing:", error);
+      alert("Server error. Please try again later.");
     }
-  };
+  }
+};
+
 
   const renderStep = () => {
     switch (currentStep) {
