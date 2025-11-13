@@ -47,3 +47,22 @@ export const publishSpecial = async (data) => {
     const res = await axios.post(`${API}/publish-special`, data);
     return res.data;
 };
+
+// export const getAllMess = async () => {
+//   const res = await fetch(API);
+//   return res.json();
+// };
+
+export const getMessById = async (id) => {
+  const res = await fetch(`${API}/${id}`);
+  return res.json();
+};
+
+export const submitMessRating = async (messId, ratingData) => {
+  const res = await fetch(`${API}/${messId}/rate`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(ratingData),
+  });
+  return res.json();
+};

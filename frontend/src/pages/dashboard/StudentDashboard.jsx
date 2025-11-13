@@ -4,13 +4,7 @@ import { Link } from "react-router-dom";
 import Header from "../../components/Header";
 import Footer from "../../components/Footer";
 import Sidebar from "../../components/Sidebar";
-
-// Mock data
-const mockMessList = [
-  { id: 1, name: "Annapurna Mess", location: "Near Campus", rating: 4.5, type: "Veg", price: 3500, menu: ["Dal", "Rice", "Roti", "Sabzi"] },
-  { id: 2, name: "Tasty Bites", location: "City Center", rating: 4.2, type: "Non-Veg", price: 4000, menu: ["Chicken Curry", "Rice", "Roti"] },
-];
-
+import { getAllMesses } from "../../services/messService";
 const mockLaundryList = [
   { id: 1, name: "Quick Wash", location: "Main Street", rating: 4.3, services: ["Washing", "Ironing", "Dry Cleaning"], price: "₹50/kg" },
   { id: 2, name: "Fresh Clean", location: "Campus Road", rating: 4.6, services: ["Washing", "Ironing"], price: "₹40/kg" },
@@ -49,9 +43,13 @@ const StudentDashboard = () => {
       console.error("Failed to load PG listings:", err);
     }
   };
+  const fetchMesses = async () => {
+    const res = await getAllMesses();
+    setMesses(res);
+  };
 
   useEffect(() => {
-    setMesses(mockMessList);
+    fetchMesses();
     setLaundryOptions(mockLaundryList);
     fetchPGs();
   }, []);
@@ -64,8 +62,8 @@ const StudentDashboard = () => {
 
   // Filters
   const filtered = {
-    mess: messes.filter((m) => m.name.toLowerCase().includes(query.toLowerCase())),
-    housing: housingOptions.filter((h) => 
+    mess: messes.filter((m) => m.title.toLowerCase().includes(query.toLowerCase())),
+    housing: housingOptions.filter((h) =>
       h.name.toLowerCase().includes(query.toLowerCase()) ||
       h.location.toLowerCase().includes(query.toLowerCase()) ||
       h.type.toLowerCase().includes(query.toLowerCase())
@@ -118,9 +116,8 @@ const StudentDashboard = () => {
                 <div
                   key={s.key}
                   onClick={() => handleServiceChange(s.key)}
-                  className={`bg-white p-6 rounded-lg shadow-sm border-2 cursor-pointer transition-all hover:shadow-md ${
-                    activeService === s.key ? "border-indigo-500 ring-2 ring-indigo-100" : "border-gray-200"
-                  }`}
+                  className={`bg-white p-6 rounded-lg shadow-sm border-2 cursor-pointer transition-all hover:shadow-md ${activeService === s.key ? "border-indigo-500 ring-2 ring-indigo-100" : "border-gray-200"
+                    }`}
                 >
                   <div className={`w-12 h-12 rounded-lg flex items-center justify-center mb-3 ${activeService === s.key ? "bg-indigo-100" : "bg-gray-100"}`}>
                     <Icon path={s.icon} className="w-6 h-6 text-indigo-600" />
@@ -206,24 +203,46 @@ const StudentDashboard = () => {
           {activeService === "mess" && (
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
               {filtered.mess.map((mess) => (
-                <div key={mess.id} className="bg-white rounded-lg shadow-sm border border-gray-200 p-5 hover:shadow-md transition-shadow">
+                <div
+                  key={mess._id}
+                  className="bg-white rounded-lg shadow-sm border border-gray-200 p-5 hover:shadow-md transition-shadow"
+                >
                   <div className="flex justify-between items-start mb-3">
                     <div>
-                      <h4 className="font-semibold text-lg text-gray-900">{mess.name}</h4>
-                      <p className="text-sm text-gray-600">{mess.location}</p>
+                      <h4 className="font-semibold text-lg text-gray-900">
+                        {mess.title || mess.name}
+                      </h4>
+                      <p className="text-sm text-gray-600">
+                        {mess.location}
+                      </p>
                     </div>
-                    <span className="bg-green-100 text-green-700 text-xs font-semibold px-2 py-1 rounded">{mess.type}</span>
+                    <span className="bg-green-100 text-green-700 text-xs font-semibold px-2 py-1 rounded">
+                      {mess.type}
+                    </span>
                   </div>
+
                   <div className="flex items-center gap-1 mb-3">
                     <StarIcon />
-                    <span className="text-sm font-semibold text-gray-700">{mess.rating}</span>
+                    <span className="text-sm font-semibold text-gray-700">
+                      {mess.rating || 4.5}
+                    </span>
                   </div>
-                  <p className="text-lg font-bold text-gray-900 mb-4">₹{mess.price}/month</p>
-                  <button onClick={() => setSelectedMess(mess)} className="w-full bg-indigo-600 text-white py-2.5 rounded-lg font-medium hover:bg-indigo-700 transition-colors">View Menu</button>
+
+                  <p className="text-lg font-bold text-gray-900 mb-4">
+                    ₹{mess.price}/month
+                  </p>
+
+                  <button
+                    onClick={() => setSelectedMess(mess)}
+                    className="w-full bg-indigo-600 text-white py-2.5 rounded-lg font-medium hover:bg-indigo-700 transition-colors"
+                  >
+                    View Menu
+                  </button>
                 </div>
               ))}
             </div>
           )}
+
 
           {/* Laundry */}
           {activeService === "laundry" && (

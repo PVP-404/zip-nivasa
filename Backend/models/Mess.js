@@ -22,8 +22,18 @@ const messSchema = new mongoose.Schema(
             date: { type: Date, default: new Date() }, // 🕒 store date for which the special applies
         },
         images: { type: [String], default: [] },
+        ratings: [
+            {
+                studentId: { type: mongoose.Schema.Types.ObjectId, ref: "User" },
+                stars: Number,
+                comment: String,
+                date: { type: Date, default: new Date() }
+            }
+        ],
+
 
     },
+
     { timestamps: true }
 );
 

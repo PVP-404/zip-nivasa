@@ -106,3 +106,27 @@ export const publishSpecial = async (req, res) => {
         res.status(500).json({ success: false, message: err.message });
     }
 };
+
+// backend/controllers/messController.js
+export const getAllMess = async (req, res) => {
+  try {
+    const messes = await Mess.find().populate("messOwnerId", "name phone email");
+    res.json(messes);
+  } catch (err) {
+    res.status(500).json({ message: "Failed to fetch mess list" });
+  }
+};
+export const addRating = async (req, res) => {
+  const { stars, comment, studentId } = req.body;
+
+  try {
+    const mess = await Mess.findById(req.params.id);
+    mess.ratings.push({ stars, comment, studentId });
+    await mess.save();
+
+    res.json({ success: true, message: "Rating submitted" });
+  } catch (err) {
+    res.status(500).json({ message: "Failed to submit rating" });
+  }
+};
+
