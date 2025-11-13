@@ -1,511 +1,616 @@
-// src/pages/dashboard/MessOwnerDashboard.jsx
 import React, { useState, useEffect } from "react";
-import { useNavigate, Link } from "react-router-dom";
+// Assuming these paths are correct
+import Sidebar from "../../components/Sidebar";
 import Header from "../../components/Header";
 import Footer from "../../components/Footer";
-import Sidebar from "../../components/Sidebar";
 
-// Dummy data to simulate API responses
-const mockSubscribers = [
-  { id: "s1", name: "Anil Kumble", plan: "Lunch & Dinner", status: "Active", joined: "2024-05-10" },
-  { id: "s2", name: "Priya Sharma", plan: "Breakfast & Lunch", status: "Active", joined: "2024-06-01" },
-  { id: "s3", name: "Rahul Singh", plan: "Dinner Only", status: "Active", joined: "2024-06-15" },
-  { id: "s4", name: "Sonia Patel", plan: "All Meals", status: "Active", joined: "2024-07-20" },
-];
+import {
+  getMessesByOwner,
+  publishSpecial,
+  updateMess,
+  deleteMess,
+} from "../../services/messService";
 
-const mockMenu = {
-  monday: { lunch: "Dal, Roti, Rice, Veg Curry", dinner: "Paneer Butter Masala, Roti, Salad" },
-  tuesday: { lunch: "Rajma Chawal, Curd", dinner: "Mix Veg, Roti, Dal" },
-  wednesday: { lunch: "Chole Bhature", dinner: "Aloo Gobi, Roti, Jeera Rice" },
-  thursday: { lunch: "Veg Biryani, Raita", dinner: "Kadhi Pakora, Rice" },
-  friday: { lunch: "Palak Paneer, Roti", dinner: "Masoor Dal, Roti, Rice" },
-  saturday: { lunch: "Puri Bhaji", dinner: "Pav Bhaji" },
-  sunday: { lunch: "Special Thali", dinner: "Khichdi, Papad, Pickle" },
-};
+import { getAllMessOwners } from "../../services/messOwnerService";
 
-const mockInquiries = [
-  { 
-    id: "i1", 
-    customerName: "Siddharth Jain", 
-    contact: "9876543210", 
-    status: "New",
-    date: "2024-08-15T10:30:00",
-    message: "I am looking for a lunch subscription near Hinjewadi. Do you deliver to my area?",
-  },
-  { 
-    id: "i2", 
-    customerName: "Shreya Gupta", 
-    contact: "9988776655", 
-    status: "Contacted",
-    date: "2024-08-14T16:45:00",
-    message: "Hi, what are your meal plan options for a single person?",
-  },
-];
+import { FaUsers, FaEnvelopeOpenText, FaStar, FaUtensils, FaEdit, FaTrash, FaCheckCircle, FaTimesCircle, FaLink } from "react-icons/fa";
 
-const mockReviews = [
-  { id: "r1", customer: "Aarti", rating: 5, comment: "Excellent food quality and on-time delivery!", date: "2024-09-01" },
-  { id: "r2", customer: "Vivek", rating: 4, comment: "The lunch menu is great, but dinner could have more variety.", date: "2024-08-28" },
-  { id: "r3", customer: "Komal", rating: 5, comment: "Very hygienic and affordable. A lifesaver for students.", date: "2024-08-25" },
-  { id: "r4", customer: "Deepak", rating: 3, comment: "Sometimes the food is a bit too spicy.", date: "2024-08-20" },
-];
+/* --------------------- REUSABLE COMPONENTS ------------------------ */
 
+// 🔹 Stat Card (Subtler, more refined shadow)
+const StatCard = ({ title, value, icon, color, subtitle }) => (
+  <div className="bg-white p-6 rounded-xl shadow-lg border border-gray-100 hover:shadow-xl transition-all duration-300 transform hover:-translate-y-0.5">
+    <div className="flex justify-between items-start">
+      <div>
+        <h3 className="text-gray-500 font-medium text-sm mb-2 uppercase tracking-wider">
+          {title}
+        </h3>
+        <p className="text-gray-900 text-3xl font-extrabold">{value}</p>
+        <p className="text-gray-400 text-xs mt-2">{subtitle}</p>
+      </div>
+      <div className={`${color} p-3 rounded-full text-white shadow-md`}>
+        {icon}
+      </div>
+    </div>
+  </div>
+);
+
+// 🔹 Tab Button (Clean active state)
+const TabButton = ({ active, onClick, children, badge }) => (
+  <button
+    onClick={onClick}
+    className={`relative py-3 px-6 font-semibold text-sm transition-all whitespace-nowrap rounded-t-lg ${
+      active
+        ? "text-blue-600 bg-white border-b-2 border-blue-600 shadow-inner"
+        : "text-gray-600 hover:text-blue-700 border-b-2 border-transparent hover:border-gray-100"
+    }`}
+  >
+    {children}
+    {badge > 0 && (
+      <span className="absolute -top-1 right-2 bg-red-500 text-white text-xs rounded-full h-5 w-5 flex items-center justify-center font-bold animate-pulse">
+        {badge}
+      </span>
+    )}
+  </button>
+);
+
+/* ---------------------------------------------------
+        MAIN COMPONENT
+----------------------------------------------------- */
 const MessOwnerDashboard = () => {
-  const navigate = useNavigate();
   const [loading, setLoading] = useState(true);
-  const [error, setError] = useState(null);
-  const [subscribers, setSubscribers] = useState([]);
-  const [inquiries, setInquiries] = useState([]);
-  const [reviews, setReviews] = useState([]);
-  const [menu, setMenu] = useState({});
+  const [owner, setOwner] = useState(null);
   const [activeTab, setActiveTab] = useState("subscribers");
 
-  const [todaysMenu, setTodaysMenu] = useState({
-    lunch: "",
-    dinner: "",
+  const ownerId = localStorage.getItem("ownerId");
+
+  const [data, setData] = useState({
+    subscribers: [],
+    inquiries: [],
+    reviews: [],
   });
 
-  const user = {
-    id: "mess123",
-    role: "mess_owner",
-    name: "Maharaja Mess Services",
-  };
+  const [todaysSpecial, setTodaysSpecial] = useState({
+    lunch: "",
+    dinner: "",
+    image: null,
+  });
 
+  const [imagePreview, setImagePreview] = useState(null);
+
+  /* ------------------ FETCH DATA (Logic Unchanged) ------------------ */
   useEffect(() => {
-    const fetchDashboardData = async () => {
+    const loadData = async () => {
+      if (!ownerId) {
+        setLoading(false);
+        return;
+      }
       try {
-        setLoading(true);
-        // Simulate API call delay
-        await new Promise((resolve) => setTimeout(resolve, 1500));
-        setSubscribers(mockSubscribers);
-        setInquiries(mockInquiries);
-        setReviews(mockReviews);
-        setMenu(mockMenu);
-        const currentDay = getDayName(new Date().getDay()).toLowerCase();
-        setTodaysMenu({
-          lunch: mockMenu[currentDay]?.lunch || "",
-          dinner: mockMenu[currentDay]?.dinner || "",
-        });
+        const [messes, owners] = await Promise.all([
+          getMessesByOwner(ownerId),
+          getAllMessOwners(),
+        ]);
+
+        const ownerData = owners.find((o) => o.userId === ownerId);
+        setOwner(ownerData);
+
+        // Enhance subscriber data mapping with location for better display
+        const subscribers = messes.map((m) => ({
+          id: m._id,
+          name: m.title || m.messName || "Unnamed Mess",
+          location: m.location || "N/A", // Added location field
+          plan: `${m.type || "Veg"} • ₹${m.price || 0}`,
+          status: "Active",
+          joined: m.createdAt,
+        }));
+
+        // Added more realistic dummy data for reviews/inquiries
+        const inquiries = [
+          {
+            id: "i1",
+            customerName: "Priya Sharma",
+            contact: "9876543210",
+            status: "New",
+            date: new Date(Date.now() - 86400000), // 1 day ago
+            message: "Looking for lunch subscription near your mess, 5-day plan.",
+          },
+          {
+            id: "i2",
+            customerName: "Rohan Verma",
+            contact: "9988776655",
+            status: "Contacted",
+            date: new Date(Date.now() - 2 * 86400000), // 2 days ago
+            message: "Enquiring about your weekend meal package options.",
+          },
+        ];
+
+        const reviews = [
+          {
+            id: "r1",
+            customer: "Amit Singh",
+            rating: 5,
+            comment: "Best food! Always fresh and on time.",
+            date: new Date(Date.now() - 5 * 86400000),
+          },
+          {
+            id: "r2",
+            customer: "Anjali Das",
+            rating: 4,
+            comment: "Good quality, prompt service.",
+            date: new Date(Date.now() - 10 * 86400000),
+          },
+        ];
+
+        setData({ subscribers, inquiries, reviews });
       } catch (err) {
-        setError("Failed to fetch dashboard data. Please try again.");
         console.error(err);
       } finally {
         setLoading(false);
       }
     };
-    fetchDashboardData();
-  }, []);
 
-  const handleMarkInquiry = (inquiryId, newStatus) => {
-    setInquiries(inquiries.map(inquiry => 
-      inquiry.id === inquiryId ? {...inquiry, status: newStatus} : inquiry
-    ));
+    loadData();
+  }, [ownerId]);
+
+  /* ------------------ IMAGE UPLOAD ------------------ */
+  const handleImageUpload = (e) => {
+    const file = e.target.files[0];
+    if (file) {
+      setTodaysSpecial({ ...todaysSpecial, image: file });
+      setImagePreview(URL.createObjectURL(file));
+    } else {
+      setTodaysSpecial({ ...todaysSpecial, image: null });
+      setImagePreview(null);
+    }
   };
 
-  const handleViewInquiry = (inquiry) => {
-    alert(`Inquiry Details:\nFrom: ${inquiry.customerName}\nContact: ${inquiry.contact}\nMessage: ${inquiry.message}`);
-  };
-
-  const handleMenuUpdate = (e) => {
+  /* ------------------ Publish Special (Logic Unchanged) ------------------ */
+  const handleSpecialSubmit = async (e) => {
     e.preventDefault();
-    const today = getDayName(new Date().getDay()).toLowerCase();
-    // In a real app, you'd send this to an API
-    console.log(`Updating today's menu for ${today}:`, todaysMenu);
-    setMenu(prevMenu => ({
-      ...prevMenu,
-      [today]: todaysMenu
+    if (!todaysSpecial.lunch && !todaysSpecial.dinner) {
+      alert("Please enter at least one menu item (Lunch or Dinner).");
+      return;
+    }
+
+    try {
+      const res = await publishSpecial({
+        messOwnerId: ownerId,
+        lunch: todaysSpecial.lunch,
+        dinner: todaysSpecial.dinner,
+        imageUrl: imagePreview || "",
+      });
+
+      if (res.success) {
+        alert("Special Published!");
+        setTodaysSpecial({ lunch: "", dinner: "", image: null });
+        setImagePreview(null);
+      } else {
+        alert(res.message || "Failed to publish special.");
+      }
+    } catch (err) {
+      alert("Server error");
+    }
+  };
+
+  /* ------------------ DELETE MESS (Logic Unchanged) ------------------ */
+  const handleDeleteMess = async (id) => {
+    if (!window.confirm("Are you sure you want to permanently delete this mess listing? This cannot be undone.")) return;
+
+    try {
+      const res = await deleteMess(id);
+      if (res.success) {
+        alert("Mess deleted successfully!");
+        setData((prev) => ({
+          ...prev,
+          subscribers: prev.subscribers.filter((s) => s.id !== id),
+        }));
+      } else {
+        alert(res.message || "Error deleting mess.");
+      }
+    } catch (err) {
+      alert("Error deleting mess.");
+    }
+  };
+
+  /* ------------------ UPDATE MESS (Logic Unchanged) ------------------ */
+  const handleEditMess = (mess) => {
+    const newName = prompt("Enter new Mess Name:", mess.name);
+    if (!newName) return;
+
+    updateMess(mess.id, { title: newName }).then((res) => {
+      if (res.success) {
+        alert("Mess name updated successfully!");
+
+        setData((prev) => ({
+          ...prev,
+          subscribers: prev.subscribers.map((m) =>
+            m.id === mess.id ? { ...m, name: newName } : m
+          ),
+        }));
+      } else {
+        alert(res.message || "Error updating mess.");
+      }
+    }).catch(() => alert("Server error during update."));
+  };
+  
+  // Update Inquiry Status (for the UI only)
+  const handleContacted = (inqId) => {
+    setData((prev) => ({
+        ...prev,
+        inquiries: prev.inquiries.map((i) =>
+        i.id === inqId ? { ...i, status: "Contacted" } : i
+        ),
     }));
-    alert("Today's menu has been updated successfully!");
   };
 
-  const getDayName = (dayIndex) => {
-    const days = ["Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"];
-    return days[dayIndex];
-  };
+  /* ------------------ CALCULATIONS ------------------ */
+  const avgRating =
+    data.reviews.length > 0
+      ? (
+          data.reviews.reduce((sum, r) => sum + r.rating, 0) /
+          data.reviews.length
+        ).toFixed(1)
+      : "0.0";
 
-  const getStarRating = (rating) => {
-    const filledStars = "⭐".repeat(rating);
-    const emptyStars = "☆".repeat(5 - rating);
-    return (
-      <span className="text-yellow-400">
-        {filledStars}
-        <span className="text-gray-300">{emptyStars}</span>
-      </span>
-    );
-  };
+  const newInquiries = data.inquiries.filter((i) => i.status === "New").length;
 
-  if (loading) {
-    return (
-      <div className="flex flex-col min-h-screen bg-gray-50">
-        <Header userRole={user.role} isLoggedIn={true} />
-        <div className="flex flex-1">
-          <Sidebar />
-          <div className="flex-1 container mx-auto px-4 py-8 max-w-7xl">
-            <div className="animate-pulse">
-              <div className="h-8 bg-gray-200 rounded w-1/4 mb-6"></div>
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
-                {[1, 2, 3].map((item) => (
-                  <div key={item} className="bg-white p-6 rounded-lg shadow-md h-32"></div>
-                ))}
-              </div>
-              <div className="h-8 bg-gray-200 rounded w-1/3 mb-6"></div>
-              <div className="bg-white p-6 rounded-lg shadow-sm h-80"></div>
-            </div>
-          </div>
-        </div>
-        <Footer />
-      </div>
-    );
-  }
-
-  if (error) {
-    return (
-      <div className="flex flex-col min-h-screen bg-gray-50">
-        <Header userRole={user.role} isLoggedIn={true} />
-        <div className="flex flex-1">
-          <Sidebar />
-          <div className="flex-1 flex justify-center items-center">
-            <div className="text-center p-8 bg-white rounded-lg shadow-md">
-              <div className="text-red-500 text-5xl mb-4">⚠️</div>
-              <div className="text-xl text-red-500 mb-4">{error}</div>
-              <button 
-                onClick={() => window.location.reload()}
-                className="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 transition-colors"
-              >
-                Try Again
-              </button>
-            </div>
-          </div>
-        </div>
-        <Footer />
-      </div>
-    );
-  }
-
-  const newInquiriesCount = inquiries.filter(i => i.status === "New").length;
-  const currentDay = getDayName(new Date().getDay()).toLowerCase();
-
+  /* ------------------ RENDER CONTENT ------------------ */
   const renderContent = () => {
     switch (activeTab) {
       case "subscribers":
         return (
-          <div className="bg-white p-6 rounded-lg shadow-xl mb-8">
-            <div className="flex justify-between items-center mb-4">
-              <h2 className="text-2xl font-bold text-gray-800">My Subscribers</h2>
-            </div>
-            {subscribers.length === 0 ? (
-              <div className="text-center py-12 text-gray-500">
-                <p>You have no active subscribers yet. Start marketing your mess to attract customers!</p>
+          <div className="grid gap-4">
+            {data.subscribers.length === 0 ? (
+              <div className="text-center py-10 text-gray-500 bg-gray-50 rounded-xl border border-dashed border-gray-300">
+                <FaUsers className="mx-auto w-10 h-10 text-gray-300 mb-3" />
+                <p className="font-semibold">No active mess listings found.</p>
+                <p className="text-sm text-gray-400">Use the 'Add New Mess' button to get started.</p>
               </div>
             ) : (
-              <div className="overflow-x-auto">
-                <table className="min-w-full divide-y divide-gray-200">
-                  <thead className="bg-gray-50">
-                    <tr>
-                      <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Name</th>
-                      <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Plan</th>
-                      <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Joined</th>
-                      <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Status</th>
-                    </tr>
-                  </thead>
-                  <tbody className="bg-white divide-y divide-gray-200">
-                    {subscribers.map((subscriber) => (
-                      <tr key={subscriber.id} className="hover:bg-gray-50 transition-colors">
-                        <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">{subscriber.name}</td>
-                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{subscriber.plan}</td>
-                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{subscriber.joined}</td>
-                        <td className="px-6 py-4 whitespace-nowrap">
-                          <span className="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-green-100 text-green-800">
-                            {subscriber.status}
-                          </span>
-                        </td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
-              </div>
+                data.subscribers.map((sub) => (
+                    <div
+                        key={sub.id}
+                        className="bg-white p-5 rounded-xl shadow-md border border-gray-100 flex justify-between items-center transition duration-200 hover:shadow-lg"
+                    >
+                        <div className="flex-1 min-w-0">
+                            <h4 className="font-bold text-lg text-blue-800 truncate">{sub.name}</h4>
+                            <p className="text-sm text-gray-500 mt-1 flex items-center gap-2">
+                                <FaLink className="w-3 h-3 text-gray-400" />
+                                <span>{sub.plan}</span>
+                                <span className="text-xs text-gray-400 ml-3">| Listed at: {sub.location}</span>
+                            </p>
+                        </div>
+
+                        {/* Update + Delete Buttons */}
+                        <div className="flex items-center space-x-3 ml-4">
+                            <span className="px-3 py-1 bg-green-100 text-green-700 rounded-full text-xs font-medium">
+                                {sub.status}
+                            </span>
+                            <button
+                                onClick={() => handleEditMess(sub)}
+                                title="Edit Mess Name"
+                                className="p-2 text-sm bg-gray-100 text-blue-600 rounded-lg hover:bg-blue-100 transition"
+                            >
+                                <FaEdit />
+                            </button>
+
+                            <button
+                                onClick={() => handleDeleteMess(sub.id)}
+                                title="Delete Mess"
+                                className="p-2 text-sm bg-gray-100 text-red-600 rounded-lg hover:bg-red-100 transition"
+                            >
+                                <FaTrash />
+                            </button>
+                        </div>
+                    </div>
+                ))
             )}
+            <div className="h-10"></div>
           </div>
         );
-      case "menu":
-        return (
-          <div className="bg-white p-6 rounded-lg shadow-xl mb-8">
-            <div className="flex justify-between items-center mb-4">
-              <h2 className="text-2xl font-bold text-gray-800">Weekly Menu</h2>
-            </div>
-            <div className="space-y-4">
-              {Object.entries(menu).map(([day, meals]) => (
-                <div key={day} className={`p-4 rounded-lg border ${day === currentDay ? "bg-blue-50 border-blue-200" : "bg-gray-50 border-gray-200"}`}>
-                  <h3 className="text-lg font-bold capitalize mb-2">{day} {day === currentDay && <span className="text-xs font-normal text-blue-600">(Today)</span>}</h3>
-                  <div className="flex flex-col md:flex-row md:justify-between text-sm">
-                    <p className="mb-2 md:mb-0">
-                      <span className="font-semibold text-gray-700">Lunch:</span> {meals.lunch}
-                    </p>
-                    <p>
-                      <span className="font-semibold text-gray-700">Dinner:</span> {meals.dinner}
-                    </p>
-                  </div>
-                </div>
-              ))}
-            </div>
-          </div>
-        );
+
       case "inquiries":
         return (
-          <div className="bg-white p-6 rounded-lg shadow-xl mb-8">
-            <h2 className="text-2xl font-bold text-gray-800 mb-4">Inquiries & Leads</h2>
-            {inquiries.length === 0 ? (
-              <div className="text-center py-12 text-gray-500">
-                <p>No new inquiries at the moment. Keep your profile Updated to attract more customers.</p>
-              </div>
-            ) : (
-              <div className="space-y-4">
-                {inquiries.map((inquiry) => (
-                  <div 
-                    key={inquiry.id} 
-                    className={`p-4 rounded-lg border transition-colors ${
-                      inquiry.status === "New" ? "bg-purple-50 border-purple-200 hover:bg-purple-100" : "bg-white border-gray-200 hover:bg-gray-50"
-                    }`}
-                  >
-                    <div className="flex justify-between items-start">
-                      <div>
-                        <h3 className="font-medium text-gray-900">{inquiry.customerName}</h3>
-                        <p className="text-sm text-gray-500 mt-1">{inquiry.message}</p>
-                      </div>
-                      <div className="text-right">
-                        <span className={`px-2 inline-flex text-xs leading-5 font-semibold rounded-full ${
-                          inquiry.status === "New" ? "bg-purple-100 text-purple-800" : "bg-green-100 text-green-800"
-                        }`}>
-                          {inquiry.status}
-                        </span>
-                        <p className="text-xs text-gray-400 mt-1">
-                          {new Date(inquiry.date).toLocaleDateString()}
+            <div className="grid gap-4">
+                {data.inquiries.map((inq) => (
+                    <div
+                        key={inq.id}
+                        className={`p-5 rounded-xl shadow-md border transition-all duration-300 ${
+                            inq.status === "New"
+                                ? "bg-yellow-50 border-yellow-200"
+                                : "bg-white border-gray-100"
+                        }`}
+                    >
+                        <div className="flex justify-between items-start mb-3">
+                            <div>
+                                <h4 className="font-bold text-gray-900 text-base">{inq.customerName}</h4>
+                                <p className="text-sm text-gray-600 mt-1 leading-relaxed italic">
+                                    "{inq.message}"
+                                </p>
+                            </div>
+                            <span
+                                className={`px-3 py-1 rounded-full text-xs font-medium min-w-[80px] text-center shadow-sm ${
+                                    inq.status === "New"
+                                        ? "bg-yellow-500 text-white"
+                                        : "bg-green-100 text-green-700"
+                                }`}
+                            >
+                                {inq.status}
+                            </span>
+                        </div>
+                        <div className="flex justify-between items-center pt-3 border-t border-gray-100 mt-2">
+                            <p className="text-xs text-gray-500 font-mono flex items-center gap-1">
+                                <FaEnvelopeOpenText className="w-3 h-3" /> {inq.contact}
+                            </p>
+                            {inq.status === "New" && (
+                                <button
+                                    onClick={() => handleContacted(inq.id)}
+                                    className="px-4 py-1.5 bg-blue-600 text-white text-xs font-semibold rounded-lg hover:bg-blue-700 transition"
+                                >
+                                    Mark Contacted
+                                </button>
+                            )}
+                        </div>
+                    </div>
+                ))}
+                <div className="h-10"></div>
+            </div>
+        );
+
+      case "reviews":
+          const StarRating = ({ rating }) => (
+            <span className="text-yellow-500 font-bold text-lg">
+              {Array(rating).fill("★").join("")}
+              {Array(5 - rating).fill("☆").join("")}
+            </span>
+          );
+        return (
+            <div className="grid gap-4">
+                {data.reviews.map((rev) => (
+                    <div
+                        key={rev.id}
+                        className="bg-white p-5 rounded-xl shadow-lg border border-gray-100 hover:shadow-xl"
+                    >
+                        <div className="flex justify-between items-start mb-2">
+                            <h4 className="font-semibold text-gray-900 text-base">
+                                {rev.customer}
+                            </h4>
+                            <StarRating rating={rev.rating} />
+                        </div>
+                        <p className="text-gray-700 text-sm leading-relaxed border-b pb-3 mb-3 italic">
+                            "{rev.comment}"
                         </p>
-                      </div>
+                        <p className="text-xs text-gray-400">
+                            Reviewed on {new Date(rev.date).toLocaleDateString()}
+                        </p>
                     </div>
-                    <div className="flex justify-end items-center mt-4 pt-3 border-t border-gray-100">
-                      <div className="flex space-x-2">
-                        <button
-                          onClick={() => handleViewInquiry(inquiry)}
-                          className="text-sm text-blue-600 hover:text-blue-800"
-                        >
-                          View Details
-                        </button>
-                        {inquiry.status === "New" && (
-                          <button
-                            onClick={() => handleMarkInquiry(inquiry.id, "Contacted")}
-                            className="text-sm bg-purple-600 text-white px-3 py-1 rounded hover:bg-purple-700 transition-colors"
-                          >
-                            Mark as Contacted
-                          </button>
-                        )}
-                      </div>
-                    </div>
-                  </div>
                 ))}
-              </div>
-            )}
-          </div>
+                <div className="h-10"></div>
+            </div>
         );
-      case "feedback":
+
+      case "special":
         return (
-          <div className="bg-white p-6 rounded-lg shadow-xl mb-8">
-            <h2 className="text-2xl font-bold text-gray-800 mb-4">Feedback & Reviews</h2>
-            {reviews.length === 0 ? (
-              <div className="text-center py-12 text-gray-500">
-                <p>No reviews yet. Keep up the good work and they will come!</p>
-              </div>
-            ) : (
-              <div className="space-y-4">
-                {reviews.map((review) => (
-                  <div key={review.id} className="p-4 bg-gray-50 rounded-lg border border-gray-200 hover:shadow-sm transition-shadow">
-                    <div className="flex justify-between items-center mb-2">
-                      <div className="font-semibold text-gray-900">{review.customer}</div>
-                      <div className="text-sm text-gray-500">{review.date}</div>
-                    </div>
-                    <div className="flex items-center mb-2">
-                      {getStarRating(review.rating)}
-                    </div>
-                    <p className="text-gray-700">{review.comment}</p>
-                  </div>
-                ))}
-              </div>
-            )}
-          </div>
-        );
-      case "todays_menu":
-        return (
-          <div className="bg-white p-6 rounded-lg shadow-xl mb-8">
-            <h2 className="text-2xl font-bold text-gray-800 mb-4">Update Today's Menu</h2>
-            <form onSubmit={handleMenuUpdate} className="space-y-4">
+          <form
+            onSubmit={handleSpecialSubmit}
+            className="bg-white p-8 rounded-xl shadow-2xl border border-blue-100 max-w-2xl mx-auto"
+          >
+            <h3 className="text-2xl font-extrabold text-gray-900 mb-6 flex items-center gap-2">
+              <FaUtensils className="text-blue-600" /> Publish Today’s Special Menu
+            </h3>
+
+            <div className="space-y-6">
+              {/* Lunch Special */}
               <div>
-                <label htmlFor="lunch" className="block text-sm font-medium text-gray-700 mb-1">Lunch Menu</label>
+                <label className="block text-sm font-bold text-gray-700 mb-2">
+                  🍽️ Lunch Special (e.g., Dal, Roti, Rice, Veg Curry)
+                </label>
                 <input
                   type="text"
-                  id="lunch"
-                  name="lunch"
-                  value={todaysMenu.lunch}
-                  onChange={(e) => setTodaysMenu({...todaysMenu, lunch: e.target.value})}
-                  className="w-full border border-gray-300 rounded-md p-3 focus:outline-none focus:ring-2 focus:ring-blue-500"
-                  placeholder="e.g., Dal Makhani, Rice, Roti"
-                  required
+                  placeholder="Enter the main items for lunch"
+                  value={todaysSpecial.lunch}
+                  onChange={(e) =>
+                    setTodaysSpecial({ ...todaysSpecial, lunch: e.target.value })
+                  }
+                  className="w-full border border-gray-300 p-3 rounded-lg focus:ring-blue-500 focus:border-blue-500 transition"
                 />
               </div>
+
+              {/* Dinner Special */}
               <div>
-                <label htmlFor="dinner" className="block text-sm font-medium text-gray-700 mb-1">Dinner Menu</label>
+                <label className="block text-sm font-bold text-gray-700 mb-2">
+                  🌙 Dinner Special (e.g., Paneer, Naan, Salad, Sweet)
+                </label>
                 <input
                   type="text"
-                  id="dinner"
-                  name="dinner"
-                  value={todaysMenu.dinner}
-                  onChange={(e) => setTodaysMenu({...todaysMenu, dinner: e.target.value})}
-                  className="w-full border border-gray-300 rounded-md p-3 focus:outline-none focus:ring-2 focus:ring-blue-500"
-                  placeholder="e.g., Paneer Tikka Masala, Roti, Salad"
-                  required
+                  placeholder="Enter the main items for dinner"
+                  value={todaysSpecial.dinner}
+                  onChange={(e) =>
+                    setTodaysSpecial({ ...todaysSpecial, dinner: e.target.value })
+                  }
+                  className="w-full border border-gray-300 p-3 rounded-lg focus:ring-blue-500 focus:border-blue-500 transition"
                 />
               </div>
-              <button
-                type="submit"
-                className="w-full bg-blue-600 text-white font-bold py-3 px-4 rounded-md hover:bg-blue-700 transition-colors"
-              >
-                Update Menu
-              </button>
-            </form>
-          </div>
+
+              {/* Image Upload */}
+              <div className="border-t pt-6">
+                <label className="block text-sm font-bold text-gray-700 mb-3">
+                  📸 Upload Special Dish Image (Optional)
+                </label>
+                
+                <input
+                  type="file"
+                  accept="image/*"
+                  onChange={handleImageUpload}
+                  className="hidden"
+                  id="image-upload"
+                />
+
+                <div className="flex items-center space-x-4">
+                  <label
+                    htmlFor="image-upload"
+                    className="cursor-pointer px-4 py-2 text-sm font-semibold bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition shadow-md"
+                  >
+                    {todaysSpecial.image ? "Change Image" : "Choose Image"}
+                  </label>
+
+                  {imagePreview ? (
+                    <div className="relative">
+                      <img
+                        src={imagePreview}
+                        alt="Special Preview"
+                        className="w-24 h-24 object-cover rounded-lg border-2 border-green-400 shadow-md"
+                      />
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setTodaysSpecial({...todaysSpecial, image: null});
+                          setImagePreview(null);
+                          document.getElementById('image-upload').value = '';
+                        }}
+                        className="absolute -top-2 -right-2 bg-red-500 text-white rounded-full w-6 h-6 text-xs font-bold flex items-center justify-center shadow-lg"
+                      >
+                        <FaTimesCircle className="w-3 h-3" />
+                      </button>
+                    </div>
+                  ) : (
+                    <p className="text-sm text-gray-500">No image selected</p>
+                  )}
+                </div>
+              </div>
+            </div>
+
+            <button
+              type="submit"
+              className="w-full mt-8 bg-gradient-to-r from-blue-600 to-indigo-700 text-white font-extrabold py-4 rounded-xl shadow-lg hover:shadow-xl transition-all duration-300 transform hover:-translate-y-0.5"
+            >
+              Publish Special Menu 🚀
+            </button>
+            <div className="h-10"></div>
+          </form>
         );
+
       default:
-        return null;
+        return (
+            <div className="text-center py-10 text-gray-500 bg-gray-50 rounded-xl">
+              <FaUtensils className="mx-auto w-10 h-10 text-gray-300 mb-3" />
+              <p className="font-semibold">Select a tab to view content.</p>
+            </div>
+        );
     }
   };
 
-  return (
-    <div className="flex flex-col min-h-screen bg-gray-50 font-sans">
-      <Header userRole={user.role} isLoggedIn={true} />
-      <div className="flex flex-1">
-        <Sidebar />
-        <main className="flex-1 container mx-auto px-4 py-8 max-w-7xl">
-          <div className="flex flex-col sm:flex-row justify-between items-center mb-6">
-            <h1 className="text-3xl font-bold text-gray-800 mb-4 sm:mb-0">
-              Welcome, {user.name}! 👋
-            </h1>
-            <div className="flex items-center space-x-4">
-              <Link
-                to="/dashboard/add-mess"
-                className="px-6 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 transition-colors duration-200 shadow-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-opacity-50 flex items-center gap-2"
-              >
-                <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
-                  <path fillRule="evenodd" d="M10 5a1 1 0 011 1v3h3a1 1 0 110 2h-3v3a1 1 0 11-2 0v-3H6a1 1 0 110-2h3V6a1 1 0 011-1z" clipRule="evenodd" />
-                </svg>
-                Add New Mess
-              </Link>
-            </div>
-          </div>
-
-          <section className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
-            <div className="bg-white p-6 rounded-lg shadow-md border-l-4 border-blue-500 hover:shadow-lg transition-shadow">
-              <div className="flex justify-between items-start">
-                <div>
-                  <h3 className="text-lg font-semibold text-gray-700">Total Subscribers</h3>
-                  <p className="text-4xl font-bold text-gray-900 mt-1">{subscribers.length}</p>
-                </div>
-                <div className="bg-blue-100 p-3 rounded-full">
-                  <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6 text-blue-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 20h2a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v11a2 2 0 002 2h2m13-2h-2.5A2.5 2.5 0 0112 17.5V15m12.5-3.5h-2.5a2.5 2.5 0 00-2.5 2.5v2.5m-10-2h-2.5A2.5 2.5 0 0012 17.5V15m-12-2h-2.5a2.5 2.5 0 00-2.5 2.5v2.5" />
-                  </svg>
-                </div>
-              </div>
-              <p className="text-sm text-gray-500 mt-2">Manage your current subscribers.</p>
-            </div>
-            
-            <div className="bg-white p-6 rounded-lg shadow-md border-l-4 border-purple-500 hover:shadow-lg transition-shadow">
-              <div className="flex justify-between items-start">
-                <div>
-                  <h3 className="text-lg font-semibold text-gray-700">New Inquiries</h3>
-                  <p className="text-4xl font-bold text-gray-900 mt-1">
-                    {newInquiriesCount}
-                  </p>
-                </div>
-                <div className="bg-purple-100 p-3 rounded-full">
-                  <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6 text-purple-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 10h.01M12 10h.01M16 10h.01M9 16H5a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v8a2 2 0 01-2 2h-5l-5 5v-5z" />
-                  </svg>
-                </div>
-              </div>
-              <p className="text-sm text-gray-500 mt-2">Leads that need your attention.</p>
-            </div>
-            
-            <div className="bg-white p-6 rounded-lg shadow-md border-l-4 border-yellow-500 hover:shadow-lg transition-shadow">
-              <div className="flex justify-between items-start">
-                <div>
-                  <h3 className="text-lg font-semibold text-gray-700">Average Rating</h3>
-                  <div className="flex items-center text-4xl font-bold text-gray-900 mt-1">
-                    {(reviews.reduce((sum, r) => sum + r.rating, 0) / reviews.length).toFixed(1) || "N/A"}
-                    <span className="text-yellow-400 text-3xl ml-2">⭐</span>
-                  </div>
-                </div>
-                <div className="bg-yellow-100 p-3 rounded-full">
-                  <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6 text-yellow-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11.049 2.927c.3-.921 1.603-.921 1.902 0l1.519 4.674a1 1 0 00.95.69h4.915c.969 0 1.371 1.24.588 1.81l-3.977 2.887a1 1 0 00-.363 1.118l1.519 4.674c.3.921-.755 1.688-1.539 1.118l-3.977-2.887a1 1 0 00-1.176 0l-3.977 2.887c-.784.57-1.838-.197-1.539-1.118l1.519-4.674a1 1 0 00-.364-1.118L2.92 10.1c-.783-.57-.381-1.81.588-1.81h4.914a1 1 0 00.951-.69l1.519-4.674z" />
-                  </svg>
-                </div>
-              </div>
-              <p className="text-sm text-gray-500 mt-2">Based on {reviews.length} reviews.</p>
-            </div>
-          </section>
-
-          <div className="border-b border-gray-200 mb-6">
-            <nav className="flex flex-wrap space-x-4 sm:space-x-8">
-              <button
-                onClick={() => setActiveTab("subscribers")}
-                className={`py-4 px-1 border-b-2 font-medium text-sm transition-colors ${
-                  activeTab === "subscribers" ? "border-blue-500 text-blue-600" : "border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300"
-                }`}
-              >
-                My Subscribers
-              </button>
-              <button
-                onClick={() => setActiveTab("menu")}
-                className={`py-4 px-1 border-b-2 font-medium text-sm transition-colors ${
-                  activeTab === "menu" ? "border-blue-500 text-blue-600" : "border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300"
-                }`}
-              >
-                Weekly Menu
-              </button>
-              <button
-                onClick={() => setActiveTab("inquiries")}
-                className={`py-4 px-1 border-b-2 font-medium text-sm transition-colors ${
-                  activeTab === "inquiries" ? "border-blue-500 text-blue-600" : "border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300"
-                }`}
-              >
-                Inquiries
-                {newInquiriesCount > 0 && (
-                  <span className="ml-2 py-0.5 px-2.5 rounded-full text-xs font-medium bg-red-100 text-red-800">
-                    {newInquiriesCount}
-                  </span>
-                )}
-              </button>
-              <button
-                onClick={() => setActiveTab("feedback")}
-                className={`py-4 px-1 border-b-2 font-medium text-sm transition-colors ${
-                  activeTab === "feedback" ? "border-blue-500 text-blue-600" : "border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300"
-                }`}
-              >
-                Feedback & Reviews
-              </button>
-              <button
-                onClick={() => setActiveTab("todays_menu")}
-                className={`py-4 px-1 border-b-2 font-medium text-sm transition-colors ${
-                  activeTab === "todays_menu" ? "border-blue-500 text-blue-600" : "border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300"
-                }`}
-              >
-                Update Today's Menu
-              </button>
-            </nav>
-          </div>
-          
-          {renderContent()}
-        </main>
+  /* ------------------ LOADING UI ------------------ */
+  if (loading)
+    return (
+      <div className="flex justify-center items-center h-screen bg-gray-50">
+        <div className="text-xl font-semibold text-gray-600">Loading Dashboard...</div>
       </div>
-      <Footer />
+    );
+
+  /* ------------------ MAIN UI ------------------ */
+  return (
+    <div className="min-h-screen bg-gray-50 relative">
+      
+      {/* 1. Fixed Sidebar */}
+      <div className="fixed top-0 left-0 h-full w-64 z-30">
+        <Sidebar />
+      </div>
+
+      {/* 2. Main Content Wrapper */}
+      <div className="ml-64 flex flex-col min-h-screen">
+        
+        {/* 3. Fixed Header */}
+        <header className="fixed top-0 right-0 left-64 bg-white z-20 shadow-md border-b">
+          <Header />
+        </header>
+
+        {/* 4. Scrollable Main Content (pt-20 pushes content below the fixed header) */}
+        <main className="flex-1 pt-20 px-6 pb-6">
+          <div className="max-w-7xl mx-auto">
+            
+            {/* Dashboard Header/Title */}
+            <div className="flex justify-between items-center mb-8 border-b pb-4">
+              <div>
+                <h1 className="text-4xl font-extrabold text-transparent bg-gradient-to-r from-blue-600 to-indigo-600 bg-clip-text">
+                  {owner ? owner.messName : "Mess Owner Dashboard"}
+                </h1>
+                <p className="text-gray-500 mt-1 text-base">
+                  {owner
+                    ? `📍 ${owner.messLocation || "Unknown"} • ${owner.messType || "N/A"}`
+                    : "Manage your services and grow your business."}
+                </p>
+              </div>
+
+              <button className="px-5 py-2.5 bg-blue-600 text-white rounded-lg shadow-md hover:bg-blue-700 transition font-semibold">
+                ➕ Add New Mess
+              </button>
+            </div>
+
+
+            {/* Stats */}
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 mb-10">
+              <StatCard
+                title="Total Subscribers"
+                value={data.subscribers.length}
+                color="bg-blue-500"
+                subtitle="Active customers"
+                icon={<FaUsers className="w-5 h-5" />}
+              />
+              <StatCard
+                title="New Inquiries"
+                value={newInquiries}
+                color="bg-purple-500"
+                subtitle="Pending responses"
+                icon={<FaEnvelopeOpenText className="w-5 h-5" />}
+              />
+              <StatCard
+                title="Average Rating"
+                value={`${avgRating} ★`}
+                color="bg-yellow-500"
+                subtitle={`${data.reviews.length} total reviews`}
+                icon={<FaStar className="w-5 h-5" />}
+              />
+            </div>
+
+            {/* Tabs & Content Area */}
+            <div className="mt-10 bg-white rounded-xl shadow-2xl p-6 border border-gray-100">
+              <div className="flex space-x-1 border-b mb-6 -mt-6 -mx-6 px-6 pt-6">
+                <TabButton
+                  active={activeTab === "subscribers"}
+                  onClick={() => setActiveTab("subscribers")}
+                >
+                  Listings & Subscribers
+                </TabButton>
+                <TabButton
+                  active={activeTab === "inquiries"}
+                  onClick={() => setActiveTab("inquiries")}
+                  badge={newInquiries}
+                >
+                  Inquiries
+                </TabButton>
+                 <TabButton
+                  active={activeTab === "reviews"}
+                  onClick={() => setActiveTab("reviews")}
+                >
+                  Reviews
+                </TabButton>
+                <TabButton
+                  active={activeTab === "special"}
+                  onClick={() => setActiveTab("special")}
+                >
+                  Today's Special
+                </TabButton>
+              </div>
+
+              <div className="py-4">{renderContent()}</div>
+            </div>
+          </div>
+        </main>
+
+        {/* 5. Footer (Visible only when scrolled to the bottom of the main content) */}
+        <Footer />
+      </div>
     </div>
   );
 };

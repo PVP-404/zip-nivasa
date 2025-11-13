@@ -113,6 +113,12 @@ const Sidebar = () => {
         label: "Add Mess",
         path: "/dashboard/add-mess",
       },
+      {
+  icon: <Icon d="M4 4h16v16H4z" />,
+  label: "Messages",
+  path: "/messages",
+}
+      
     ],
 
     laundry: [

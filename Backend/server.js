@@ -7,6 +7,7 @@ import { fileURLToPath } from "url";
 import connectDB from "./config/db.js";
 import { createServer } from "http";
 import { Server } from "socket.io";
+import cron from "node-cron";
 
 // Routes
 import pgRoutes from "./routes/pgRoutes.js";
@@ -15,6 +16,10 @@ import chatRoutes from "./routes/chatRoutes.js";
 
 // Models
 import Message from "./models/Message.js";
+
+//messes
+import messOwnerRoutes from "./routes/messOwnerRoutes.js";
+import messRoutes from "./routes/messRoutes.js";
 
 dotenv.config();
 
@@ -51,6 +56,10 @@ app.use("/api/chat", chatRoutes);
 app.get("/", (req, res) => {
   res.send("Zip Nivasa Backend Running ✅");
 });
+
+// API mess Routes
+app.use("/api/mess-owner", messOwnerRoutes);
+app.use("/api/mess", messRoutes);
 
 // Socket.io
 const io = new Server(httpServer, {
@@ -139,4 +148,22 @@ io.on("connection", (socket) => {
 // Start server
 httpServer.listen(PORT, () => {
   console.log(`✅ Server + Socket.io running on port ${PORT}`);
+});
+
+
+// 🕛 Reset today's specials every midnight
+cron.schedule("0 0 * * *", async () => {
+  try {
+    await Mess.updateMany({}, { 
+      $set: { 
+        "specialToday.lunch": "",
+        "specialToday.dinner": "",
+        "specialToday.imageUrl": "",
+        "specialToday.date": new Date()
+      } 
+    });
+    console.log("✅ Daily specials reset successfully at midnight");
+  } catch (err) {
+    console.error("❌ Error resetting daily specials:", err.message);
+  }
 });

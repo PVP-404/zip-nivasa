@@ -1,14 +1,13 @@
-// frontend/src/pages/Login.jsx
-import React, { useState } from 'react';
-import { useNavigate, useLocation, Link } from 'react-router-dom';
-import { motion } from 'framer-motion';
+import React, { useState } from "react";
+import { useNavigate, useLocation, Link } from "react-router-dom";
+import { motion } from "framer-motion";
 
 const roleImages = {
-  student: 'https://images.pexels.com/photos/3807750/pexels-photo-3807750.jpeg',
-  pgowner: 'https://images.pexels.com/photos/439391/pexels-photo-439391.jpeg',
-  messowner: 'https://images.pexels.com/photos/3184436/pexels-photo-3184436.jpeg',
-  laundry: 'https://images.pexels.com/photos/3616760/pexels-photo-3616760.jpeg',
-  service: 'https://images.pexels.com/photos/6209271/pexels-photo-6209271.jpeg',
+  student: "https://images.pexels.com/photos/3807750/pexels-photo-3807750.jpeg",
+  pgowner: "https://images.pexels.com/photos/439391/pexels-photo-439391.jpeg",
+  messowner: "https://images.pexels.com/photos/3184436/pexels-photo-3184436.jpeg",
+  laundry: "https://images.pexels.com/photos/3616760/pexels-photo-3616760.jpeg",
+  service: "https://images.pexels.com/photos/6209271/pexels-photo-6209271.jpeg",
 };
 
 const loginBanner = "https://cdn-icons-png.flaticon.com/512/5087/5087579.png";
@@ -31,7 +30,6 @@ const Login = () => {
         body: JSON.stringify({ email, password }),
       });
 
-      // handle non-JSON or 500 gracefully
       let data;
       try {
         data = await res.json();
@@ -45,18 +43,23 @@ const Login = () => {
         return;
       }
 
+      // ✅ Save JWT and user data
       localStorage.setItem("token", data.token);
-localStorage.setItem("userId", data.user.id);
-localStorage.setItem("role", data.user.role);
-localStorage.setItem("username", data.user.name);
+      localStorage.setItem("userId", data.user.id);
+      localStorage.setItem("role", data.user.role);
+      localStorage.setItem("username", data.user.name);
 
-console.log("LOGIN RESPONSE:", data);
+      // ✅ Fix: also save ownerId if role = messowner / pgowner
+      if (data.user.role === "messowner" || data.user.role === "pgowner") {
+        localStorage.setItem("ownerId", data.user.id);
+      }
 
+      console.log("LOGIN RESPONSE:", data);
 
-
-
+      // ✅ Role-based redirect
       switch (data.user.role) {
         case "tenant":
+        case "student":
           navigate("/dashboard/student");
           break;
         case "pgowner":
@@ -75,6 +78,7 @@ console.log("LOGIN RESPONSE:", data);
           navigate("/");
       }
     } catch (error) {
+      console.error("Login error:", error);
       alert("Login failed. Please try again.");
     }
   };
@@ -89,7 +93,7 @@ console.log("LOGIN RESPONSE:", data);
           alt="Role"
         />
         <div className="absolute inset-0 bg-sky-700 bg-opacity-30 flex items-center justify-center">
-          <img src={loginBanner} className="w-40 h-40 md:w-56 md:h-56" alt="Banner"/>
+          <img src={loginBanner} className="w-40 h-40 md:w-56 md:h-56" alt="Banner" />
         </div>
       </div>
 
@@ -102,7 +106,9 @@ console.log("LOGIN RESPONSE:", data);
       >
         <div className="bg-white p-10 rounded-3xl shadow-xl border w-full max-w-md">
           <h2 className="text-4xl font-bold text-gray-800 text-center mb-2">Login</h2>
-          <p className="text-gray-500 text-center mb-8">Enter your details to continue</p>
+          <p className="text-gray-500 text-center mb-8">
+            Enter your details to continue
+          </p>
 
           <form onSubmit={handleLogin} className="space-y-6">
             <div>
@@ -112,7 +118,7 @@ console.log("LOGIN RESPONSE:", data);
                 className="w-full p-3 border rounded-lg"
                 placeholder="you@example.com"
                 value={email}
-                onChange={(e)=>setEmail(e.target.value)}
+                onChange={(e) => setEmail(e.target.value)}
                 required
               />
             </div>
@@ -124,14 +130,14 @@ console.log("LOGIN RESPONSE:", data);
                 className="w-full p-3 border rounded-lg"
                 placeholder="********"
                 value={password}
-                onChange={(e)=>setPassword(e.target.value)}
+                onChange={(e) => setPassword(e.target.value)}
                 required
               />
             </div>
 
             <button
               type="submit"
-              className="w-full py-3 bg-gradient-to-r from-sky-500 to-indigo-600 text-white rounded-lg shadow-md"
+              className="w-full py-3 bg-gradient-to-r from-sky-500 to-indigo-600 text-white rounded-lg shadow-md hover:scale-105 transition-all"
             >
               Login
             </button>
@@ -139,7 +145,7 @@ console.log("LOGIN RESPONSE:", data);
 
           <p className="text-center text-gray-500 mt-8">
             New to Zip-Nivasa?{" "}
-            <Link className="text-sky-600" to={`/register?role=${roleParam}`}>
+            <Link className="text-sky-600 font-medium" to={`/register?role=${roleParam}`}>
               Create an account
             </Link>
           </p>
