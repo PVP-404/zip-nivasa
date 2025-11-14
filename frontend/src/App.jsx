@@ -24,6 +24,11 @@ import Payments from "./pages/tenant/Payments";
 import Complaints from "./pages/tenant/Complaints";
 import Profile from "./pages/tenant/Profile";
 
+//mess pages
+// Mess Details Page
+import MessDetails from "./pages/mess/MessDetails";
+
+
 // Other Pages
 import AddListing from "./pages/dashboard/AddListing";
 import AddMessListing from "./pages/dashboard/AddMessListing";
@@ -53,8 +58,8 @@ function App() {
         <Route path="/services/pg/:id" element={<PGDetails />} />
 
         {/* ✅ Chat Route */}
-        <Route 
-          path="/chat/:id" 
+        <Route
+          path="/chat/:id"
           element={
             <ProtectedRoute>
               <ChatPageWrapper />
@@ -63,8 +68,8 @@ function App() {
         />
 
         {/* ✅ Chat List for all roles */}
-        <Route 
-          path="/messages" 
+        <Route
+          path="/messages"
           element={
             <ProtectedRoute>
               <ChatList />
@@ -73,8 +78,8 @@ function App() {
         />
 
         {/* ✅ Inbox (Optional — keep if needed) */}
-        <Route 
-          path="/inbox" 
+        <Route
+          path="/inbox"
           element={
             <ProtectedRoute>
               <Inbox />
@@ -148,6 +153,15 @@ function App() {
             </RoleProtectedRoute>
           }
         />
+        <Route
+          path="/mess/:id"
+          element={
+            <ProtectedRoute>
+              <MessDetails />
+            </ProtectedRoute>
+          }
+        />
+
 
         {/* ✅ Laundry Dashboard */}
         <Route

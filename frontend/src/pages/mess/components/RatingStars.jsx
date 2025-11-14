@@ -1,3 +1,4 @@
+//pages/mess/components/RatingStars.jsx
 import React from "react";
 
 const RatingStars = ({ rating, setRating }) => {

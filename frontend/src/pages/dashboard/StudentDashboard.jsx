@@ -1,6 +1,6 @@
 // src/pages/dashboard/StudentDashboard.jsx
 import React, { useState, useEffect, useRef } from "react";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import Header from "../../components/Header";
 import Footer from "../../components/Footer";
 import Sidebar from "../../components/Sidebar";
@@ -10,7 +10,11 @@ const mockLaundryList = [
   { id: 2, name: "Fresh Clean", location: "Campus Road", rating: 4.6, services: ["Washing", "Ironing"], price: "₹40/kg" },
 ];
 
+
+
+
 const StudentDashboard = () => {
+  const navigate = useNavigate();
   const [messes, setMesses] = useState([]);
   const [housingOptions, setHousingOptions] = useState([]);
   const [laundryOptions, setLaundryOptions] = useState([]);
@@ -233,10 +237,10 @@ const StudentDashboard = () => {
                   </p>
 
                   <button
-                    onClick={() => setSelectedMess(mess)}
+                    onClick={() => navigate(`/mess/${mess._id}`)}
                     className="w-full bg-indigo-600 text-white py-2.5 rounded-lg font-medium hover:bg-indigo-700 transition-colors"
                   >
-                    View Menu
+                    View Details
                   </button>
                 </div>
               ))}

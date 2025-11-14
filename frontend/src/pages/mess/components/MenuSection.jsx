@@ -1,3 +1,4 @@
+//pages/mess/components.MenuSection.jsx
 const MenuSection = ({ menu }) => (
   <div className="mt-6 bg-white p-6 rounded-lg shadow">
     <h2 className="text-xl font-semibold mb-3">Menu</h2>
