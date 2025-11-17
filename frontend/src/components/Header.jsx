@@ -28,7 +28,7 @@ const Header = () => {
         <h1 className="text-3xl font-bold text-white tracking-tight cursor-pointer hover:scale-105 transition-transform duration-200">
           Zip Nivasa
           <span className="block text-xs font-normal text-indigo-200 tracking-wider mt-0.5">
-            Property Management System
+            Find. Connect. Live Better.
           </span>
         </h1>
       </div>

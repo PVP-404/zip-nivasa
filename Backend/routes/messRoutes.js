@@ -13,28 +13,46 @@ import {
 
 const router = express.Router();
 
+// // ADD MESS
+// router.post("/add", upload.array("images", 5), addMess);
+
+// // GET ALL
+// router.get("/all", getAllMesses);
+
+// // 🔥 IMPORTANT: get by ID MUST come BEFORE owner route
+// router.get("/:id", getMessById);
+
+// // Owner messes
+// router.get("/owner/:ownerId", getMessesByOwner);
+
+// // Update
+// router.put("/:id", updateMess);
+
+// // Delete
+// router.delete("/:id", deleteMess);
+
+
+
+// // Rating
+// router.post("/:id/rate", addRating);
+
 // ADD MESS
 router.post("/add", upload.array("images", 5), addMess);
 
 // GET ALL
 router.get("/all", getAllMesses);
 
-// 🔥 IMPORTANT: get by ID MUST come BEFORE owner route
-router.get("/:id", getMessById);
-
-// Owner messes
+// OWNER ROUTE (static prefix)
 router.get("/owner/:ownerId", getMessesByOwner);
 
-// Update
-router.put("/:id", updateMess);
+// RATING ROUTE (specific)
+router.post("/:id/rate", addRating);
 
-// Delete
-router.delete("/:id", deleteMess);
+// GET BY ID (generic → MUST be last)
+router.get("/:id", getMessById);
 
 // Today's special
 router.post("/publish-special", publishSpecial);
 
-// Rating
-router.post("/:id/rate", addRating);
 
 export default router;

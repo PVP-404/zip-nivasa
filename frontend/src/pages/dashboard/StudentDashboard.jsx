@@ -102,11 +102,19 @@ const StudentDashboard = () => {
   );
 
   return (
-    <div className="flex min-h-screen bg-gray-50">
-      <Sidebar />
-      <div className="flex-1 flex flex-col">
+    <div className="bg-gray-50 min-h-screen flex">
+
+      {/* 🟣 FIXED SIDEBAR */}
+      <div className="fixed top-0 left-0 h-full w-64 z-40">
+        <Sidebar />
+      </div>
+
+      {/* 🟢 MAIN CONTENT (shifted right) */}
+      <div className="ml-64 flex-1 flex flex-col min-h-screen">
         <Header />
+
         <main className="flex-grow p-6 md:p-10 max-w-7xl mx-auto w-full">
+
           <div className="mb-8">
             <h1 className="text-3xl font-bold text-gray-900 mb-2">Welcome to Student Dashboard</h1>
             <p className="text-gray-600">Find the best PGs, messes, and laundry services near you</p>
@@ -206,46 +214,66 @@ const StudentDashboard = () => {
           {/* Mess */}
           {activeService === "mess" && (
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-              {filtered.mess.map((mess) => (
-                <div
-                  key={mess._id}
-                  className="bg-white rounded-lg shadow-sm border border-gray-200 p-5 hover:shadow-md transition-shadow"
-                >
-                  <div className="flex justify-between items-start mb-3">
-                    <div>
-                      <h4 className="font-semibold text-lg text-gray-900">
-                        {mess.title || mess.name}
-                      </h4>
-                      <p className="text-sm text-gray-600">
-                        {mess.location}
-                      </p>
-                    </div>
-                    <span className="bg-green-100 text-green-700 text-xs font-semibold px-2 py-1 rounded">
-                      {mess.type}
-                    </span>
-                  </div>
+              {filtered.mess.map((mess) => {
 
-                  <div className="flex items-center gap-1 mb-3">
-                    <StarIcon />
-                    <span className="text-sm font-semibold text-gray-700">
-                      {mess.rating || 4.5}
-                    </span>
-                  </div>
+                // 1️⃣ Calculate average rating (fallback)
+                const calculatedAvg =
+                  mess.ratings && mess.ratings.length > 0
+                    ? mess.ratings.reduce((sum, r) => sum + (r.stars || 0), 0) /
+                    mess.ratings.length
+                    : null;
 
-                  <p className="text-lg font-bold text-gray-900 mb-4">
-                    ₹{mess.price}/month
-                  </p>
+                // 2️⃣ Choose backend average if available OR the calculated one
+                const avgRating = mess.averageRating ?? calculatedAvg;
 
-                  <button
-                    onClick={() => navigate(`/mess/${mess._id}`)}
-                    className="w-full bg-indigo-600 text-white py-2.5 rounded-lg font-medium hover:bg-indigo-700 transition-colors"
+                return (
+                  <div
+                    key={mess._id}
+                    className="bg-white rounded-lg shadow-sm border border-gray-200 p-5 hover:shadow-md transition-shadow"
                   >
-                    View Details
-                  </button>
-                </div>
-              ))}
+                    <div className="flex justify-between items-start mb-3">
+                      <div>
+                        <h4 className="font-semibold text-lg text-gray-900">
+                          {mess.title || mess.name}
+                        </h4>
+                        <p className="text-sm text-gray-600">{mess.location}</p>
+                      </div>
+                      <span className="bg-green-100 text-green-700 text-xs font-semibold px-2 py-1 rounded">
+                        {mess.type}
+                      </span>
+                    </div>
+
+                    {/* ⭐ Rating Row */}
+                    <div className="flex items-center gap-1 mb-3">
+                      <StarIcon className="text-yellow-500" />
+
+                      {avgRating ? (
+                        <span className="text-sm font-semibold text-gray-700">
+                          {avgRating.toFixed(1)}
+                        </span>
+                      ) : (
+                        <span className="text-sm text-gray-400 italic">
+                          No ratings
+                        </span>
+                      )}
+                    </div>
+
+                    <p className="text-lg font-bold text-gray-900 mb-4">
+                      ₹{mess.price}/month
+                    </p>
+
+                    <button
+                      onClick={() => navigate(`/mess/${mess._id}`)}
+                      className="w-full bg-indigo-600 text-white py-2.5 rounded-lg font-medium hover:bg-indigo-700 transition-colors"
+                    >
+                      View Details
+                    </button>
+                  </div>
+                );
+              })}
             </div>
           )}
+
 
 
           {/* Laundry */}

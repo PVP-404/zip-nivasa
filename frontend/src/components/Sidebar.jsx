@@ -78,10 +78,10 @@ const Sidebar = () => {
         path: "/student/profile",
       },
       {
-  icon: <Icon d="M4 4h16v16H4z" />,
-  label: "Messages",
-  path: "/messages",
-},
+        icon: <Icon d="M4 4h16v16H4z" />,
+        label: "Messages",
+        path: "/messages",
+      },
     ],
 
     pgowner: [
@@ -96,10 +96,10 @@ const Sidebar = () => {
         path: "/dashboard/add-listing",
       },
       {
-  icon: <Icon d="M4 4h16v16H4z" />,
-  label: "Messages",
-  path: "/messages",
-}
+        icon: <Icon d="M4 4h16v16H4z" />,
+        label: "Messages",
+        path: "/messages",
+      }
     ],
 
     messowner: [
@@ -114,11 +114,11 @@ const Sidebar = () => {
         path: "/dashboard/add-mess",
       },
       {
-  icon: <Icon d="M4 4h16v16H4z" />,
-  label: "Messages",
-  path: "/messages",
-}
-      
+        icon: <Icon d="M4 4h16v16H4z" />,
+        label: "Messages",
+        path: "/messages",
+      }
+
     ],
 
     laundry: [
@@ -169,11 +169,10 @@ const Sidebar = () => {
             <button
               key={index}
               onClick={() => handleNavigation(menu.path)}
-              className={`w-full flex items-center gap-4 px-3 py-3 rounded-xl transition-all duration-200 group relative ${
-                active
+              className={`w-full flex items-center gap-4 px-3 py-3 rounded-xl transition-all duration-200 group relative ${active
                   ? "bg-white/20 text-white shadow-lg"
                   : "text-indigo-200 hover:bg-white/10 hover:text-white"
-              }`}
+                }`}
             >
               {active && (
                 <div className="absolute left-0 top-0 bottom-0 w-1 bg-gradient-to-b from-yellow-400 to-orange-500 rounded-r-full"></div>

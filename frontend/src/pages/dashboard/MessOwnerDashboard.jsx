@@ -39,11 +39,10 @@ const StatCard = ({ title, value, icon, color, subtitle }) => (
 const TabButton = ({ active, onClick, children, badge }) => (
   <button
     onClick={onClick}
-    className={`relative py-3 px-6 font-semibold text-sm transition-all whitespace-nowrap rounded-t-lg ${
-      active
-        ? "text-blue-600 bg-white border-b-2 border-blue-600 shadow-inner"
-        : "text-gray-600 hover:text-blue-700 border-b-2 border-transparent hover:border-gray-100"
-    }`}
+    className={`relative py-3 px-6 font-semibold text-sm transition-all whitespace-nowrap rounded-t-lg ${active
+      ? "text-blue-600 bg-white border-b-2 border-blue-600 shadow-inner"
+      : "text-gray-600 hover:text-blue-700 border-b-2 border-transparent hover:border-gray-100"
+      }`}
   >
     {children}
     {badge > 0 && (
@@ -85,33 +84,40 @@ const MessOwnerDashboard = () => {
         setLoading(false);
         return;
       }
+
       try {
+        // Fetch all messes owned by this owner + all mess owners
         const [messes, owners] = await Promise.all([
           getMessesByOwner(ownerId),
           getAllMessOwners(),
         ]);
 
+        // Set logged-in owner details
         const ownerData = owners.find((o) => o.userId === ownerId);
         setOwner(ownerData);
 
-        // Enhance subscriber data mapping with location for better display
+        /* --------------------------------------------------
+           1️⃣ Subscribers (Mess Listings)
+        -------------------------------------------------- */
         const subscribers = messes.map((m) => ({
           id: m._id,
           name: m.title || m.messName || "Unnamed Mess",
-          location: m.location || "N/A", // Added location field
+          location: m.location || "N/A",
           plan: `${m.type || "Veg"} • ₹${m.price || 0}`,
           status: "Active",
           joined: m.createdAt,
         }));
 
-        // Added more realistic dummy data for reviews/inquiries
+        /* --------------------------------------------------
+           2️⃣ Inquiries (KEEP DUMMY FOR NOW)
+        -------------------------------------------------- */
         const inquiries = [
           {
             id: "i1",
             customerName: "Priya Sharma",
             contact: "9876543210",
             status: "New",
-            date: new Date(Date.now() - 86400000), // 1 day ago
+            date: new Date(Date.now() - 86400000),
             message: "Looking for lunch subscription near your mess, 5-day plan.",
           },
           {
@@ -119,29 +125,31 @@ const MessOwnerDashboard = () => {
             customerName: "Rohan Verma",
             contact: "9988776655",
             status: "Contacted",
-            date: new Date(Date.now() - 2 * 86400000), // 2 days ago
+            date: new Date(Date.now() - 2 * 86400000),
             message: "Enquiring about your weekend meal package options.",
           },
         ];
 
-        const reviews = [
-          {
-            id: "r1",
-            customer: "Amit Singh",
-            rating: 5,
-            comment: "Best food! Always fresh and on time.",
-            date: new Date(Date.now() - 5 * 86400000),
-          },
-          {
-            id: "r2",
-            customer: "Anjali Das",
-            rating: 4,
-            comment: "Good quality, prompt service.",
-            date: new Date(Date.now() - 10 * 86400000),
-          },
-        ];
+        /* --------------------------------------------------
+           3️⃣ REVIEWS — REAL DATA FROM MONGODB
+        -------------------------------------------------- */
+        const reviews = messes.flatMap((mess) =>
+          (mess.ratings || []).map((r) => ({
+            id: r._id,
+            messId: mess._id,
+            messName: mess.title || mess.messName || "Unnamed Mess",
+            customer: r.studentId?.name || "Student", // populated name
+            rating: r.stars || 0,
+            comment: r.comment || "",
+            date: r.date || mess.createdAt,
+          }))
+        );
 
+        /* --------------------------------------------------
+           4️⃣ SET ALL DASHBOARD DATA
+        -------------------------------------------------- */
         setData({ subscribers, inquiries, reviews });
+
       } catch (err) {
         console.error(err);
       } finally {
@@ -151,6 +159,7 @@ const MessOwnerDashboard = () => {
 
     loadData();
   }, [ownerId]);
+
 
   /* ------------------ IMAGE UPLOAD ------------------ */
   const handleImageUpload = (e) => {
@@ -232,14 +241,14 @@ const MessOwnerDashboard = () => {
       }
     }).catch(() => alert("Server error during update."));
   };
-  
+
   // Update Inquiry Status (for the UI only)
   const handleContacted = (inqId) => {
     setData((prev) => ({
-        ...prev,
-        inquiries: prev.inquiries.map((i) =>
+      ...prev,
+      inquiries: prev.inquiries.map((i) =>
         i.id === inqId ? { ...i, status: "Contacted" } : i
-        ),
+      ),
     }));
   };
 
@@ -247,9 +256,9 @@ const MessOwnerDashboard = () => {
   const avgRating =
     data.reviews.length > 0
       ? (
-          data.reviews.reduce((sum, r) => sum + r.rating, 0) /
-          data.reviews.length
-        ).toFixed(1)
+        data.reviews.reduce((sum, r) => sum + r.rating, 0) /
+        data.reviews.length
+      ).toFixed(1)
       : "0.0";
 
   const newInquiries = data.inquiries.filter((i) => i.status === "New").length;
@@ -267,43 +276,43 @@ const MessOwnerDashboard = () => {
                 <p className="text-sm text-gray-400">Use the 'Add New Mess' button to get started.</p>
               </div>
             ) : (
-                data.subscribers.map((sub) => (
-                    <div
-                        key={sub.id}
-                        className="bg-white p-5 rounded-xl shadow-md border border-gray-100 flex justify-between items-center transition duration-200 hover:shadow-lg"
+              data.subscribers.map((sub) => (
+                <div
+                  key={sub.id}
+                  className="bg-white p-5 rounded-xl shadow-md border border-gray-100 flex justify-between items-center transition duration-200 hover:shadow-lg"
+                >
+                  <div className="flex-1 min-w-0">
+                    <h4 className="font-bold text-lg text-blue-800 truncate">{sub.name}</h4>
+                    <p className="text-sm text-gray-500 mt-1 flex items-center gap-2">
+                      <FaLink className="w-3 h-3 text-gray-400" />
+                      <span>{sub.plan}</span>
+                      <span className="text-xs text-gray-400 ml-3">| Listed at: {sub.location}</span>
+                    </p>
+                  </div>
+
+                  {/* Update + Delete Buttons */}
+                  <div className="flex items-center space-x-3 ml-4">
+                    <span className="px-3 py-1 bg-green-100 text-green-700 rounded-full text-xs font-medium">
+                      {sub.status}
+                    </span>
+                    <button
+                      onClick={() => handleEditMess(sub)}
+                      title="Edit Mess Name"
+                      className="p-2 text-sm bg-gray-100 text-blue-600 rounded-lg hover:bg-blue-100 transition"
                     >
-                        <div className="flex-1 min-w-0">
-                            <h4 className="font-bold text-lg text-blue-800 truncate">{sub.name}</h4>
-                            <p className="text-sm text-gray-500 mt-1 flex items-center gap-2">
-                                <FaLink className="w-3 h-3 text-gray-400" />
-                                <span>{sub.plan}</span>
-                                <span className="text-xs text-gray-400 ml-3">| Listed at: {sub.location}</span>
-                            </p>
-                        </div>
+                      <FaEdit />
+                    </button>
 
-                        {/* Update + Delete Buttons */}
-                        <div className="flex items-center space-x-3 ml-4">
-                            <span className="px-3 py-1 bg-green-100 text-green-700 rounded-full text-xs font-medium">
-                                {sub.status}
-                            </span>
-                            <button
-                                onClick={() => handleEditMess(sub)}
-                                title="Edit Mess Name"
-                                className="p-2 text-sm bg-gray-100 text-blue-600 rounded-lg hover:bg-blue-100 transition"
-                            >
-                                <FaEdit />
-                            </button>
-
-                            <button
-                                onClick={() => handleDeleteMess(sub.id)}
-                                title="Delete Mess"
-                                className="p-2 text-sm bg-gray-100 text-red-600 rounded-lg hover:bg-red-100 transition"
-                            >
-                                <FaTrash />
-                            </button>
-                        </div>
-                    </div>
-                ))
+                    <button
+                      onClick={() => handleDeleteMess(sub.id)}
+                      title="Delete Mess"
+                      className="p-2 text-sm bg-gray-100 text-red-600 rounded-lg hover:bg-red-100 transition"
+                    >
+                      <FaTrash />
+                    </button>
+                  </div>
+                </div>
+              ))
             )}
             <div className="h-10"></div>
           </div>
@@ -311,83 +320,95 @@ const MessOwnerDashboard = () => {
 
       case "inquiries":
         return (
-            <div className="grid gap-4">
-                {data.inquiries.map((inq) => (
-                    <div
-                        key={inq.id}
-                        className={`p-5 rounded-xl shadow-md border transition-all duration-300 ${
-                            inq.status === "New"
-                                ? "bg-yellow-50 border-yellow-200"
-                                : "bg-white border-gray-100"
-                        }`}
+          <div className="grid gap-4">
+            {data.inquiries.map((inq) => (
+              <div
+                key={inq.id}
+                className={`p-5 rounded-xl shadow-md border transition-all duration-300 ${inq.status === "New"
+                  ? "bg-yellow-50 border-yellow-200"
+                  : "bg-white border-gray-100"
+                  }`}
+              >
+                <div className="flex justify-between items-start mb-3">
+                  <div>
+                    <h4 className="font-bold text-gray-900 text-base">{inq.customerName}</h4>
+                    <p className="text-sm text-gray-600 mt-1 leading-relaxed italic">
+                      "{inq.message}"
+                    </p>
+                  </div>
+                  <span
+                    className={`px-3 py-1 rounded-full text-xs font-medium min-w-[80px] text-center shadow-sm ${inq.status === "New"
+                      ? "bg-yellow-500 text-white"
+                      : "bg-green-100 text-green-700"
+                      }`}
+                  >
+                    {inq.status}
+                  </span>
+                </div>
+                <div className="flex justify-between items-center pt-3 border-t border-gray-100 mt-2">
+                  <p className="text-xs text-gray-500 font-mono flex items-center gap-1">
+                    <FaEnvelopeOpenText className="w-3 h-3" /> {inq.contact}
+                  </p>
+                  {inq.status === "New" && (
+                    <button
+                      onClick={() => handleContacted(inq.id)}
+                      className="px-4 py-1.5 bg-blue-600 text-white text-xs font-semibold rounded-lg hover:bg-blue-700 transition"
                     >
-                        <div className="flex justify-between items-start mb-3">
-                            <div>
-                                <h4 className="font-bold text-gray-900 text-base">{inq.customerName}</h4>
-                                <p className="text-sm text-gray-600 mt-1 leading-relaxed italic">
-                                    "{inq.message}"
-                                </p>
-                            </div>
-                            <span
-                                className={`px-3 py-1 rounded-full text-xs font-medium min-w-[80px] text-center shadow-sm ${
-                                    inq.status === "New"
-                                        ? "bg-yellow-500 text-white"
-                                        : "bg-green-100 text-green-700"
-                                }`}
-                            >
-                                {inq.status}
-                            </span>
-                        </div>
-                        <div className="flex justify-between items-center pt-3 border-t border-gray-100 mt-2">
-                            <p className="text-xs text-gray-500 font-mono flex items-center gap-1">
-                                <FaEnvelopeOpenText className="w-3 h-3" /> {inq.contact}
-                            </p>
-                            {inq.status === "New" && (
-                                <button
-                                    onClick={() => handleContacted(inq.id)}
-                                    className="px-4 py-1.5 bg-blue-600 text-white text-xs font-semibold rounded-lg hover:bg-blue-700 transition"
-                                >
-                                    Mark Contacted
-                                </button>
-                            )}
-                        </div>
-                    </div>
-                ))}
-                <div className="h-10"></div>
-            </div>
+                      Mark Contacted
+                    </button>
+                  )}
+                </div>
+              </div>
+            ))}
+            <div className="h-10"></div>
+          </div>
         );
 
       case "reviews":
-          const StarRating = ({ rating }) => (
-            <span className="text-yellow-500 font-bold text-lg">
-              {Array(rating).fill("★").join("")}
-              {Array(5 - rating).fill("☆").join("")}
-            </span>
-          );
-        return (
-            <div className="grid gap-4">
-                {data.reviews.map((rev) => (
-                    <div
-                        key={rev.id}
-                        className="bg-white p-5 rounded-xl shadow-lg border border-gray-100 hover:shadow-xl"
-                    >
-                        <div className="flex justify-between items-start mb-2">
-                            <h4 className="font-semibold text-gray-900 text-base">
-                                {rev.customer}
-                            </h4>
-                            <StarRating rating={rev.rating} />
-                        </div>
-                        <p className="text-gray-700 text-sm leading-relaxed border-b pb-3 mb-3 italic">
-                            "{rev.comment}"
-                        </p>
-                        <p className="text-xs text-gray-400">
-                            Reviewed on {new Date(rev.date).toLocaleDateString()}
-                        </p>
-                    </div>
-                ))}
-                <div className="h-10"></div>
-            </div>
+        const StarRating = ({ rating }) => (
+          <span className="text-yellow-500 font-bold text-lg">
+            {Array(rating).fill("★").join("")}
+            {Array(5 - rating).fill("☆").join("")}
+          </span>
         );
+        return (
+          <div className="grid gap-4">
+            {data.reviews.length === 0 ? (
+              <div className="text-center py-10 text-gray-500 bg-gray-50 rounded-xl border border-dashed border-gray-300">
+                <FaStar className="mx-auto w-10 h-10 text-gray-300 mb-3" />
+                <p className="font-semibold">No reviews yet.</p>
+                <p className="text-sm text-gray-400">Your customers’ ratings will appear here.</p>
+              </div>
+            ) : (
+              data.reviews.map((rev) => (
+                <div
+                  key={rev.id}
+                  className="bg-white p-5 rounded-xl shadow-lg border border-gray-100 hover:shadow-xl"
+                >
+                  <div className="flex justify-between items-start mb-1">
+                    <div>
+                      <h4 className="font-semibold text-gray-900 text-base">
+                        {rev.customer}
+                      </h4>
+                      <p className="text-xs text-gray-500">
+                        For mess: <span className="font-medium">{rev.messName}</span>
+                      </p>
+                    </div>
+                    <StarRating rating={rev.rating} />
+                  </div>
+                  <p className="text-gray-700 text-sm leading-relaxed border-b pb-3 mb-3 italic">
+                    "{rev.comment}"
+                  </p>
+                  <p className="text-xs text-gray-400">
+                    Reviewed on {new Date(rev.date).toLocaleDateString()}
+                  </p>
+                </div>
+              ))
+            )}
+            <div className="h-10"></div>
+          </div>
+        );
+
 
       case "special":
         return (
@@ -437,7 +458,7 @@ const MessOwnerDashboard = () => {
                 <label className="block text-sm font-bold text-gray-700 mb-3">
                   📸 Upload Special Dish Image (Optional)
                 </label>
-                
+
                 <input
                   type="file"
                   accept="image/*"
@@ -464,7 +485,7 @@ const MessOwnerDashboard = () => {
                       <button
                         type="button"
                         onClick={() => {
-                          setTodaysSpecial({...todaysSpecial, image: null});
+                          setTodaysSpecial({ ...todaysSpecial, image: null });
                           setImagePreview(null);
                           document.getElementById('image-upload').value = '';
                         }}
@@ -492,10 +513,10 @@ const MessOwnerDashboard = () => {
 
       default:
         return (
-            <div className="text-center py-10 text-gray-500 bg-gray-50 rounded-xl">
-              <FaUtensils className="mx-auto w-10 h-10 text-gray-300 mb-3" />
-              <p className="font-semibold">Select a tab to view content.</p>
-            </div>
+          <div className="text-center py-10 text-gray-500 bg-gray-50 rounded-xl">
+            <FaUtensils className="mx-auto w-10 h-10 text-gray-300 mb-3" />
+            <p className="font-semibold">Select a tab to view content.</p>
+          </div>
         );
     }
   };
@@ -511,7 +532,7 @@ const MessOwnerDashboard = () => {
   /* ------------------ MAIN UI ------------------ */
   return (
     <div className="min-h-screen bg-gray-50 relative">
-      
+
       {/* 1. Fixed Sidebar */}
       <div className="fixed top-0 left-0 h-full w-64 z-30">
         <Sidebar />
@@ -519,7 +540,7 @@ const MessOwnerDashboard = () => {
 
       {/* 2. Main Content Wrapper */}
       <div className="ml-64 flex flex-col min-h-screen">
-        
+
         {/* 3. Fixed Header */}
         <header className="fixed top-0 right-0 left-64 bg-white z-20 shadow-md border-b">
           <Header />
@@ -528,7 +549,7 @@ const MessOwnerDashboard = () => {
         {/* 4. Scrollable Main Content (pt-20 pushes content below the fixed header) */}
         <main className="flex-1 pt-20 px-6 pb-6">
           <div className="max-w-7xl mx-auto">
-            
+
             {/* Dashboard Header/Title */}
             <div className="flex justify-between items-center mb-8 border-b pb-4">
               <div>
@@ -589,7 +610,7 @@ const MessOwnerDashboard = () => {
                 >
                   Inquiries
                 </TabButton>
-                 <TabButton
+                <TabButton
                   active={activeTab === "reviews"}
                   onClick={() => setActiveTab("reviews")}
                 >

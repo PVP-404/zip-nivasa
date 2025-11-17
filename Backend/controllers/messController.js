@@ -47,7 +47,9 @@ export const getAllMesses = async (req, res) => {
 // 🧍 Get messes by owner
 export const getMessesByOwner = async (req, res) => {
   try {
-    const messes = await Mess.find({ messOwnerId: req.params.ownerId });
+    const messes = await Mess.find({ messOwnerId: req.params.ownerId })
+      .populate("ratings.studentId", "name email"); // <-- ⭐ important
+
     res.json(messes);
   } catch (err) {
     res.status(500).json({ message: err.message });
