@@ -14,6 +14,9 @@ const mockLaundryList = [
 
 
 const StudentDashboard = () => {
+
+  const username = localStorage.getItem("username") || "Student";
+
   const navigate = useNavigate();
   const [messes, setMesses] = useState([]);
   const [housingOptions, setHousingOptions] = useState([]);
@@ -86,7 +89,13 @@ const StudentDashboard = () => {
 
   // Service icons
   const services = [
-    { key: "mess", title: "Mess Services", desc: "Explore mess options and menus", icon: "M3 1a1 1 0 000 2h1.22l.305 1.222a.997.997 0 00.01.042l1.358 5.43-.893.892C3.74 11.846 4.632 14 6.414 14H15a1 1 0 000-2H6.414l1-1H14a1 1 0 00.894-.553l3-6A1 1 0 0017 3H6.28l-.31-1.243A1 1 0 005 1H3zM16 16.5a1.5 1.5 0 11-3 0 1.5 1.5 0 013 0zM6.5 18a1.5 1.5 0 100-3 1.5 1.5 0 000 3z" },
+    {
+      "key": "mess",
+      "title": "Mess Services",
+      "desc": "Explore mess options and menus",
+      "icon": "M8.1 13.34l2.83-2.83L3.91 3.5a4.008 4.008 0 0 0 0 5.66l4.19 4.18zm6.78-1.81c1.53.71 3.68.21 5.27-1.38 1.91-1.91 2.28-4.65.81-6.12-1.46-1.46-4.2-1.1-6.12.81-1.59 1.59-2.09 3.74-1.38 5.27L3.7 19.87l1.41 1.41L12 14.41l6.88 6.88 1.41-1.41L13.41 13l1.47-1.47z"
+    }
+    ,
     { key: "housing", title: "Housing Services", desc: "Find PGs, rooms & hostels", icon: "M10.707 2.293a1 1 0 00-1.414 0l-7 7a1 1 0 001.414 1.414L4 10.414V17a1 1 0 001 1h2a1 1 0 001-1v-2a1 1 0 011-1h2a1 1 0 011 1v2a1 1 0 001 1h2a1 1 0 001-1v-6.586l.293.293a1 1 0 001.414-1.414l-7-7z" },
     { key: "laundry", title: "Laundry Services", desc: "Find nearby laundry shops", icon: "M3 4a1 1 0 011-1h12a1 1 0 110 2H4a1 1 0 01-1-1zm0 4a1 1 0 011-1h12a1 1 0 110 2H4a1 1 0 01-1-1zm0 4a1 1 0 011-1h12a1 1 0 110 2H4a1 1 0 01-1-1zm0 4a1 1 0 011-1h12a1 1 0 110 2H4a1 1 0 01-1-1z" },
   ];
@@ -116,8 +125,11 @@ const StudentDashboard = () => {
         <main className="flex-grow p-6 md:p-10 max-w-7xl mx-auto w-full">
 
           <div className="mb-8">
-            <h1 className="text-3xl font-bold text-gray-900 mb-2">Welcome to Student Dashboard</h1>
-            <p className="text-gray-600">Find the best PGs, messes, and laundry services near you</p>
+            <h1 className="text-3xl font-bold text-gray-900 mb-2">Welcome {username}</h1>
+            <p className="text-gray-600 text-sm sm:text-base italic">
+              Comfortable stay. Healthy meals. Hassle-free living.
+            </p>
+
           </div>
 
           {/* Services */}

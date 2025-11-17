@@ -1,6 +1,6 @@
 import MessOwner from "../models/MessOwner.js";
 
-// ➕ Add new Mess Owner
+//  Add new Mess Owner
 export const addMessOwner = async (req, res) => {
   try {
     const messOwner = new MessOwner(req.body);
@@ -11,7 +11,7 @@ export const addMessOwner = async (req, res) => {
   }
 };
 
-// 📋 Get all Mess Owners
+// Get all Mess Owners
 export const getAllMessOwners = async (req, res) => {
   try {
     const messOwners = await MessOwner.find();

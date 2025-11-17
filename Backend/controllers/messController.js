@@ -1,6 +1,6 @@
 import Mess from "../models/Mess.js";
 
-// ➕ Add Mess
+//  Add Mess
 export const addMess = async (req, res) => {
   try {
     const imagePaths = req.files ? req.files.map(f => `/uploads/pgs/${f.filename}`) : [];
@@ -21,7 +21,7 @@ export const addMess = async (req, res) => {
   }
 };
 
-// 📌 Get mess by ID
+//  Get mess by ID
 export const getMessById = async (req, res) => {
   try {
     const mess = await Mess.findById(req.params.id);
@@ -34,7 +34,7 @@ export const getMessById = async (req, res) => {
   }
 };
 
-// 📋 Get All Mess
+// Get All Mess
 export const getAllMesses = async (req, res) => {
   try {
     const messes = await Mess.find();
@@ -44,7 +44,7 @@ export const getAllMesses = async (req, res) => {
   }
 };
 
-// 🧍 Get messes by owner
+//  Get messes by owner
 export const getMessesByOwner = async (req, res) => {
   try {
     const messes = await Mess.find({ messOwnerId: req.params.ownerId })
@@ -56,7 +56,7 @@ export const getMessesByOwner = async (req, res) => {
   }
 };
 
-// ✏️ Update Mess
+//  Update Mess
 export const updateMess = async (req, res) => {
   try {
     const updated = await Mess.findByIdAndUpdate(req.params.id, req.body, { new: true });
@@ -66,7 +66,7 @@ export const updateMess = async (req, res) => {
   }
 };
 
-// ❌ Delete Mess
+//  Delete Mess
 export const deleteMess = async (req, res) => {
   try {
     await Mess.findByIdAndDelete(req.params.id);
@@ -76,7 +76,7 @@ export const deleteMess = async (req, res) => {
   }
 };
 
-// 🌟 Publish Today's Special
+//  Publish Today's Special
 export const publishSpecial = async (req, res) => {
   try {
     const mess = await Mess.findOne({ messOwnerId: req.body.messOwnerId });
@@ -92,7 +92,7 @@ export const publishSpecial = async (req, res) => {
   }
 };
 
-// ⭐ Add Rating
+//  Add Rating
 export const addRating = async (req, res) => {
   try {
     const mess = await Mess.findById(req.params.id);

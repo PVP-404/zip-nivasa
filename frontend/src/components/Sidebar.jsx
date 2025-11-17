@@ -19,12 +19,7 @@ const Sidebar = () => {
 
   // ✅ REUSABLE ICON COMPONENT
   const Icon = ({ d }) => (
-    <svg
-      className="w-5 h-5"
-      fill="currentColor"
-      viewBox="0 0 24 24"
-      stroke="none"
-    >
+    <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 24 24">
       <path d={d} />
     </svg>
   );
@@ -32,101 +27,32 @@ const Sidebar = () => {
   // ✅ Navigation Menus (ONLY ICON PATHS UPDATED)
   const menus = {
     tenant: [
-      {
-        icon: <Icon d="M3 3h18v18H3V3zm2 2v14h14V5H5z" />,
-        label: "Dashboard",
-        path: "/dashboard/student",
-      },
-      {
-        icon: <Icon d="M12 2l9 4v6c0 5-4 9-9 9s-9-4-9-9V6l9-4z" />,
-        label: "Explore PGs",
-        path: "/pgs/all",
-      },
-      {
-        icon: <Icon d="M8 7V3h8v4m-9 4h10v10H7V11z" />,
-        label: "My Bookings",
-        path: "/student/bookings",
-      },
-      {
-        icon: <Icon d="M3 8h18M5 12h14M5 16h14" />,
-        label: "Payments",
-        path: "/student/payments",
-      },
-      {
-        icon: <Icon d="M12 2l7 6v12H5V8l7-6z" />,
-        label: "Complaints",
-        path: "/student/complaints",
-      },
-      {
-        icon: <Icon d="M4 6h16M4 12h16M4 18h16" />,
-        label: "Mess",
-        path: "/services/mess",
-      },
-      {
-        icon: <Icon d="M4 4h16v16H4z" />,
-        label: "Laundry",
-        path: "/services/laundry",
-      },
-      {
-        icon: <Icon d="M4 6l8 8 8-8" />,
-        label: "Wishlist",
-        path: "/student/wishlist",
-      },
-      {
-        icon: <Icon d="M12 12a5 5 0 100-10 5 5 0 000 10zm-7 9a7 7 0 0114 0H5z" />,
-        label: "Profile",
-        path: "/student/profile",
-      },
-      {
-        icon: <Icon d="M4 4h16v16H4z" />,
-        label: "Messages",
-        path: "/messages",
-      },
+      { icon: <Icon d="M3 3h18v18H3V3zm2 2v14h14V5H5z" />, label: "Dashboard", path: "/dashboard/student" },
+      { icon: <Icon d="M12 2l9 4v6c0 5-4 9-9 9s-9-4-9-9V6l9-4z" />, label: "Explore PGs", path: "/pgs/all" },
+      // { icon: <Icon d="M8 7V3h8v4m-9 4h10v10H7V11z" />, label: "My Bookings", path: "/student/bookings" },
+      // { icon: <Icon d="M3 8h18M5 12h14M5 16h14" />, label: "Payments", path: "/student/payments" },
+      // { icon: <Icon d="M12 2l7 6v12H5V8l7-6z" />, label: "Complaints", path: "/student/complaints" },
+      { icon: <Icon d="M4 6h16M4 12h16M4 18h16" />, label: "Mess", path: "/messes" },
+      { icon: <Icon d="M4 4h16v16H4z" />, label: "Laundry", path: "/services/laundry" },
+      { icon: <Icon d="M4 6l8 8 8-8" />, label: "Wishlist", path: "/student/wishlist" },
+      { icon: <Icon d="M12 12a5 5 0 100-10 5 5 0 000 10zm-7 9a7 7 0 0114 0H5z" />, label: "Profile", path: "/tenant/profile" },
+      { icon: <Icon d="M4 4h16v16H4z" />, label: "Messages", path: "/messages" },
     ],
 
     pgowner: [
-      {
-        icon: <Icon d="M12 3l7 6v12H5V9l7-6z" />,
-        label: "Dashboard",
-        path: "/dashboard/pgowner",
-      },
-      {
-        icon: <Icon d="M12 5v6m0 0h6m-6 0H6" />,
-        label: "Add PG",
-        path: "/dashboard/add-listing",
-      },
-      {
-        icon: <Icon d="M4 4h16v16H4z" />,
-        label: "Messages",
-        path: "/messages",
-      }
+      { icon: <Icon d="M12 3l7 6v12H5V9l7-6z" />, label: "Dashboard", path: "/dashboard/pgowner" },
+      { icon: <Icon d="M12 5v6m0 0h6m-6 0H6" />, label: "Add PG", path: "/dashboard/add-listing" },
+      { icon: <Icon d="M4 4h16v16H4z" />, label: "Messages", path: "/messages" },
     ],
 
     messowner: [
-      {
-        icon: <Icon d="M12 3l7 6v12H5V9l7-6z" />,
-        label: "Dashboard",
-        path: "/dashboard/messowner",
-      },
-      {
-        icon: <Icon d="M12 5v6m0 0h6m-6 0H6" />,
-        label: "Add Mess",
-        path: "/dashboard/add-mess",
-      },
-      {
-        icon: <Icon d="M4 4h16v16H4z" />,
-        label: "Messages",
-        path: "/messages",
-      }
-
+      { icon: <Icon d="M12 3l7 6v12H5V9l7-6z" />, label: "Dashboard", path: "/dashboard/messowner" },
+      { icon: <Icon d="M12 5v6m0 0h6m-6 0H6" />, label: "Add Mess", path: "/dashboard/add-mess" },
+      { icon: <Icon d="M4 4h16v16H4z" />, label: "Messages", path: "/messages" },
     ],
 
     laundry: [
-      {
-        icon: <Icon d="M12 3l7 6v12H5V9l7-6z" />,
-        label: "Dashboard",
-        path: "/dashboard/laundry",
-      },
+      { icon: <Icon d="M12 3l7 6v12H5V9l7-6z" />, label: "Dashboard", path: "/dashboard/laundry" },
     ],
   };
 
@@ -169,10 +95,11 @@ const Sidebar = () => {
             <button
               key={index}
               onClick={() => handleNavigation(menu.path)}
-              className={`w-full flex items-center gap-4 px-3 py-3 rounded-xl transition-all duration-200 group relative ${active
+              className={`w-full flex items-center gap-4 px-3 py-3 rounded-xl transition-all duration-200 group relative ${
+                active
                   ? "bg-white/20 text-white shadow-lg"
                   : "text-indigo-200 hover:bg-white/10 hover:text-white"
-                }`}
+              }`}
             >
               {active && (
                 <div className="absolute left-0 top-0 bottom-0 w-1 bg-gradient-to-b from-yellow-400 to-orange-500 rounded-r-full"></div>
@@ -183,6 +110,42 @@ const Sidebar = () => {
           );
         })}
       </nav>
+
+      {/* --------------------------------------------------- */}
+      {/* 👉 PROFILE SECTION ADDED HERE (ONLY NEW CODE)       */}
+      {/* --------------------------------------------------- */}
+      <div className="absolute bottom-4 left-0 right-0 px-3">
+        <button
+          onClick={() => navigate(`/${role}/profile`)}
+          className={`w-full flex items-center gap-3 p-3 rounded-xl transition-all duration-200
+            ${
+              isActive(`/${role}/profile`)
+                ? "bg-white/20 text-white shadow-lg"
+                : "text-indigo-100 hover:bg-white/10"
+            }`}
+        >
+          {/* Avatar Circle */}
+          <div className="w-10 h-10 rounded-full bg-gradient-to-br from-orange-400 to-yellow-500 
+            flex items-center justify-center font-bold text-white shadow-md">
+            {localStorage.getItem("username")?.charAt(0)?.toUpperCase() || "U"}
+          </div>
+
+          {/* Show text only when expanded */}
+          {open && (
+            <div className="text-left">
+              <p className="text-white font-semibold text-sm">
+                {localStorage.getItem("username") || "User"}
+              </p>
+              <p className="text-indigo-200 text-xs">
+                {localStorage.getItem("email") || "user@example.com"}
+              </p>
+            </div>
+          )}
+        </button>
+      </div>
+      {/* --------------------------------------------------- */}
+      {/* END PROFILE SECTION                                 */}
+      {/* --------------------------------------------------- */}
     </aside>
   );
 };

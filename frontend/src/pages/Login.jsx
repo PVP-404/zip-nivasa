@@ -48,6 +48,7 @@ const Login = () => {
       localStorage.setItem("userId", data.user.id);
       localStorage.setItem("role", data.user.role);
       localStorage.setItem("username", data.user.name);
+      localStorage.setItem("email", data.user.email);
 
       // ✅ Fix: also save ownerId if role = messowner / pgowner
       if (data.user.role === "messowner" || data.user.role === "pgowner") {

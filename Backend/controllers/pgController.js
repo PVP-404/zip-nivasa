@@ -1,7 +1,7 @@
 import PG from "../models/pgModel.js";
 import User from "../models/User.js";
 
-// ✅ CREATE PG LISTING
+//  CREATE PG LISTING
 export const createPG = async (req, res) => {
   try {
     const userId = req.user.id;
@@ -54,7 +54,7 @@ export const createPG = async (req, res) => {
   }
 };
 
-// ✅ PUBLIC – FETCH ALL PGs
+//  PUBLIC – FETCH ALL PGs
 export const getAllPGs = async (req, res) => {
   try {
     const pgs = await PG.find().sort({ createdAt: -1 });
@@ -65,7 +65,7 @@ export const getAllPGs = async (req, res) => {
   }
 };
 
-// ✅ UPDATED — FETCH SINGLE PG WITH OWNER INFO
+// UPDATED — FETCH SINGLE PG WITH OWNER INFO
 export const getPGById = async (req, res) => {
   try {
     const pg = await PG.findById(req.params.id)
@@ -87,7 +87,7 @@ export const getPGById = async (req, res) => {
   }
 };
 
-// ✅ OWNER – FETCH PGs BY OWNER
+// OWNER – FETCH PGs BY OWNER
 export const getPGsByOwner = async (req, res) => {
   try {
     const ownerId = req.user.id;

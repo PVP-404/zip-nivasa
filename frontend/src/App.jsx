@@ -26,7 +26,7 @@ import SearchPGResults from "./pages/pgs/SearchPGResults";
 import MyBookings from "./pages/tenant/MyBookings";
 import Payments from "./pages/tenant/Payments";
 import Complaints from "./pages/tenant/Complaints";
-import Profile from "./pages/tenant/Profile";
+import Profile from "./pages/profile/Profile";
 
 //mess pages
 // Mess Details Page
@@ -130,7 +130,7 @@ function App() {
         />
 
         <Route
-          path="/dashboard/student/profile"
+          path="/tenant/profile"
           element={
             <RoleProtectedRoute allowedRoles={["tenant"]}>
               <Profile />

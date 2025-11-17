@@ -13,6 +13,7 @@ import cron from "node-cron";
 import pgRoutes from "./routes/pgRoutes.js";
 import authRoutes from "./routes/authRoutes.js";
 import chatRoutes from "./routes/chatRoutes.js";
+import profileRoutes from "./routes/profileRoutes.js";
 
 // Models
 import Message from "./models/Message.js";
@@ -60,6 +61,9 @@ app.get("/", (req, res) => {
 // API mess Routes
 app.use("/api/mess-owner", messOwnerRoutes);
 app.use("/api/mess", messRoutes);
+
+//profile routes 
+app.use("/api/profile", profileRoutes);
 
 // Socket.io
 const io = new Server(httpServer, {

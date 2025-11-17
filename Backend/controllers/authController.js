@@ -8,14 +8,14 @@ import MessOwner from "../models/MessOwner.js";
 import LaundryOwner from "../models/LaundryOwner.js";
 
 
-// ✅ Ensure JWT Secret exists
+//  Ensure JWT Secret exists
 const ensureJwt = () => {
   if (!process.env.JWT_SECRET || process.env.JWT_SECRET.trim() === "") {
     throw new Error("JWT_SECRET is not set in environment");
   }
 };
 
-// ✅ REGISTER USER
+//  REGISTER USER
 export const register = async (req, res) => {
   try {
     ensureJwt();
@@ -102,7 +102,7 @@ export const register = async (req, res) => {
   }
 };
 
-// ✅ LOGIN USER
+//  LOGIN USER
 export const login = async (req, res) => {
   try {
     ensureJwt();
@@ -138,7 +138,7 @@ export const login = async (req, res) => {
   }
 };
 
-// ✅ GET LOGGED-IN USER PROFILE
+//  GET LOGGED-IN USER PROFILE
 export const getMe = async (req, res) => {
   try {
     const user = await User.findById(req.user.id).select("-password");
