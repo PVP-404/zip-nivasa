@@ -7,6 +7,7 @@ import Home from "./pages/Home";
 import Login from "./pages/Login";
 import Register from "./pages/Register";
 import AboutUs from "./pages/AboutUs";
+import AllMesses from "./pages/mess/AllMesses";
 
 // Dashboards
 import StudentDashboard from "./pages/dashboard/StudentDashboard";
@@ -17,6 +18,9 @@ import MessOwnerDashboard from "./pages/dashboard/MessOwnerDashboard";
 // PG Pages
 import AllPGs from "./pages/pgs/AllPGs";
 import PGDetails from "./pages/pgs/PGDetails";
+import SearchPGResults from "./pages/pgs/SearchPGResults";
+
+
 
 // Tenant Pages
 import MyBookings from "./pages/tenant/MyBookings";
@@ -191,6 +195,9 @@ function App() {
             </RoleProtectedRoute>
           }
         />
+        <Route path="/accommodations" element={<SearchPGResults />} />
+
+        <Route path="/messes" element={<AllMesses />} />
 
         {/* ✅ Fallback */}
         <Route path="*" element={<h1>404 - Page Not Found</h1>} />

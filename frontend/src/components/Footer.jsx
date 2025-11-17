@@ -76,10 +76,10 @@ const Footer = () => {
         <div className="text-center md:text-left">
           <h4 className="text-xl font-semibold text-white mb-4">Contact</h4>
           <p className="text-sm mb-2">Email: contact@zipnivasa.com</p>
-          <p className="text-sm">Phone: +91 98765 43210</p>
+          <p className="text-sm">Phone: +91 8856985713</p>
           <p className="text-sm mt-4 text-gray-400">
-            123, Tech Park Rd, <br />
-            Bangalore, Karnataka, India
+            Gurudwara Chowk, <br />
+            Pune, Maharashtra, India
           </p>
         </div>
       </div>

@@ -118,7 +118,7 @@ const AboutUs = () => {
               <h3 className="text-xl font-semibold text-blue-950">
                 Pratik Ghule
               </h3>
-              <p className="text-gray-500">Frontend Lead</p>
+              <p className="text-gray-500">Backend Developer</p>
             </div>
             <div className="bg-white shadow-lg rounded-3xl p-8 text-center transition-all duration-300 transform hover:shadow-2xl hover:scale-105">
               <img
@@ -129,7 +129,7 @@ const AboutUs = () => {
               <h3 className="text-xl font-semibold text-blue-950">
                 Vivek Ugale
               </h3>
-              <p className="text-gray-500">Backend Architect</p>
+              <p className="text-gray-500">Front End Developer</p>
             </div>
             <div className="bg-white shadow-lg rounded-3xl p-8 text-center transition-all duration-300 transform hover:shadow-2xl hover:scale-105">
               <img
@@ -140,7 +140,7 @@ const AboutUs = () => {
               <h3 className="text-xl font-semibold text-blue-950">
                 Pratik Warikari
               </h3>
-              <p className="text-gray-500">Full-Stack Developer</p>
+              <p className="text-gray-500">UI/UX Designer</p>
             </div>
           </div>
         </section>

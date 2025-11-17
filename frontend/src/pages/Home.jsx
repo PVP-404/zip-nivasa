@@ -1,6 +1,6 @@
 // src/pages/Home.jsx
 import React, { useState } from "react";
-import { Link } from "react-router-dom";
+import { Link,useNavigate } from "react-router-dom";
 import { motion } from "framer-motion";
 import {
   FaSearch,
@@ -40,10 +40,24 @@ const Home = () => {
     setSearchFilters({ ...searchFilters, [e.target.name]: e.target.value });
   };
 
-  const handleSearchSubmit = (e) => {
-    e.preventDefault();
-    console.log("Searching with filters:", searchFilters);
-  };
+  const navigate = useNavigate();
+
+const handleSearchSubmit = (e) => {
+  e.preventDefault();
+  const { location, type, budget } = searchFilters;
+
+  // If user selects "mess"
+  if (type === "mess") {
+    navigate(`/messes?location=${location}`);
+    return;
+  }
+
+  // For accommodations (PG / Hostel / Flat)
+  navigate(
+    `/accommodations?location=${location}&type=${type}&budget=${budget}`
+  );
+};
+
 
   return (
     <div className="min-h-screen flex flex-col bg-gradient-to-b from-blue-50 to-gray-100 font-sans text-gray-800">
@@ -61,7 +75,7 @@ const Home = () => {
             {["accommodations", "messes"].map((link, i) => (
               <Link
                 key={i}
-                to={`/${link}`}
+                to="/login"
                 className="text-gray-700 hover:text-blue-600 font-medium transition-colors duration-200"
               >
                 {link === "accommodations" ? "Find Accommodations" : "Find Mess"}
@@ -100,12 +114,12 @@ const Home = () => {
             Find Your Perfect Stay & Meal
           </motion.h1>
           <motion.p
-            className="mt-3 sm:mt-4 text-lg sm:text-xl md:text-2xl text-gray-200 font-light"
+            className="mt-3 sm:mt-4 text-lg sm:text-xl md:text-2xl text-gray-200 font-dark"
             initial={{ y: -50, opacity: 0 }}
             animate={{ y: 0, opacity: 1 }}
             transition={{ duration: 0.6, delay: 0.2 }}
           >
-            Students & Migrants – Simplified, Safe & Reliable.
+            Find. Connect. Live Better.
           </motion.p>
 
           {/* Search Box */}
