@@ -419,7 +419,7 @@ const AllPGs = () => {
                 <span className="hidden sm:inline text-slate-300">Sort by</span>
                 <select
                   id="sortBy"
-                  className="border border-white/20 bg-white/10 text-slate-100 px-3 py-2 rounded-lg focus:ring-2 focus:ring-indigo-400 focus:border-transparent outline-none text-xs sm:text-sm"
+                  className="border border-white/20 bg-white/10 text-slate-500 px-3 py-2 rounded-lg focus:ring-2 focus:ring-indigo-400 focus:border-transparent outline-none text-xs sm:text-sm"
                   value={sortBy}
                   onChange={(e) => setSortBy(e.target.value)}
                 >

@@ -20,6 +20,7 @@ const Header = () => {
 
       {/* ✅ Logo + Title */}
       <div className="flex items-center gap-3">
+        
         <div className="bg-white/10 backdrop-blur-sm p-2 rounded-xl border border-white/20">
           <div className="w-8 h-8 bg-gradient-to-br from-yellow-400 to-orange-500 rounded-lg flex items-center justify-center shadow-lg">
             <span className="text-white font-bold text-xl">Z</span>
