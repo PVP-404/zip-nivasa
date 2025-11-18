@@ -111,41 +111,7 @@ const Sidebar = () => {
         })}
       </nav>
 
-      {/* --------------------------------------------------- */}
-      {/* 👉 PROFILE SECTION ADDED HERE (ONLY NEW CODE)       */}
-      {/* --------------------------------------------------- */}
-      <div className="absolute bottom-4 left-0 right-0 px-3">
-        <button
-          onClick={() => navigate(`/${role}/profile`)}
-          className={`w-full flex items-center gap-3 p-3 rounded-xl transition-all duration-200
-            ${
-              isActive(`/${role}/profile`)
-                ? "bg-white/20 text-white shadow-lg"
-                : "text-indigo-100 hover:bg-white/10"
-            }`}
-        >
-          {/* Avatar Circle */}
-          <div className="w-10 h-10 rounded-full bg-gradient-to-br from-orange-400 to-yellow-500 
-            flex items-center justify-center font-bold text-white shadow-md">
-            {localStorage.getItem("username")?.charAt(0)?.toUpperCase() || "U"}
-          </div>
-
-          {/* Show text only when expanded */}
-          {open && (
-            <div className="text-left">
-              <p className="text-white font-semibold text-sm">
-                {localStorage.getItem("username") || "User"}
-              </p>
-              <p className="text-indigo-200 text-xs">
-                {localStorage.getItem("email") || "user@example.com"}
-              </p>
-            </div>
-          )}
-        </button>
-      </div>
-      {/* --------------------------------------------------- */}
-      {/* END PROFILE SECTION                                 */}
-      {/* --------------------------------------------------- */}
+      
     </aside>
   );
 };
