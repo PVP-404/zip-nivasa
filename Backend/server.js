@@ -78,7 +78,7 @@ const io = new Server(httpServer, {
 const onlineUsers = new Map(); // userId -> socketId
 
 io.on("connection", (socket) => {
-  console.log("✅ User connected:", socket.id);
+  console.log("User connected:", socket.id);
 
   // ✅ Register userId with socket
   socket.on("register", (userId) => {

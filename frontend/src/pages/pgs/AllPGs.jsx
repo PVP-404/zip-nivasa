@@ -98,7 +98,7 @@ const AllPGs = () => {
   const navigate = useNavigate();
   const locationHook = useLocation();
 
-  // ⏺️ Sidebar state
+  // Sidebar state
   const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(false);
   const [showMobileSidebar, setShowMobileSidebar] = useState(false);
 

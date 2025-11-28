@@ -9,8 +9,8 @@ const socket = io("http://localhost:5000", {
 });
 
 // Helpful logs (debug only)
-socket.on("connect", () => console.log("🔌 socket connected:", socket.id));
-socket.on("connect_error", (e) => console.warn("🚫 socket connect_error:", e.message));
+socket.on("connect", () => console.log("socket connected:", socket.id));
+socket.on("connect_error", (e) => console.warn(" socket connect_error:", e.message));
 socket.on("reconnect_attempt", (n) => console.log("↻ reconnect_attempt", n));
 
 export const registerSocket = (userId) => {
