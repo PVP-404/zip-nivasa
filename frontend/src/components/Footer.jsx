@@ -1,6 +1,7 @@
 import React from 'react';
 import { motion } from 'framer-motion';
 import { FaLinkedin, FaFacebook, FaInstagram, FaTwitter } from 'react-icons/fa';
+import { Link } from 'react-router-dom'; // ✅ Added import
 
 const Footer = () => {
   return (
@@ -56,10 +57,8 @@ const Footer = () => {
         <div className="text-center md:text-left">
           <h4 className="text-xl font-semibold text-white mb-4">Quick Links</h4>
           <ul className="space-y-2">
-            <li><a href="/about" className="hover:text-white transition-colors duration-200">About Us</a></li>
-            <li><a href="/services" className="hover:text-white transition-colors duration-200">Our Services</a></li>
-            <li><a href="/faq" className="hover:text-white transition-colors duration-200">FAQ</a></li>
-            <li><a href="/blog" className="hover:text-white transition-colors duration-200">Blog</a></li>
+            <li><Link to="/about" className="hover:text-white transition-colors duration-200">About Us</Link></li>
+           
           </ul>
         </div>
 
@@ -67,9 +66,9 @@ const Footer = () => {
         <div className="text-center md:text-left">
           <h4 className="text-xl font-semibold text-white mb-4">Legal</h4>
           <ul className="space-y-2">
-            <li><a href="/privacy-policy" className="hover:text-white transition-colors duration-200">Privacy Policy</a></li>
-            <li><a href="/terms-of-service" className="hover:text-white transition-colors duration-200">Terms of Service</a></li>
-            <li><a href="/disclaimer" className="hover:text-white transition-colors duration-200">Disclaimer</a></li>
+            <li><Link to="/privacy-policy" className="hover:text-white transition-colors duration-200">Privacy Policy</Link></li>
+            <li><Link to="/terms-of-service" className="hover:text-white transition-colors duration-200">Terms of Service</Link></li>
+            <li><Link to="/disclaimer" className="hover:text-white transition-colors duration-200">Disclaimer</Link></li>
           </ul>
         </div>
 
@@ -77,10 +76,10 @@ const Footer = () => {
         <div className="text-center md:text-left">
           <h4 className="text-xl font-semibold text-white mb-4">Contact</h4>
           <p className="text-sm mb-2">Email: contact@zipnivasa.com</p>
-          <p className="text-sm">Phone: +91 98765 43210</p>
+          <p className="text-sm">Phone: +91 8856985713</p>
           <p className="text-sm mt-4 text-gray-400">
-            123, Tech Park Rd, <br />
-            Bangalore, Karnataka, India
+            Gurudwara Chowk, <br />
+            Pune, Maharashtra, India
           </p>
         </div>
       </div>

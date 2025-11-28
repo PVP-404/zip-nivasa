@@ -1,202 +1,359 @@
-import React, { useState, useEffect } from 'react';
-import { motion } from 'framer-motion';
-import { Link } from 'react-router-dom';
-import Header from '../../components/Header';
-import Footer from '../../components/Footer';
-import { FaUtensils, FaHome, FaHistory, FaPhoneAlt } from 'react-icons/fa'; // Importing icons from react-icons
+// src/pages/dashboard/StudentDashboard.jsx
+import React, { useState, useEffect, useRef } from "react";
+import { Link, useNavigate } from "react-router-dom";
+import Header from "../../components/Header";
+import Footer from "../../components/Footer";
+import Sidebar from "../../components/Sidebar";
+import { getAllMesses } from "../../services/messService";
+const mockLaundryList = [
+  { id: 1, name: "Quick Wash", location: "Main Street", rating: 4.3, services: ["Washing", "Ironing", "Dry Cleaning"], price: "₹50/kg" },
+  { id: 2, name: "Fresh Clean", location: "Campus Road", rating: 4.6, services: ["Washing", "Ironing"], price: "₹40/kg" },
+];
 
-// Mock data to simulate real-time API calls
-const mockMessData = {
-  currentSubscription: {
-    messName: 'Daily Delights Mess',
-    plan: 'Monthly (Lunch & Dinner)',
-    status: 'Active',
-    nextRenewal: '2025-10-05',
-  },
-  todaysMenu: {
-    breakfast: 'Poha, Jalebi, Tea',
-    lunch: 'Dal Makhani, Jeera Rice, Chapati, Salad',
-    dinner: 'Shahi Paneer, Naan, Gulab Jamun',
-  },
-  featuredMesses: [
-    { name: 'Healthy Bites Mess', rating: 4.8, price: 2500, distance: '1.2 km' },
-    { name: 'Home Taste Tiffins', rating: 4.5, price: 2800, distance: '0.5 km' },
-  ],
-};
 
-const widgetVariants = {
-  hidden: { opacity: 0, scale: 0.95 },
-  visible: { opacity: 1, scale: 1, transition: { duration: 0.5, type: 'spring' } },
-};
+
 
 const StudentDashboard = () => {
-  // State to hold dynamic data
-  const [messMenu, setMessMenu] = useState(null);
+
+  const username = localStorage.getItem("username") || "Student";
+
+  const navigate = useNavigate();
+  const [messes, setMesses] = useState([]);
+  const [housingOptions, setHousingOptions] = useState([]);
+  const [laundryOptions, setLaundryOptions] = useState([]);
+  const [query, setQuery] = useState("");
+  const [selectedMess, setSelectedMess] = useState(null);
+  const [activeService, setActiveService] = useState("housing");
+
+  const overlayRef = useRef(null);
+  const searchInputRef = useRef(null);
+
+  // Fetch PGs from backend
+  const fetchPGs = async () => {
+    try {
+      const res = await fetch("http://localhost:5000/api/pgs");
+      const data = await res.json();
+
+      const formattedPGs = data.map((pg) => ({
+        id: pg._id,
+        name: pg.title,
+        type: pg.propertyType,
+        location: pg.location,
+        price: pg.monthlyRent,
+        rating: 4.6,
+        image: pg.images?.[0] ? `http://localhost:5000${pg.images[0]}` : "https://via.placeholder.com/400",
+        amenities: pg.amenities,
+        contact: "+919999999999",
+      }));
+      setHousingOptions(formattedPGs);
+    } catch (err) {
+      console.error("Failed to load PG listings:", err);
+    }
+  };
+  const fetchMesses = async () => {
+    const res = await getAllMesses();
+    setMesses(res);
+  };
 
   useEffect(() => {
-    // Simulate fetching real-time data
-    setTimeout(() => {
-      setMessMenu(mockMessData.todaysMenu);
-    }, 1000); // A small delay to simulate network latency
+    fetchMesses();
+    setLaundryOptions(mockLaundryList);
+    fetchPGs();
   }, []);
 
+  useEffect(() => {
+    const onKey = (e) => e.key === "Escape" && setSelectedMess(null);
+    window.addEventListener("keydown", onKey);
+    return () => window.removeEventListener("keydown", onKey);
+  }, []);
+
+  // Filters
+  const filtered = {
+    mess: messes.filter((m) => m.title.toLowerCase().includes(query.toLowerCase())),
+    housing: housingOptions.filter((h) =>
+      h.name.toLowerCase().includes(query.toLowerCase()) ||
+      h.location.toLowerCase().includes(query.toLowerCase()) ||
+      h.type.toLowerCase().includes(query.toLowerCase())
+    ),
+    laundry: laundryOptions.filter((l) =>
+      l.name.toLowerCase().includes(query.toLowerCase()) ||
+      l.services.some((s) => s.toLowerCase().includes(query.toLowerCase()))
+    ),
+  };
+
+  const handleServiceChange = (service) => {
+    setActiveService(service);
+    setQuery("");
+    if (searchInputRef.current) searchInputRef.current.value = "";
+  };
+
+  // Service icons
+  const services = [
+    {
+      "key": "mess",
+      "title": "Mess Services",
+      "desc": "Explore mess options and menus",
+      "icon": "M8.1 13.34l2.83-2.83L3.91 3.5a4.008 4.008 0 0 0 0 5.66l4.19 4.18zm6.78-1.81c1.53.71 3.68.21 5.27-1.38 1.91-1.91 2.28-4.65.81-6.12-1.46-1.46-4.2-1.1-6.12.81-1.59 1.59-2.09 3.74-1.38 5.27L3.7 19.87l1.41 1.41L12 14.41l6.88 6.88 1.41-1.41L13.41 13l1.47-1.47z"
+    }
+    ,
+    { key: "housing", title: "Housing Services", desc: "Find PGs, rooms & hostels", icon: "M10.707 2.293a1 1 0 00-1.414 0l-7 7a1 1 0 001.414 1.414L4 10.414V17a1 1 0 001 1h2a1 1 0 001-1v-2a1 1 0 011-1h2a1 1 0 011 1v2a1 1 0 001 1h2a1 1 0 001-1v-6.586l.293.293a1 1 0 001.414-1.414l-7-7z" },
+    { key: "laundry", title: "Laundry Services", desc: "Find nearby laundry shops", icon: "M3 4a1 1 0 011-1h12a1 1 0 110 2H4a1 1 0 01-1-1zm0 4a1 1 0 011-1h12a1 1 0 110 2H4a1 1 0 01-1-1zm0 4a1 1 0 011-1h12a1 1 0 110 2H4a1 1 0 01-1-1zm0 4a1 1 0 011-1h12a1 1 0 110 2H4a1 1 0 01-1-1z" },
+  ];
+
+  const Icon = ({ path, className = "w-6 h-6" }) => (
+    <svg className={className} fill="currentColor" viewBox="0 0 20 20"><path d={path} /></svg>
+  );
+
+  const StarIcon = () => (
+    <svg className="w-4 h-4 text-yellow-400" fill="currentColor" viewBox="0 0 20 20">
+      <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z" />
+    </svg>
+  );
+
   return (
-    <div className="flex flex-col min-h-screen bg-gray-100">
-      <Header />
-      <main className="flex-grow p-4 md:p-8">
-        <div className="max-w-7xl mx-auto">
-          {/* Welcome Section */}
-          <motion.div
-            initial={{ y: -20, opacity: 0 }}
-            animate={{ y: 0, opacity: 1 }}
-            transition={{ duration: 0.5 }}
-            className="mb-8"
-          >
-            <h1 className="text-4xl md:text-5xl font-extrabold text-gray-900">
-              Welcome to <span className="text-blue-600">Zip Nivasa</span>!
-            </h1>
-            <p className="text-lg text-gray-600 mt-2">
-              Your home away from home.
+    <div className="bg-gray-50 min-h-screen flex">
+
+      {/* 🟣 FIXED SIDEBAR */}
+      <div className="fixed top-0 left-0 h-full w-64 z-40">
+        <Sidebar />
+      </div>
+
+      {/* 🟢 MAIN CONTENT (shifted right) */}
+      <div className="ml-64 flex-1 flex flex-col min-h-screen">
+        <Header />
+
+        <main className="flex-grow p-6 md:p-10 max-w-7xl mx-auto w-full">
+
+          <div className="mb-8">
+            <h1 className="text-3xl font-bold text-gray-900 mb-2">Welcome {username}</h1>
+            <p className="text-gray-600 text-sm sm:text-base italic">
+              Comfortable stay. Healthy meals. Hassle-free living.
             </p>
-          </motion.div>
 
-          <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-            {/* Main Widget Area */}
-            <div className="lg:col-span-2 grid grid-cols-1 md:grid-cols-2 gap-6">
+          </div>
 
-              {/* My Mess Widget - Real-time information */}
-              <motion.div
-                className="bg-white rounded-xl shadow-lg p-6 hover:shadow-xl transition-shadow"
-                variants={widgetVariants}
-                initial="hidden"
-                animate="visible"
-                transition={{ delay: 0.1 }}
-              >
-                <div className="flex items-center justify-between mb-4">
-                  <h2 className="text-2xl font-bold text-gray-800 flex items-center">
-                    <FaUtensils className="mr-3 text-green-600" /> My Mess Subscription
-                  </h2>
-                  <Link to="/services/mess" className="text-sm font-medium text-blue-600 hover:underline">
-                    Manage
-                  </Link>
+          {/* Services */}
+          <section className="mb-10">
+            <h3 className="text-xl font-semibold text-gray-900 mb-5">Choose a Service</h3>
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-5">
+              {services.map((s) => (
+                <div
+                  key={s.key}
+                  onClick={() => handleServiceChange(s.key)}
+                  className={`bg-white p-6 rounded-lg shadow-sm border-2 cursor-pointer transition-all hover:shadow-md ${activeService === s.key ? "border-indigo-500 ring-2 ring-indigo-100" : "border-gray-200"
+                    }`}
+                >
+                  <div className={`w-12 h-12 rounded-lg flex items-center justify-center mb-3 ${activeService === s.key ? "bg-indigo-100" : "bg-gray-100"}`}>
+                    <Icon path={s.icon} className="w-6 h-6 text-indigo-600" />
+                  </div>
+                  <h2 className="text-lg font-semibold text-gray-900 mb-1">{s.title}</h2>
+                  <p className="text-sm text-gray-600">{s.desc}</p>
                 </div>
-                <div className="bg-green-50 text-green-700 p-4 rounded-lg border border-green-200">
-                  <h3 className="font-semibold text-lg mb-2">Today's Menu</h3>
-                  {messMenu ? (
-                    <ul className="text-sm space-y-1">
-                      <li><span className="font-bold">Breakfast:</span> {messMenu.breakfast}</li>
-                      <li><span className="font-bold">Lunch:</span> {messMenu.lunch}</li>
-                      <li><span className="font-bold">Dinner:</span> {messMenu.dinner}</li>
-                    </ul>
-                  ) : (
-                    <div className="animate-pulse space-y-2">
-                      <div className="h-4 bg-gray-200 rounded w-3/4"></div>
-                      <div className="h-4 bg-gray-200 rounded w-full"></div>
-                      <div className="h-4 bg-gray-200 rounded w-5/6"></div>
-                    </div>
-                  )}
-                </div>
-                <div className="mt-4 text-sm text-gray-500">
-                  <p>Status: <span className="text-green-600 font-semibold">{mockMessData.currentSubscription.status}</span></p>
-                  <p>Next Renewal: {mockMessData.currentSubscription.nextRenewal}</p>
-                </div>
-              </motion.div>
-
-              {/* Find a PG Widget */}
-              <motion.div
-                className="bg-white rounded-xl shadow-lg p-6 hover:shadow-xl transition-shadow"
-                variants={widgetVariants}
-                initial="hidden"
-                animate="visible"
-                transition={{ delay: 0.2 }}
-              >
-                <div className="flex items-center justify-between mb-4">
-                  <h2 className="text-2xl font-bold text-gray-800 flex items-center">
-                    <FaHome className="mr-3 text-purple-600" /> Find a Home
-                  </h2>
-                  <Link to="/services/pg" className="text-sm font-medium text-blue-600 hover:underline">
-                    Search PGs
-                  </Link>
-                </div>
-                <p className="text-sm text-gray-500 mb-4">
-                  Explore new PGs and apartments near you.
-                </p>
-                <button className="w-full py-3 px-4 bg-purple-600 text-white rounded-md font-medium hover:bg-purple-700 transition-colors">
-                  Start Your Search
-                </button>
-              </motion.div>
-
-              {/* Service Cards (mini-widgets) */}
-              <motion.div
-                className="bg-white rounded-xl shadow-lg p-6 flex flex-col items-center text-center hover:shadow-xl transition-shadow"
-                variants={widgetVariants}
-                initial="hidden"
-                animate="visible"
-                transition={{ delay: 0.3 }}
-              >
-                <FaUtensils className="text-5xl text-blue-500 mb-4" />
-                <h2 className="text-lg font-semibold text-gray-800 mb-2">My Service History</h2>
-                <p className="text-sm text-gray-500 mb-4">View your past orders and payments.</p>
-                <Link to="/services/history" className="mt-auto py-2 px-4 bg-blue-600 text-white rounded-full font-medium hover:bg-blue-700 transition-colors">
-                  View History
-                </Link>
-              </motion.div>
-
-              <motion.div
-                className="bg-white rounded-xl shadow-lg p-6 flex flex-col items-center text-center hover:shadow-xl transition-shadow"
-                variants={widgetVariants}
-                initial="hidden"
-                animate="visible"
-                transition={{ delay: 0.4 }}
-              >
-                <FaPhoneAlt className="text-5xl text-orange-500 mb-4" />
-                <h2 className="text-lg font-semibold text-gray-800 mb-2">Contact Support</h2>
-                <p className="text-sm text-gray-500 mb-4">Get in touch with our support team.</p>
-                <Link to="/contact" className="mt-auto py-2 px-4 bg-orange-500 text-white rounded-full font-medium hover:bg-orange-600 transition-colors">
-                  Get Help
-                </Link>
-              </motion.div>
+              ))}
             </div>
+          </section>
 
-            {/* Right Sidebar for Alerts and Recommendations */}
-            <motion.div
-              className="lg:col-span-1 bg-white rounded-xl shadow-lg p-6 h-fit"
-              variants={widgetVariants}
-              initial="hidden"
-              animate="visible"
-              transition={{ delay: 0.5 }}
-            >
-              <h2 className="text-2xl font-bold text-gray-800 mb-4">Alerts & Recommendations</h2>
-              <div className="space-y-4">
-                {/* Dynamic alert example */}
-                <div className="bg-red-50 border-l-4 border-red-500 text-red-700 p-4 rounded">
-                  <p className="font-bold">Rent Reminder!</p>
-                  <p className="text-sm">Your rent for Sunshine PGs is due in 5 days. Don't forget to pay!</p>
+          {/* Search Bar */}
+          <div className="flex justify-between items-center mb-6">
+            <div>
+              <h3 className="text-2xl font-bold text-gray-900 mb-1">
+                {activeService === "housing" ? "Explore PGs & Rooms" : activeService === "mess" ? "Mess Services" : "Laundry Services"}
+              </h3>
+              <p className="text-gray-600 text-sm">
+                {activeService === "housing" ? "Find your perfect accommodation" : activeService === "mess" ? "Explore mess options" : "Find nearby laundry shops"}
+              </p>
+            </div>
+            <div className="relative w-full sm:w-72">
+              <Icon path="M8 4a4 4 0 100 8 4 4 0 000-8zM2 8a6 6 0 1110.89 3.476l4.817 4.817a1 1 0 01-1.414 1.414l-4.816-4.816A6 6 0 012 8z" className="absolute left-3 top-3 w-5 h-5 text-gray-400" />
+              <input
+                ref={searchInputRef}
+                placeholder={`Search ${activeService}...`}
+                className="pl-10 pr-4 py-2.5 border border-gray-300 rounded-lg w-full focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                onChange={(e) => setQuery(e.target.value)}
+              />
+            </div>
+          </div>
+
+          {/* Housing */}
+          {activeService === "housing" && (
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+              {filtered.housing.length === 0 ? (
+                <div className="col-span-full text-center py-12">
+                  <div className="w-16 h-16 border-4 border-indigo-600 border-t-transparent rounded-full animate-spin mx-auto mb-4"></div>
+                  <p className="text-gray-600">Loading PGs...</p>
                 </div>
-                
-                {/* Featured Messes */}
-                <h3 className="font-bold text-gray-700 mt-6">Top-Rated Messes Near You</h3>
-                {mockMessData.featuredMesses.map((mess, index) => (
-                  <div key={index} className="flex justify-between items-center p-3 bg-gray-50 rounded-lg hover:bg-gray-100 transition-colors">
-                    <div>
-                      <h4 className="font-semibold">{mess.name}</h4>
-                      <p className="text-xs text-gray-500">{mess.distance} away</p>
+              ) : (
+                filtered.housing.map((pg) => (
+                  <div key={pg.id} className="bg-white rounded-lg shadow-sm border border-gray-200 overflow-hidden hover:shadow-md transition-shadow">
+                    <div className="relative h-48">
+                      <img src={pg.image} alt={pg.name} className="w-full h-full object-cover" />
+                      <div className="absolute top-3 right-3 bg-white px-3 py-1 rounded-md shadow-md">
+                        <p className="text-sm font-bold text-indigo-600">₹{pg.price}/mo</p>
+                      </div>
+                      {pg.rating && (
+                        <div className="absolute top-3 left-3 bg-white px-2 py-1 rounded-md shadow-md flex items-center gap-1">
+                          <StarIcon />
+                          <span className="text-sm font-semibold text-gray-700">{pg.rating}</span>
+                        </div>
+                      )}
                     </div>
-                    <div className="text-right">
-                      <p className="text-sm font-bold text-yellow-500">{mess.rating} ★</p>
-                      <p className="text-xs text-gray-600">₹{mess.price}/mo</p>
+                    <div className="p-5">
+                      <h4 className="font-semibold text-lg text-gray-900 mb-1 truncate">{pg.name}</h4>
+                      <p className="text-sm text-gray-600 mb-1">{pg.type}</p>
+                      <p className="text-sm text-gray-500 flex items-center gap-1 mb-3">
+                        <Icon path="M5.05 4.05a7 7 0 119.9 9.9L10 18.9l-4.95-4.95a7 7 0 010-9.9zM10 11a2 2 0 100-4 2 2 0 000 4z" className="w-4 h-4" />
+                        {pg.location}
+                      </p>
+                      {pg.amenities?.length > 0 && (
+                        <div className="flex flex-wrap gap-2 mb-4">
+                          {pg.amenities.slice(0, 3).map((a, i) => (
+                            <span key={i} className="text-xs bg-indigo-50 text-indigo-700 px-2 py-1 rounded font-medium">{a}</span>
+                          ))}
+                          {pg.amenities.length > 3 && <span className="text-xs bg-gray-100 text-gray-600 px-2 py-1 rounded">+{pg.amenities.length - 3}</span>}
+                        </div>
+                      )}
+                      <div className="flex gap-2">
+                        <a href={`tel:${pg.contact}`} className="flex-1 bg-indigo-600 text-white py-2.5 rounded-lg text-center font-medium hover:bg-indigo-700 transition-colors text-sm">Call</a>
+                        <Link to={`/services/pg/${pg.id}`} className="flex-1 border border-indigo-600 text-indigo-600 py-2.5 rounded-lg text-center font-medium hover:bg-indigo-50 transition-colors text-sm">View Details</Link>
+                      </div>
                     </div>
                   </div>
-                ))}
-                <Link to="/services/mess" className="block text-center mt-4 text-blue-600 font-medium hover:underline">
-                  View More Messes
-                </Link>
+                ))
+              )}
+            </div>
+          )}
+
+          {/* Mess */}
+          {activeService === "mess" && (
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+              {filtered.mess.map((mess) => {
+
+                // 1️⃣ Calculate average rating (fallback)
+                const calculatedAvg =
+                  mess.ratings && mess.ratings.length > 0
+                    ? mess.ratings.reduce((sum, r) => sum + (r.stars || 0), 0) /
+                    mess.ratings.length
+                    : null;
+
+                // 2️⃣ Choose backend average if available OR the calculated one
+                const avgRating = mess.averageRating ?? calculatedAvg;
+
+                return (
+                  <div
+                    key={mess._id}
+                    className="bg-white rounded-lg shadow-sm border border-gray-200 p-5 hover:shadow-md transition-shadow"
+                  >
+                    <div className="flex justify-between items-start mb-3">
+                      <div>
+                        <h4 className="font-semibold text-lg text-gray-900">
+                          {mess.title || mess.name}
+                        </h4>
+                        <p className="text-sm text-gray-600">{mess.location}</p>
+                      </div>
+                      <span className="bg-green-100 text-green-700 text-xs font-semibold px-2 py-1 rounded">
+                        {mess.type}
+                      </span>
+                    </div>
+
+                    {/* ⭐ Rating Row */}
+                    <div className="flex items-center gap-1 mb-3">
+                      <StarIcon className="text-yellow-500" />
+
+                      {avgRating ? (
+                        <span className="text-sm font-semibold text-gray-700">
+                          {avgRating.toFixed(1)}
+                        </span>
+                      ) : (
+                        <span className="text-sm text-gray-400 italic">
+                          No ratings
+                        </span>
+                      )}
+                    </div>
+
+                    <p className="text-lg font-bold text-gray-900 mb-4">
+                      ₹{mess.price}/month
+                    </p>
+
+                    <button
+                      onClick={() => navigate(`/mess/${mess._id}`)}
+                      className="w-full bg-indigo-600 text-white py-2.5 rounded-lg font-medium hover:bg-indigo-700 transition-colors"
+                    >
+                      View Details
+                    </button>
+                  </div>
+                );
+              })}
+            </div>
+          )}
+
+
+
+          {/* Laundry */}
+          {activeService === "laundry" && (
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+              {filtered.laundry.map((laundry) => (
+                <div key={laundry.id} className="bg-white rounded-lg shadow-sm border border-gray-200 p-5 hover:shadow-md transition-shadow">
+                  <h4 className="font-semibold text-lg text-gray-900 mb-1">{laundry.name}</h4>
+                  <p className="text-sm text-gray-600 mb-3 flex items-center gap-1">
+                    <Icon path="M5.05 4.05a7 7 0 119.9 9.9L10 18.9l-4.95-4.95a7 7 0 010-9.9zM10 11a2 2 0 100-4 2 2 0 000 4z" className="w-4 h-4" />
+                    {laundry.location}
+                  </p>
+                  <div className="flex items-center gap-1 mb-3">
+                    <StarIcon />
+                    <span className="text-sm font-semibold text-gray-700">{laundry.rating}</span>
+                  </div>
+                  <div className="flex flex-wrap gap-2 mb-4">
+                    {laundry.services.map((service, i) => (
+                      <span key={i} className="text-xs bg-indigo-50 text-indigo-700 px-2 py-1 rounded font-medium">{service}</span>
+                    ))}
+                  </div>
+                  <p className="text-lg font-bold text-gray-900">{laundry.price}</p>
+                </div>
+              ))}
+            </div>
+          )}
+        </main>
+        <Footer />
+      </div>
+
+      {/* Modal */}
+      {selectedMess && (
+        <div ref={overlayRef} onClick={(e) => e.target === overlayRef.current && setSelectedMess(null)} className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+          <div className="bg-white rounded-lg shadow-2xl max-w-md w-full p-6">
+            <div className="flex justify-between items-start mb-4">
+              <div>
+                <h3 className="text-2xl font-bold text-gray-900">{selectedMess.name}</h3>
+                <p className="text-gray-600">{selectedMess.location}</p>
               </div>
-            </motion.div>
+              <button onClick={() => setSelectedMess(null)} className="text-gray-400 hover:text-gray-600">
+                <Icon path="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z" />
+              </button>
+            </div>
+            <div className="mb-4">
+              <div className="flex items-center gap-2 mb-2">
+                <span className="bg-green-100 text-green-700 text-xs font-semibold px-2 py-1 rounded">{selectedMess.type}</span>
+                <div className="flex items-center gap-1">
+                  <StarIcon />
+                  <span className="text-sm font-semibold text-gray-700">{selectedMess.rating}</span>
+                </div>
+              </div>
+              <p className="text-xl font-bold text-gray-900">₹{selectedMess.price}/month</p>
+            </div>
+            <div className="border-t pt-4">
+              <h4 className="font-semibold text-gray-900 mb-3">Today's Menu</h4>
+              <ul className="space-y-2">
+                {selectedMess.menu.map((item, i) => (
+                  <li key={i} className="flex items-center gap-2 text-gray-700">
+                    <Icon path="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" className="w-4 h-4 text-green-500" />
+                    {item}
+                  </li>
+                ))}
+              </ul>
+            </div>
+            <button onClick={() => setSelectedMess(null)} className="w-full mt-6 bg-indigo-600 text-white py-3 rounded-lg font-medium hover:bg-indigo-700 transition-colors">Close</button>
           </div>
         </div>
-      </main>
-      <Footer />
+      )}
     </div>
   );
 };

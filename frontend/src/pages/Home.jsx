@@ -1,11 +1,9 @@
 // src/pages/Home.jsx
 import React, { useState } from "react";
-import { Link } from "react-router-dom";
+import { Link,useNavigate } from "react-router-dom";
 import { motion } from "framer-motion";
 import {
   FaSearch,
-  FaHome,
-  FaUtensils,
   FaBuilding,
   FaCheckCircle,
   FaComments,
@@ -42,10 +40,24 @@ const Home = () => {
     setSearchFilters({ ...searchFilters, [e.target.name]: e.target.value });
   };
 
-  const handleSearchSubmit = (e) => {
-    e.preventDefault();
-    console.log("Searching with filters:", searchFilters);
-  };
+  const navigate = useNavigate();
+
+const handleSearchSubmit = (e) => {
+  e.preventDefault();
+  const { location, type, budget } = searchFilters;
+
+  // If user selects "mess"
+  if (type === "mess") {
+    navigate(`/messes?location=${location}`);
+    return;
+  }
+
+  // For accommodations (PG / Hostel / Flat)
+  navigate(
+    `/accommodations?location=${location}&type=${type}&budget=${budget}`
+  );
+};
+
 
   return (
     <div className="min-h-screen flex flex-col bg-gradient-to-b from-blue-50 to-gray-100 font-sans text-gray-800">
@@ -63,14 +75,15 @@ const Home = () => {
             {["accommodations", "messes"].map((link, i) => (
               <Link
                 key={i}
-                to={`/${link}`}
+                to="/login"
                 className="text-gray-700 hover:text-blue-600 font-medium transition-colors duration-200"
               >
                 {link === "accommodations" ? "Find Accommodations" : "Find Mess"}
               </Link>
             ))}
+            {/* 🔹 Navbar Login goes to Login page for student */}
             <Link
-              to="/login"
+              to="/login?role=student"
               className="bg-blue-600 text-white font-medium py-2 px-4 md:px-6 rounded-full shadow-md hover:bg-blue-700 hover:shadow-lg transition-all"
             >
               Login
@@ -101,12 +114,12 @@ const Home = () => {
             Find Your Perfect Stay & Meal
           </motion.h1>
           <motion.p
-            className="mt-3 sm:mt-4 text-lg sm:text-xl md:text-2xl text-gray-200 font-light"
+            className="mt-3 sm:mt-4 text-lg sm:text-xl md:text-2xl text-gray-200 font-dark"
             initial={{ y: -50, opacity: 0 }}
             animate={{ y: 0, opacity: 1 }}
             transition={{ duration: 0.6, delay: 0.2 }}
           >
-            Students & Migrants – Simplified, Safe & Reliable.
+            Find. Connect. Live Better.
           </motion.p>
 
           {/* Search Box */}
@@ -243,8 +256,8 @@ const Home = () => {
           </p>
           <div className="flex flex-col sm:flex-row justify-center items-center gap-4 sm:gap-6 mt-6 sm:mt-10">
             {[
-              { label: "List a PG / Home", to: "/register?role=homeowner" },
-              { label: "List a Mess Service", to: "/register?role=messowner" },
+              { label: "List a PG / Home", to: "/login?role=pgowner" },
+              { label: "List a Mess Service", to: "/login?role=pgowner" },
             ].map((btn, i) => (
               <Link key={i} to={btn.to} className="w-full sm:w-auto">
                 <motion.button
@@ -293,8 +306,12 @@ const Home = () => {
             <h4 className="text-base sm:text-lg font-semibold text-white mb-3 sm:mb-4">
               Contact
             </h4>
-            <p className="text-xs sm:text-sm text-gray-400">📍 Pune, Maharashtra</p>
-            <p className="text-xs sm:text-sm text-gray-400">📧 info@zipnivasa.com</p>
+            <p className="text-xs sm:text-sm text-gray-400">
+              📍 Pune, Maharashtra
+            </p>
+            <p className="text-xs sm:text-sm text-gray-400">
+              📧 info@zipnivasa.com
+            </p>
           </div>
           <div>
             <h4 className="text-base sm:text-lg font-semibold text-white mb-3 sm:mb-4">
