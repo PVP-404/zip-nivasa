@@ -22,7 +22,11 @@ import Message from "./models/Message.js";
 import messOwnerRoutes from "./routes/messOwnerRoutes.js";
 import messRoutes from "./routes/messRoutes.js";
 
+import mapRoutes from "./routes/mapRoutes.js";
+
 dotenv.config();
+console.log("Loaded OPENCAGE_KEY:", process.env.OPENCAGE_KEY);
+
 
 // __dirname support
 const __filename = fileURLToPath(import.meta.url);
@@ -52,6 +56,7 @@ connectDB();
 app.use("/api/auth", authRoutes);
 app.use("/api/pgs", pgRoutes);
 app.use("/api/chat", chatRoutes);
+app.use("/api/map", mapRoutes);
 
 // Test route
 app.get("/", (req, res) => {

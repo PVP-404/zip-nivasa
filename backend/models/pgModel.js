@@ -21,7 +21,9 @@ const pgSchema = new mongoose.Schema(
     views: { type: Number, default: 0 },
     inquiries: { type: Number, default: 0 },
     beds: { type: Number, default: 1 },
-    available: { type: Boolean, default: true }
+    available: { type: Boolean, default: true },
+    latitude: { type: Number },
+    longitude: { type: Number },
   },
   { timestamps: true }
 );

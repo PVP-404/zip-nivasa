@@ -46,6 +46,10 @@ import ChatPageWrapper from "./pages/chat/ChatPageWrapper";
 import ChatList from "./pages/chat/ChatList";      // ✅ FIXED IMPORT
 import Inbox from "./pages/chat/Inbox";            // ✅ KEEP if required
 
+
+import ExploreMapPage from "./pages/ExploreMapPage";
+
+
 function App() {
   return (
     <Router>
@@ -165,6 +169,8 @@ function App() {
             </ProtectedRoute>
           }
         />
+
+        <Route path="/explore/map" element={<ExploreMapPage />} />
 
 
         {/* ✅ Laundry Dashboard */}

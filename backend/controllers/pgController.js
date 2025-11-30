@@ -1,7 +1,76 @@
 import PG from "../models/pgModel.js";
 import User from "../models/User.js";
+import { geocodeAddress } from "../utils/geocode.js";
 
 //  CREATE PG LISTING
+// export const createPG = async (req, res) => {
+//   try {
+//     const userId = req.user.id;
+
+//     const user = await User.findById(userId);
+//     if (!user || user.role !== "pgowner") {
+//       return res.status(403).json({ success: false, message: "Unauthorized" });
+//     }
+
+//     const {
+//       title,
+//       propertyType,
+//       location,
+//       address,
+//       monthlyRent,
+//       deposit,
+//       occupancyType,
+//       amenities,
+//       description,
+//     } = req.body;
+
+//     const images =
+//       req.files?.map((file) => `/uploads/pgs/${file.filename}`) || [];
+//        // ⭐ Geocode address using OpenCage (no manual lat/lng)
+//     let lat = null;
+//     let lng = null;
+
+//     try {
+//       const coords = await geocodeAddress(address || location);
+//       lat = coords.lat;
+//       lng = coords.lng;
+//     } catch (geoErr) {
+//       console.error("Geocoding failed:", geoErr.message);
+//       // You can choose to continue without lat/lng or return error.
+//       // Here, we just log it and save PG without coordinates.
+//     }
+
+//     const pg = new PG({
+//       title,
+//       propertyType,
+//       location,
+//       address,
+//       monthlyRent,
+//       deposit,
+//       occupancyType,
+//       amenities: amenities ? JSON.parse(amenities) : [],
+//       description,
+//       images,
+//       owner: userId,
+//       beds: 1,
+//        latitude: lat,
+//       longitude: lng,
+//     });
+
+//     await pg.save();
+
+//     res.json({
+//       success: true,
+//       message: "PG listing created successfully",
+//       pg,
+//     });
+//   } catch (error) {
+//     console.log(error);
+//     res.status(500).json({ success: false, message: "Server Error" });
+//   }
+// };
+// backend/controllers/pgController.js
+
 export const createPG = async (req, res) => {
   try {
     const userId = req.user.id;
@@ -23,6 +92,26 @@ export const createPG = async (req, res) => {
       description,
     } = req.body;
 
+    console.log("ADDRESS RECEIVED IN BACKEND:", address);
+    console.log("LOCATION RECEIVED IN BACKEND:", location);
+
+    // ⭐ Clean + combine address for geocoding
+    const fullAddress = `${address}, ${location}`.trim();
+    console.log("FINAL ADDRESS SENT TO GEOCODER:", fullAddress);
+
+    let lat = null;
+    let lng = null;
+
+    try {
+      const coords = await geocodeAddress(fullAddress);
+      console.log("GEOCODER RESULT FROM BACKEND:", coords);
+
+      lat = coords.lat;
+      lng = coords.lng;
+    } catch (geoErr) {
+      console.error("BACKEND GEOCODING ERROR:", geoErr.message);
+    }
+
     const images =
       req.files?.map((file) => `/uploads/pgs/${file.filename}`) || [];
 
@@ -38,7 +127,9 @@ export const createPG = async (req, res) => {
       description,
       images,
       owner: userId,
-      beds: 1
+      beds: 1,
+      latitude: lat,
+      longitude: lng,
     });
 
     await pg.save();
@@ -49,10 +140,11 @@ export const createPG = async (req, res) => {
       pg,
     });
   } catch (error) {
-    console.log(error);
+    console.log("PG CREATE ERROR:", error);
     res.status(500).json({ success: false, message: "Server Error" });
   }
 };
+
 
 //  PUBLIC – FETCH ALL PGs
 export const getAllPGs = async (req, res) => {
