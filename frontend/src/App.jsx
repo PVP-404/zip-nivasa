@@ -1,7 +1,7 @@
 // ✅ frontend/src/App.jsx
 
 import { BrowserRouter as Router, Routes, Route } from "react-router-dom";
-
+import PGNearMe from "./pages/pgs/PGNearMe";
 // Public Pages
 import Home from "./pages/Home";
 import Login from "./pages/Login";
@@ -47,7 +47,6 @@ import ChatList from "./pages/chat/ChatList";      // ✅ FIXED IMPORT
 import Inbox from "./pages/chat/Inbox";            // ✅ KEEP if required
 
 
-import ExploreMapPage from "./pages/ExploreMapPage";
 
 
 function App() {
@@ -170,7 +169,9 @@ function App() {
           }
         />
 
-        <Route path="/explore/map" element={<ExploreMapPage />} />
+       
+        <Route path="/pgs/near-me" element={<PGNearMe/>} />
+
 
 
         {/* ✅ Laundry Dashboard */}

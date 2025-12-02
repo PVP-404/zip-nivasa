@@ -25,7 +25,7 @@ import messRoutes from "./routes/messRoutes.js";
 import mapRoutes from "./routes/mapRoutes.js";
 
 dotenv.config();
-console.log("Loaded OPENCAGE_KEY:", process.env.OPENCAGE_KEY);
+console.log("Mappls key loaded:", !!process.env.MAPPLS_REST_KEY);
 
 
 // __dirname support
@@ -153,13 +153,6 @@ io.on("connection", (socket) => {
     io.emit("online_users", Array.from(onlineUsers.keys()));
   });
 });
-
-// Start server
-httpServer.listen(PORT, () => {
-  console.log(`✅ Server + Socket.io running on port ${PORT}`);
-});
-
-
 // 🕛 Reset today's specials every midnight
 cron.schedule("0 0 * * *", async () => {
   try {
@@ -176,3 +169,11 @@ cron.schedule("0 0 * * *", async () => {
     console.error("❌ Error resetting daily specials:", err.message);
   }
 });
+
+// Start server
+httpServer.listen(PORT, () => {
+  console.log(`✅ Server + Socket.io running on port ${PORT}`);
+});
+
+
+

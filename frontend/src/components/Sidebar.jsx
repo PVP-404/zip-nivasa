@@ -1,4 +1,4 @@
-// ✅ frontend/src/components/Sidebar.jsx
+// frontend/src/components/Sidebar.jsx
 import React, { useEffect, useState } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
 
@@ -17,6 +17,8 @@ const ICON_PATHS = {
   messages:
     "M4 4h16v10H5.17L4 15.17V4zm2 3v2h12V7H6z",
   add: "M12 5v6m-6 0h6m0 0h6m-6 0v6",
+  nearme:
+    "M12 2a7 7 0 017 7c0 5-7 13-7 13S5 14 5 9a7 7 0 017-7zm0 9.5a2.5 2.5 0 100-5 2.5 2.5 0 000 5z",
 };
 
 const Icon = ({ name, className = "w-5 h-5" }) => {
@@ -50,6 +52,7 @@ const Sidebar = ({ isOpen }) => {
     tenant: [
       { icon: "dashboard", label: "Dashboard", path: "/dashboard/student" },
       { icon: "pg", label: "Explore PGs", path: "/pgs/all" },
+      { icon: "nearme", label: "PG Near Me", path: "/pgs/near-me" },
       { icon: "mess", label: "Mess Services", path: "/messes" },
       { icon: "laundry", label: "Laundry", path: "/services/laundry" },
       { icon: "wishlist", label: "Wishlist", path: "/student/wishlist" },
@@ -63,7 +66,11 @@ const Sidebar = ({ isOpen }) => {
       { icon: "messages", label: "Messages", path: "/messages" },
     ],
     messowner: [
-      { icon: "dashboard", label: "Dashboard", path: "/dashboard/messowner" },
+      {
+        icon: "dashboard",
+        label: "Dashboard",
+        path: "/dashboard/messowner",
+      },
       { icon: "mess", label: "My Messes", path: "/dashboard/messes" },
       { icon: "add", label: "Add Mess", path: "/dashboard/add-mess" },
       { icon: "messages", label: "Messages", path: "/messages" },
@@ -80,83 +87,72 @@ const Sidebar = ({ isOpen }) => {
     navigate(path);
   };
 
-  // Desktop sidebar (mini / expanded)
-  // ✅ UPDATED Desktop Sidebar (Mini labels added)
-const DesktopSidebar = () => (
-  <aside
-    className={`hidden lg:flex flex-col bg-white border-r border-gray-200 shadow-sm transition-all duration-300 ${
-      isOpen ? "w-60" : "w-20" // ⬅ mini width increased so text fits under icon
-    }`}
-  >
-    {/* Logo / Brand */}
-    <div className="flex items-center gap-2 px-3 py-4 border-b border-gray-100 justify-center">
-      <div className="w-9 h-9 bg-gradient-to-br from-yellow-400 to-orange-500 rounded-xl flex items-center justify-center shadow-md">
-        <span className="text-white font-bold text-lg">Z</span>
+  const DesktopSidebar = () => (
+    <aside
+      className={`hidden lg:flex flex-col bg-white border-r border-gray-200 shadow-sm transition-all duration-300 ${
+        isOpen ? "w-60" : "w-20"
+      }`}
+    >
+      <div className="flex items-center gap-2 px-3 py-4 border-b border-gray-100 justify-center">
+        <div className="w-9 h-9 bg-gradient-to-br from-yellow-400 to-orange-500 rounded-xl flex items-center justify-center shadow-md">
+          <span className="text-white font-bold text-lg">Z</span>
+        </div>
+        {isOpen && (
+          <div className="flex flex-col">
+            <span className="text-sm font-semibold text-gray-900">
+              Zip Nivasa
+            </span>
+            <span className="text-[10px] text-gray-500">
+              Find. Connect. Live.
+            </span>
+          </div>
+        )}
       </div>
 
-      {/* Show brand text ONLY when expanded */}
-      {isOpen && (
-        <div className="flex flex-col">
-          <span className="text-sm font-semibold text-gray-900">Zip Nivasa</span>
-          <span className="text-[10px] text-gray-500">Find. Connect. Live.</span>
-        </div>
-      )}
-    </div>
-
-    {/* Menu items */}
-    <nav className="flex-1 py-3 space-y-2 overflow-y-auto">
-      {menus[role]?.map((item, idx) => {
-        const active = isActive(item.path);
-
-        return (
-          <button
-            key={idx}
-            onClick={() => handleNavigation(item.path)}
-            className={`group flex flex-col items-center justify-center w-full transition-all ${
-              isOpen
-                ? "flex-row justify-start px-3 py-2 rounded-lg"
-                : "px-2 py-3"
-            } ${
-              active
-                ? "bg-indigo-50 text-indigo-700 font-semibold"
-                : "text-gray-700 hover:bg-gray-50"
-            }`}
-          >
-            {/* ICON */}
-            <Icon
-              name={item.icon}
-              className={`w-6 h-6 mb-1 ${
-                active ? "text-indigo-600" : "text-gray-500"
+      <nav className="flex-1 py-3 space-y-2 overflow-y-auto">
+        {menus[role]?.map((item) => {
+          const active = isActive(item.path);
+          return (
+            <button
+              key={item.path}
+              onClick={() => handleNavigation(item.path)}
+              className={`group flex flex-col items-center justify-center w-full transition-all ${
+                isOpen
+                  ? "flex-row justify-start px-3 py-2 rounded-lg"
+                  : "px-2 py-3"
               } ${
-                isOpen ? "mr-3 mb-0" : "mx-auto"
+                active
+                  ? "bg-indigo-50 text-indigo-700 font-semibold"
+                  : "text-gray-700 hover:bg-gray-50"
               }`}
-            />
+            >
+              <Icon
+                name={item.icon}
+                className={`w-6 h-6 mb-1 ${
+                  active ? "text-indigo-600" : "text-gray-500"
+                } ${isOpen ? "mr-3 mb-0" : "mx-auto"}`}
+              />
+              {isOpen ? (
+                <span className="truncate text-sm">{item.label}</span>
+              ) : (
+                <span className="text-[10px] text-gray-600 leading-tight">
+                  {item.label.length > 8
+                    ? item.label.slice(0, 8) + "…"
+                    : item.label}
+                </span>
+              )}
+            </button>
+          );
+        })}
+      </nav>
+    </aside>
+  );
 
-            {/* TEXT — inline when expanded, below icon when collapsed */}
-            {isOpen ? (
-              <span className="truncate text-sm">{item.label}</span>
-            ) : (
-              <span className="text-[10px] text-gray-600 leading-tight">
-                {item.label.length > 8
-                  ? item.label.slice(0, 8) + "…"
-                  : item.label}
-              </span>
-            )}
-          </button>
-        );
-      })}
-    </nav>
-  </aside>
-);
-
-
-  // Mobile overlay sidebar
   const MobileSidebar = () =>
     isOpen ? (
       <div className="fixed inset-0 z-40 flex lg:hidden">
         <div className="flex-1 bg-black/30" />
         <aside className="w-60 bg-white h-full shadow-2xl border-l border-gray-200">
-          {/* Same content as desktop expanded */}
           <div className="flex items-center gap-2 px-3 py-4 border-b border-gray-100">
             <div className="w-9 h-9 bg-gradient-to-br from-yellow-400 to-orange-500 rounded-xl flex items-center justify-center shadow-md">
               <span className="text-white font-bold text-lg">Z</span>
@@ -172,11 +168,11 @@ const DesktopSidebar = () => (
           </div>
 
           <nav className="flex-1 py-3 space-y-1 overflow-y-auto">
-            {menus[role]?.map((item, idx) => {
+            {menus[role]?.map((item) => {
               const active = isActive(item.path);
               return (
                 <button
-                  key={idx}
+                  key={item.path}
                   onClick={() => handleNavigation(item.path)}
                   className={`w-full flex items-center px-3 py-2 rounded-lg text-sm transition-all ${
                     active
