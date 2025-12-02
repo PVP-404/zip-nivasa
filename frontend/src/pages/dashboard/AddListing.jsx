@@ -1,4 +1,5 @@
 // src/pages/dashboard/AddListing.jsx
+
 import React, { useState, useEffect, useMemo } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import Header from "../../components/Header";
@@ -22,6 +23,13 @@ const UploadIcon = () => (
 const XCircleIcon = () => (
     <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 20 20"><path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clipRule="evenodd" /></svg>
 );
+// ⭐ NEW Icon for loading state
+const SpinnerIcon = () => (
+    <svg className="animate-spin -ml-1 mr-3 h-5 w-5 text-blue-500" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+        <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+        <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+    </svg>
+);
 
 const steps = [
   { id: 1, name: "Property Details", icon: <HomeIcon /> },
@@ -32,16 +40,24 @@ const steps = [
 const AddListing = () => {
   const [currentStep, setCurrentStep] = useState(1);
   const [loading, setLoading] = useState(false);
+  // ⭐ NEW: Pincode lookup state
+  const [pincodeLookupLoading, setPincodeLookupLoading] = useState(false); 
+  const [pincodeError, setPincodeError] = useState(null);
+
   const [formData, setFormData] = useState({
     title: "",
     propertyType: "",
-    location: "",
-    address: "",
+    // ⭐ LOCATION fields split for accuracy
+    streetAddress: "", // New primary address line
+    pincode: "",
+    district: "",
+    state: "",
+    // The previous 'location' and 'address' fields are now derived or renamed
     monthlyRent: "",
     deposit: "",
     occupancyType: "",
     amenities: [],
-    customAmenities: "", // String for custom input
+    customAmenities: "", 
     description: "",
     images: [],
   });
@@ -53,8 +69,11 @@ const AddListing = () => {
         return (
           formData.title.trim() !== "" &&
           formData.propertyType !== "" &&
-          formData.location.trim() !== "" &&
-          formData.address.trim() !== ""
+          // ⭐ Validation requires all new address fields
+          formData.streetAddress.trim() !== "" &&
+          /^\d{6}$/.test(formData.pincode) &&
+          formData.district.trim() !== "" &&
+          formData.state.trim() !== ""
         );
       case 2:
         return (
@@ -77,6 +96,62 @@ const AddListing = () => {
     const { name, value } = e.target;
     setFormData({ ...formData, [name]: value });
   };
+  
+  // ⭐ Pincode Lookup Handler
+  const handlePincodeChange = (e) => {
+    const pincode = e.target.value;
+    setFormData((prev) => ({ ...prev, pincode: pincode }));
+    setPincodeError(null);
+
+    // Trigger lookup when 6 digits are entered
+    if (pincode.length === 6 && /^\d{6}$/.test(pincode)) {
+        performPincodeLookup(pincode);
+    } else if (pincode.length !== 6) {
+        // Clear district and state if pincode is incomplete
+        setFormData((prev) => ({ ...prev, district: "", state: "" }));
+    }
+  };
+
+  const performPincodeLookup = async (pincode) => {
+    setPincodeLookupLoading(true);
+    setPincodeError(null);
+
+    try {
+        // NOTE: Pincode lookup needs to be handled via your own backend to prevent CORS issues
+        // and hide the API key, if one were used. We'll simulate a fetch to your backend endpoint.
+        // For this example, we assume you've created a backend endpoint (e.g., /api/pincode/lookup/:pincode)
+        
+        // Simulating the backend call:
+        const response = await fetch(`http://localhost:5000/api/utilities/pincode/${pincode}`);
+        
+        if (!response.ok) {
+            const errorData = await response.json();
+            throw new Error(errorData.message || "Pincode lookup failed.");
+        }
+        
+        const data = await response.json();
+        
+        if (data.district && data.state) {
+            setFormData((prev) => ({
+                ...prev,
+                district: data.district,
+                state: data.state,
+                // You can also populate the old 'location' field if needed for legacy compatibility
+                // location: `${data.district}, ${data.state}`,
+            }));
+        } else {
+            setPincodeError("Invalid Pincode or no location data found.");
+            setFormData((prev) => ({ ...prev, district: "", state: "" }));
+        }
+
+    } catch (error) {
+        console.error("Pincode lookup error:", error);
+        setPincodeError(error.message || "Failed to lookup Pincode. Try manual entry.");
+        setFormData((prev) => ({ ...prev, district: "", state: "" }));
+    } finally {
+        setPincodeLookupLoading(false);
+    }
+  };
 
   const handleCheckboxChange = (e) => {
     const { value, checked } = e.target;
@@ -90,7 +165,6 @@ const AddListing = () => {
 
   const handleImageChange = (e) => {
     const files = Array.from(e.target.files);
-    // Append new files to existing ones
     setFormData((prev) => ({
       ...prev,
       images: [...prev.images, ...files],
@@ -129,8 +203,13 @@ const AddListing = () => {
       // Basic Fields
       submitData.append("title", formData.title);
       submitData.append("propertyType", formData.propertyType);
-      submitData.append("location", formData.location);
-      submitData.append("address", formData.address);
+      
+      // ⭐ Append NEW STRUCTURED ADDRESS FIELDS
+      submitData.append("streetAddress", formData.streetAddress); 
+      submitData.append("pincode", formData.pincode);
+      submitData.append("district", formData.district);
+      submitData.append("state", formData.state);
+      
       submitData.append("monthlyRent", formData.monthlyRent);
       submitData.append("deposit", formData.deposit);
       submitData.append("occupancyType", formData.occupancyType);
@@ -169,7 +248,7 @@ const AddListing = () => {
       
       // Reset Form
       setFormData({
-        title: "", propertyType: "", location: "", address: "",
+        title: "", propertyType: "", streetAddress: "", pincode: "", district: "", state: "",
         monthlyRent: "", deposit: "", occupancyType: "",
         amenities: [], customAmenities: "", description: "", images: [],
       });
@@ -185,12 +264,14 @@ const AddListing = () => {
 
   const occupancyOptions = [
     { value: "single", label: "Single" },
+    // ... (rest of occupancyOptions)
     { value: "double", label: "Double" },
     { value: "triple", label: "Triple" },
     { value: "four_plus", label: "4+ Occupancy" },
   ];
 
   const amenityOptions = [
+    // ... (amenity options)
     "Wi-Fi", "Laundry", "Parking", "Attached Bathroom", "AC", "TV",
     "Wardrobe", "Mess Service", "Security", "Power Backup", "Gym"
   ];
@@ -211,75 +292,127 @@ const AddListing = () => {
                 <p className="text-sm text-gray-500">All fields marked with <span className="text-red-500">*</span> are mandatory.</p>
             </div>
 
-            <div>
-              <label className="block mb-2 text-sm font-semibold text-gray-700">
-                Listing Title <span className="text-red-500">*</span>
-              </label>
-              <input
-                type="text"
-                name="title"
-                value={formData.title}
-                onChange={handleInputChange}
-                placeholder="e.g., Spacious PG near Hinjewadi IT Park"
-                className="w-full border border-gray-300 rounded-lg p-3 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all outline-none"
-                required
-              />
-            </div>
-
+            {/* Title & Type */}
             <div className="grid md:grid-cols-2 gap-6">
-              <div>
-                <label className="block mb-2 text-sm font-semibold text-gray-700">
-                  Property Type <span className="text-red-500">*</span>
-                </label>
-                <select
-                  name="propertyType"
-                  value={formData.propertyType}
-                  onChange={handleInputChange}
-                  className="w-full border border-gray-300 rounded-lg p-3 focus:ring-2 focus:ring-blue-500 outline-none bg-white"
-                  required
-                >
-                  <option value="">Select Type</option>
-                  <option value="pg">PG (Paying Guest)</option>
-                  <option value="hostel">Hostel</option>
-                  <option value="room">Independent Room</option>
-                  <option value="flat">Shared Flat</option>
-                </select>
-              </div>
+                <div>
+                    <label className="block mb-2 text-sm font-semibold text-gray-700">
+                    Listing Title <span className="text-red-500">*</span>
+                    </label>
+                    <input
+                        type="text"
+                        name="title"
+                        value={formData.title}
+                        onChange={handleInputChange}
+                        placeholder="e.g., Spacious PG near Hinjewadi IT Park"
+                        className="w-full border border-gray-300 rounded-lg p-3 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all outline-none"
+                        required
+                    />
+                </div>
+                <div>
+                    <label className="block mb-2 text-sm font-semibold text-gray-700">
+                    Property Type <span className="text-red-500">*</span>
+                    </label>
+                    <select
+                    name="propertyType"
+                    value={formData.propertyType}
+                    onChange={handleInputChange}
+                    className="w-full border border-gray-300 rounded-lg p-3 focus:ring-2 focus:ring-blue-500 outline-none bg-white"
+                    required
+                    >
+                    <option value="">Select Type</option>
+                    <option value="pg">PG (Paying Guest)</option>
+                    <option value="hostel">Hostel</option>
+                    <option value="room">Independent Room</option>
+                    <option value="flat">Shared Flat</option>
+                    </select>
+                </div>
+            </div>
 
-              <div>
-                <label className="block mb-2 text-sm font-semibold text-gray-700">
-                  Location (City/Area) <span className="text-red-500">*</span>
-                </label>
-                <input
-                  type="text"
-                  name="location"
-                  value={formData.location}
-                  onChange={handleInputChange}
-                  placeholder="e.g., Pimpri-Chinchwad"
-                  className="w-full border border-gray-300 rounded-lg p-3 focus:ring-2 focus:ring-blue-500 outline-none"
-                  required
-                />
-              </div>
+            {/* ⭐ NEW: Structured Address Fields */}
+            <h3 className="text-lg font-bold text-gray-800 pt-4 border-t mt-4">Property Location</h3>
+
+            <div className="grid md:grid-cols-3 gap-6">
+                <div className="md:col-span-1">
+                    <label className="block mb-2 text-sm font-semibold text-gray-700">
+                        Pincode <span className="text-red-500">*</span>
+                    </label>
+                    <div className="relative">
+                        <input
+                            type="text"
+                            name="pincode"
+                            value={formData.pincode}
+                            onChange={handlePincodeChange}
+                            maxLength="6"
+                            placeholder="e.g., 411057"
+                            className="w-full border border-gray-300 rounded-lg p-3 focus:ring-2 focus:ring-blue-500 outline-none"
+                            required
+                        />
+                        {pincodeLookupLoading && (
+                            <div className="absolute inset-y-0 right-0 pr-3 flex items-center pointer-events-none">
+                                <SpinnerIcon />
+                            </div>
+                        )}
+                    </div>
+                    {pincodeError && (
+                        <p className="text-red-500 text-xs mt-1">{pincodeError}</p>
+                    )}
+                </div>
+
+                <div className="md:col-span-1">
+                    <label className="block mb-2 text-sm font-semibold text-gray-700">
+                        District (City/Area) <span className="text-red-500">*</span>
+                    </label>
+                    <input
+                        type="text"
+                        name="district"
+                        value={formData.district}
+                        onChange={handleInputChange}
+                        placeholder="e.g., Pune"
+                        className="w-full border border-gray-300 rounded-lg p-3 focus:ring-2 focus:ring-blue-500 outline-none bg-gray-50 disabled:bg-gray-100"
+                        required
+                        disabled={formData.pincode.length === 6 && !pincodeError} // Auto-filled if lookup is successful
+                    />
+                </div>
+
+                <div className="md:col-span-1">
+                    <label className="block mb-2 text-sm font-semibold text-gray-700">
+                        State <span className="text-red-500">*</span>
+                    </label>
+                    <input
+                        type="text"
+                        name="state"
+                        value={formData.state}
+                        onChange={handleInputChange}
+                        placeholder="e.g., Maharashtra"
+                        className="w-full border border-gray-300 rounded-lg p-3 focus:ring-2 focus:ring-blue-500 outline-none bg-gray-50 disabled:bg-gray-100"
+                        required
+                        disabled={formData.pincode.length === 6 && !pincodeError} // Auto-filled if lookup is successful
+                    />
+                </div>
             </div>
 
             <div>
               <label className="block mb-2 text-sm font-semibold text-gray-700">
-                Full Address <span className="text-red-500">*</span>
+                Full Street Address (Building, Street, Landmark) <span className="text-red-500">*</span>
               </label>
               <input
                 type="text"
-                name="address"
-                value={formData.address}
+                name="streetAddress" // Updated name
+                value={formData.streetAddress}
                 onChange={handleInputChange}
-                placeholder="Flat No, Building Name, Street, Landmark, Pin Code"
+                placeholder="Flat No, Building Name, Street, Landmark"
                 className="w-full border border-gray-300 rounded-lg p-3 focus:ring-2 focus:ring-blue-500 outline-none"
                 required
               />
+              <p className="text-xs text-gray-400 mt-1">
+                    This is the specific street-level address used for accurate map placement.
+                 </p>
             </div>
           </motion.div>
         );
 
       case 2:
+        // ... (Step 2 content remains the same)
         return (
           <motion.div
             key="step2"
@@ -414,6 +547,7 @@ const AddListing = () => {
         );
 
       case 3:
+        // ... (Step 3 content remains the same)
         return (
           <motion.div
             key="step3"

@@ -1,15 +1,30 @@
 // backend/utils/geocode.js
 import axios from "axios";
 
-export async function geocodeAddress(fullAddress) {
+/**
+ * Geocodes a structured address using OpenCage.
+ * @param {{address: string, city: string, state: string, pincode: string}} structuredAddress - Address components.
+ * @returns {{lat: number, lng: number}} - Latitude and longitude.
+ */
+export async function geocodeAddress(structuredAddress) {
   try {
     const apiKey = process.env.OPENCAGE_KEY;
     if (!apiKey) {
       throw new Error("OPENCAGE_KEY missing in environment variables.");
     }
 
+    const { address, city, state, pincode } = structuredAddress;
+    
+    // Construct a high-quality query string
+    const fullAddress = `${address}, ${city}, ${state} ${pincode}`;
+    
+    if (!address || !city || !state || !pincode) {
+        // Log error but allow for partial address geocoding, if possible
+        console.warn("Partial address components provided for geocoding.");
+    }
+    
     if (!fullAddress || fullAddress.trim() === "") {
-      throw new Error("Address cannot be empty.");
+      throw new Error("Address query cannot be empty.");
     }
 
     const url = "https://api.opencagedata.com/geocode/v1/json";
@@ -17,8 +32,9 @@ export async function geocodeAddress(fullAddress) {
     const response = await axios.get(url, {
       params: {
         key: apiKey,
-        q: fullAddress,
+        q: fullAddress, // Use the structured, joined address
         limit: 1,
+        countrycode: 'in', // Force India for better accuracy
       },
     });
 

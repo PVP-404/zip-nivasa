@@ -18,41 +18,60 @@ export const createPG = async (req, res) => {
     const {
       title,
       propertyType,
-      location,
-      address,
       monthlyRent,
       deposit,
       occupancyType,
       amenities,
       description,
       beds,
+      // ⭐ NEW STRUCTURED ADDRESS FIELDS
+      streetAddress, // Now used for the main address line
+      pincode,
+      district,
+      state,
     } = req.body;
+    
+    // Derived location fields
+    const location = `${district}, ${state}`; 
+    const address = streetAddress; // Keep the original `address` field in DB as the primary line
 
     const images =
       req.files?.map((file) => `/uploads/pgs/${file.filename}`) || [];
 
-    // ⭐ Combine title + address + city for better geocode
-    // const fullAddress = `${title}, ${address}, ${location}`;
-    const fullAddress = ` ${address}`;
-    console.log("Geocoding:", fullAddress);
+    // ⭐ IMPROVED GEOCODING: Use the full structured address for high accuracy
+    const geocodeQuery = {
+      address: streetAddress,
+      city: district, // Use district/city for better geocoding context
+      state: state,
+      pincode: pincode,
+    };
+    
+    console.log("Geocoding Query:", geocodeQuery);
 
     let latitude = null;
     let longitude = null;
 
     try {
-  const coords = await geocodeAddress(fullAddress);
-  latitude = coords.lat;
-  longitude = coords.lng;
-  console.log("OpenCage coordinates:", coords);
-} catch (err) {
-  console.error("OpenCage failed:", err.message);
-}
+      // Pass the structured query object to the geocoder
+      const coords = await geocodeAddress(geocodeQuery); 
+      latitude = coords.lat;
+      longitude = coords.lng;
+      console.log("Geocoding coordinates:", coords);
+    } catch (err) {
+      console.error("Geocoding failed:", err.message);
+      // It's acceptable to proceed without coords, but log a warning.
+    }
 
+    // ⭐ Store all structured fields for better data quality
     const pg = await PG.create({
       title,
       propertyType,
-      location,
-      address,
+      location, // Stored as 'District, State'
+      address, // Stored as the main streetAddress line
+      streetAddress, // NEW: Full address line
+      pincode, // NEW
+      district, // NEW
+      state, // NEW
       monthlyRent,
       deposit,
       occupancyType,

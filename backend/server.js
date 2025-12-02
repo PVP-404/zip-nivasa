@@ -15,6 +15,8 @@ import authRoutes from "./routes/authRoutes.js";
 import chatRoutes from "./routes/chatRoutes.js";
 import profileRoutes from "./routes/profileRoutes.js";
 
+import utilityRoutes from './routes/utilityRoutes.js';
+
 // Models
 import Message from "./models/Message.js";
 
@@ -57,7 +59,7 @@ app.use("/api/auth", authRoutes);
 app.use("/api/pgs", pgRoutes);
 app.use("/api/chat", chatRoutes);
 app.use("/api/map", mapRoutes);
-
+app.use('/api/utilities', utilityRoutes);
 // Test route
 app.get("/", (req, res) => {
   res.send("Zip Nivasa Backend Running ✅");
