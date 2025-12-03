@@ -1,7 +1,17 @@
 // frontend/src/pages/chat/ChatPage.jsx
-import React, { useEffect, useState, useRef, useMemo } from "react";
+import React, {
+  useEffect,
+  useState,
+  useRef,
+  useMemo,
+} from "react";
 import axios from "axios";
-import socket, { registerSocket, sendTyping, stopTyping } from "../../services/socket";
+import socket, {
+  registerSocket,
+  sendTyping,
+  stopTyping,
+  sendReadReceipt,
+} from "../../services/socket";
 import Sidebar from "../../components/Sidebar";
 import Header from "../../components/Header";
 
@@ -9,6 +19,17 @@ const Icon = ({ d, className = "w-5 h-5" }) => (
   <svg className={className} fill="currentColor" viewBox="0 0 20 20">
     <path d={d} fillRule="evenodd" clipRule="evenodd" />
   </svg>
+);
+
+// WhatsApp-style tick
+const TickIcon = ({ delivered, read }) => (
+  <span
+    className={`ml-1 text-[11px] font-semibold ${
+      read ? "text-blue-400" : delivered ? "text-gray-400" : "text-gray-300"
+    }`}
+  >
+    {delivered ? "✓✓" : "✓"}
+  </span>
 );
 
 export default function ChatPage({ receiverId }) {
@@ -24,15 +45,51 @@ export default function ChatPage({ receiverId }) {
   const [file, setFile] = useState(null);
 
   const scrollRef = useRef(null);
-  const typingTimerRef = useRef(null); // prevent timer re-creation on every render
+  const typingTimerRef = useRef(null);
+
   const isOnline = useMemo(
     () => onlineUsers.map(String).includes(String(receiverId)),
     [onlineUsers, receiverId]
   );
 
+  const formatTime = (d) =>
+    new Date(d).toLocaleTimeString("en-US", {
+      hour: "2-digit",
+      minute: "2-digit",
+    });
+
   useEffect(() => {
+    if (!userId || !receiverId) return;
+
     registerSocket(userId);
 
+    // mark messages from receiver as read
+    const markRead = async () => {
+      try {
+        await axios.post(
+          "http://localhost:5000/api/chat/mark-read",
+          { partnerId: receiverId },
+          { headers: { Authorization: `Bearer ${token}` } }
+        );
+
+        // instant UI update
+        setMessages((prev) =>
+          prev.map((m) =>
+            String(m.sender) === String(receiverId) &&
+            String(m.receiver) === String(userId)
+              ? { ...m, readAt: new Date().toISOString() }
+              : m
+          )
+        );
+
+        // 🔵 notify sender real-time
+        sendReadReceipt(userId, receiverId);
+      } catch (e) {
+        console.error("mark-read error:", e);
+      }
+    };
+
+    // load user & messages
     Promise.all([
       axios.get(`http://localhost:5000/api/auth/user/${receiverId}`),
       axios.get(`http://localhost:5000/api/chat/history/${receiverId}`, {
@@ -41,13 +98,17 @@ export default function ChatPage({ receiverId }) {
     ])
       .then(([uRes, hRes]) => {
         if (uRes.data?.success) setReceiver(uRes.data.user);
-        if (hRes.data?.success) setMessages(hRes.data.messages);
+        if (hRes.data?.success) {
+          setMessages(hRes.data.messages || []);
+          if ((hRes.data.messages || []).length > 0) {
+            markRead();
+          }
+        }
       })
       .catch((e) => console.log("Chat load error:", e));
 
-    // When a message is received from server:
-    socket.on("receive_message", (msg) => {
-      // If it's our current conversation
+    // SOCKET EVENTS
+    socket.on("receive_message", async (msg) => {
       const match =
         (String(msg.sender) === String(receiverId) &&
           String(msg.receiver) === String(userId)) ||
@@ -57,20 +118,39 @@ export default function ChatPage({ receiverId }) {
       if (!match) return;
 
       setMessages((prev) => {
-        // If we sent an optimistic message, replace it with the server-confirmed one
         if (String(msg.sender) === String(userId)) {
           const idx = prev.findIndex(
             (m) => m._optimistic && m.message === msg.message
           );
           if (idx !== -1) {
             const copy = [...prev];
-            copy[idx] = msg; // replace optimistic with server version
+            copy[idx] = msg;
             return copy;
           }
         }
-        // Otherwise just append
         return [...prev, msg];
       });
+
+      // incoming message → mark read immediately
+      if (
+        String(msg.sender) === String(receiverId) &&
+        String(msg.receiver) === String(userId)
+      ) {
+        await markRead();
+      }
+    });
+
+    // 🔵 Real-time read receipts
+    socket.on("message_read", ({ readerId, readAt }) => {
+      if (String(readerId) !== String(receiverId)) return;
+
+      setMessages((prev) =>
+        prev.map((m) =>
+          String(m.sender) === String(userId)
+            ? { ...m, readAt }
+            : m
+        )
+      );
     });
 
     socket.on("typing", ({ sender }) => {
@@ -85,6 +165,7 @@ export default function ChatPage({ receiverId }) {
 
     return () => {
       socket.off("receive_message");
+      socket.off("message_read");
       socket.off("typing");
       socket.off("stop_typing");
       socket.off("online_users");
@@ -93,16 +174,15 @@ export default function ChatPage({ receiverId }) {
 
   useEffect(() => {
     scrollRef.current?.scrollIntoView({ behavior: "smooth" });
-  }, [messages]);
+  }, [messages, isTyping]);
 
-  // Send a message: optimistic UI + socket emit ONLY (no REST fallback)
+  // send message
   const send = async (text) => {
     if (!text?.trim() || !userId || !receiverId) return;
     setSending(true);
 
     const trimmed = text.trim();
 
-    // Optimistic bubble (will be replaced when server echoes back with _id)
     const optimistic = {
       _id: `temp-${Date.now()}`,
       _optimistic: true,
@@ -110,10 +190,10 @@ export default function ChatPage({ receiverId }) {
       receiver: receiverId,
       message: trimmed,
       createdAt: new Date().toISOString(),
+      readAt: null,
     };
     setMessages((prev) => [...prev, optimistic]);
 
-    // Socket emit (server will save to DB and echo back; we replace optimistic)
     socket.emit("send_message", {
       sender: userId,
       receiver: receiverId,
@@ -125,6 +205,8 @@ export default function ChatPage({ receiverId }) {
 
   const handleSend = () => {
     const txt = input;
+    if (!txt.trim() && !file) return;
+
     setInput("");
     stopTyping(userId, receiverId);
     send(file ? `${txt ? txt + "\n" : ""}[📎 ${file.name}]` : txt);
@@ -149,8 +231,6 @@ export default function ChatPage({ receiverId }) {
   };
 
   const phone = receiver?.phone || "";
-  const formatTime = (d) =>
-    new Date(d).toLocaleTimeString("en-US", { hour: "2-digit", minute: "2-digit" });
 
   return (
     <div className="flex h-screen bg-gray-50 overflow-hidden">
@@ -158,7 +238,7 @@ export default function ChatPage({ receiverId }) {
       <div className="flex-1 flex flex-col overflow-hidden">
         <Header />
 
-        {/* Chat Header - Fixed (flex-shrink-0) */}
+        {/* Chat Header */}
         <div className="bg-white border-b px-4 py-3 shadow-sm flex-shrink-0">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-3">
@@ -213,23 +293,14 @@ export default function ChatPage({ receiverId }) {
           </div>
         </div>
 
-        {/* Messages - Scrollable (flex-1 overflow-y-auto) */}
+        {/* Messages */}
         <main className="flex-1 overflow-y-auto bg-gradient-to-b from-gray-50 to-gray-100">
           <div className="max-w-4xl mx-auto px-4 py-4 space-y-3">
-            {messages.length === 0 && (
-              <div className="text-center py-12">
-                <div className="w-16 h-16 bg-gray-200 rounded-full flex items-center justify-center mx-auto mb-3">
-                  <Icon
-                    d="M2.003 5.884L10 9.882l7.997-3.998A2 2 0 0016 4H4a2 2 0 00-1.997 1.884zM18 8.118l-8 4-8-4V14a2 2 0 002 2h12a2 2 0 002-2V8.118z"
-                    className="w-8 h-8 text-gray-400"
-                  />
-                </div>
-                <p className="text-gray-500 text-sm">Start the conversation!</p>
-              </div>
-            )}
-
             {messages.map((m) => {
               const mine = String(m.sender) === String(userId);
+              const delivered = true; // socket always delivers
+              const read = !!m.readAt;
+
               return (
                 <div
                   key={m._id || m.createdAt}
@@ -243,14 +314,20 @@ export default function ChatPage({ receiverId }) {
                           : "bg-white text-gray-800 border border-gray-200 rounded-bl-sm"
                       }`}
                     >
-                      <p className="whitespace-pre-wrap break-words">{m.message}</p>
+                      <p className="whitespace-pre-wrap break-words">
+                        {m.message}
+                      </p>
                     </div>
+
                     <div
-                      className={`text-xs mt-1 px-1 ${
-                        mine ? "text-right text-gray-500" : "text-left text-gray-400"
+                      className={`mt-1 px-1 flex items-center gap-1 text-[11px] ${
+                        mine
+                          ? "justify-end text-gray-200/80"
+                          : "justify-start text-gray-400"
                       }`}
                     >
-                      {formatTime(m.createdAt)}
+                      <span>{formatTime(m.createdAt)}</span>
+                      {mine && <TickIcon delivered={delivered} read={read} />}
                     </div>
                   </div>
                 </div>
@@ -276,9 +353,11 @@ export default function ChatPage({ receiverId }) {
           </div>
         </main>
 
-        {/* Composer - Fixed (flex-shrink-0) */}
+        {/* Composer */}
         <div className="bg-white border-t shadow-lg flex-shrink-0">
           <div className="max-w-4xl mx-auto px-4 py-3">
+
+            {/* file preview */}
             {file && (
               <div className="mb-2 flex items-center gap-2 bg-indigo-50 border border-indigo-200 rounded-lg px-3 py-2">
                 <Icon

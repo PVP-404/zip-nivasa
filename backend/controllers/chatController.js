@@ -87,16 +87,26 @@ export const markAsRead = async (req, res) => {
   try {
     const myId = req.user.id;
     const { partnerId } = req.body;
-    if (!partnerId) return res.status(400).json({ success: false, message: "partnerId required" });
 
     await Message.updateMany(
       { sender: partnerId, receiver: myId, readAt: null },
       { $set: { readAt: new Date() } }
     );
 
+    // 🔵 Notify sender live
+    const partnerSocket = onlineUsers.get(partnerId);
+    if (partnerSocket) {
+      io.to(partnerSocket).emit("message_read", {
+        readerId: myId,
+        partnerId,
+        readAt: new Date().toISOString(),
+      });
+    }
+
     return res.json({ success: true });
   } catch (err) {
     console.error("markAsRead error:", err);
-    return res.status(500).json({ success: false, message: "Server error" });
+    return res.status(500).json({ success: false });
   }
 };
+

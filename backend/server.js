@@ -143,6 +143,18 @@ io.on("connection", (socket) => {
       console.error("❌ Socket Error:", err);
     }
   });
+  //  Mark messages as read (real-time)
+socket.on("read_messages", ({ readerId, partnerId }) => {
+  const partnerSocket = onlineUsers.get(partnerId);
+
+  if (partnerSocket) {
+    io.to(partnerSocket).emit("message_read", {
+      readerId,
+      partnerId,
+      readAt: new Date().toISOString(),
+    });
+  }
+});
 
   // ✅ Disconnect
   socket.on("disconnect", () => {

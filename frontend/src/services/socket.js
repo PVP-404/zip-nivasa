@@ -27,5 +27,9 @@ export const sendTyping = (sender, receiver) => {
 export const stopTyping = (sender, receiver) => {
   socket.emit("stop_typing", { sender, receiver });
 };
+export const sendReadReceipt = (readerId, partnerId) => {
+  socket.emit("read_messages", { readerId, partnerId });
+};
+
 
 export default socket;

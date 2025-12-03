@@ -29,6 +29,12 @@ export default function ChatList() {
     fetchConvos();
   }, []);
 
+  const formatTime = (dateStr) =>
+    new Date(dateStr).toLocaleTimeString("en-US", {
+      hour: "2-digit",
+      minute: "2-digit",
+    });
+
   return (
     <div className="flex min-h-screen bg-gray-50">
       <Sidebar />
@@ -39,7 +45,7 @@ export default function ChatList() {
 
           {loading ? (
             <div className="flex items-center justify-center py-10">
-              <div className="w-12 h-12 rounded-full border-4 border-indigo-600 border-t-transparent animate-spin"></div>
+              <div className="w-12 h-12 rounded-full border-4 border-indigo-600 border-t-transparent animate-spin" />
             </div>
           ) : convos.length === 0 ? (
             <div className="text-gray-600">No conversations yet.</div>
@@ -60,21 +66,27 @@ export default function ChatList() {
                           {user.role}
                         </span>
                       </div>
-                      <div className="text-sm text-gray-600 mt-1 line-clamp-1">
+                      <div
+                        className={`text-sm mt-1 line-clamp-1 ${
+                          unreadCount
+                            ? "text-gray-900 font-semibold"
+                            : "text-gray-600"
+                        }`}
+                      >
                         {lastMessage?.message || "No messages"}
                       </div>
                     </div>
-                    <div className="flex items-center gap-3">
+                    <div className="flex flex-col items-end gap-1">
+                      <span className="text-xs text-gray-400">
+                        {lastMessage?.createdAt
+                          ? formatTime(lastMessage.createdAt)
+                          : ""}
+                      </span>
                       {!!unreadCount && (
-                        <span className="inline-flex items-center justify-center text-xs bg-red-600 text-white w-6 h-6 rounded-full">
+                        <span className="inline-flex items-center justify-center text-xs bg-red-600 text-white min-w-[1.5rem] h-6 rounded-full px-1">
                           {unreadCount}
                         </span>
                       )}
-                      <span className="text-xs text-gray-400">
-                        {lastMessage?.createdAt
-                          ? new Date(lastMessage.createdAt).toLocaleString()
-                          : ""}
-                      </span>
                     </div>
                   </Link>
                 </li>
