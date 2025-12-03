@@ -2,9 +2,13 @@
 import PG from "../models/pgModel.js";
 import User from "../models/User.js";
 import { geocodeAddress } from "../utils/geocode.js";
+import { geocodeEloc } from "../utils/mapplsGeocode.js";
 
 import { calculateDistanceKm } from "../services/pgService.js";
 
+//  CREATE PG LISTING (with Mappls Geocoding)
+
+// CREATE PG LISTING
 //  CREATE PG LISTING (with Mappls Geocoding)
 export const createPG = async (req, res) => {
   try {
@@ -12,7 +16,7 @@ export const createPG = async (req, res) => {
     const user = await User.findById(userId);
 
     if (!user || user.role !== "pgowner") {
-      return res.status(403).json({ success: false, message: "Unauthorized" });
+      return res.status(403).json({ message: "Unauthorized" });
     }
 
     const {
@@ -24,54 +28,73 @@ export const createPG = async (req, res) => {
       amenities,
       description,
       beds,
-      // ⭐ NEW STRUCTURED ADDRESS FIELDS
-      streetAddress, // Now used for the main address line
+      streetAddress,
       pincode,
       district,
       state,
     } = req.body;
-    
-    // Derived location fields
-    const location = `${district}, ${state}`; 
-    const address = streetAddress; // Keep the original `address` field in DB as the primary line
 
-    const images =
-      req.files?.map((file) => `/uploads/pgs/${file.filename}`) || [];
+    const location = `${district}, ${state}`;
+    const images = req.files?.map((f) => `/uploads/pgs/${f.filename}`) || [];
 
-    // ⭐ IMPROVED GEOCODING: Use the full structured address for high accuracy
+    // ✅ CLEAN STREET ADDRESS (remove S.No, Nr, extra commas)
+    const cleanedStreet = streetAddress
+      ? streetAddress
+          .replace(/S\.?No\.?\s*\d+/gi, "")
+          .replace(/Nr\s+/gi, "Near ")
+          .replace(/\s{2,}/g, " ")
+          .replace(/,\s*,/g, ", ")
+          .trim()
+      : "";
+
+    // ✅ PASS FULL STRUCTURED ADDRESS TO GEOCODERS
     const geocodeQuery = {
-      address: streetAddress,
-      city: district, // Use district/city for better geocoding context
-      state: state,
-      pincode: pincode,
+      address: cleanedStreet || streetAddress || "",
+      city: district || "",   // "Pune"
+      state: state || "",     // "Maharashtra"
+      pincode: pincode || "", // "4110xx"
     };
-    
-    console.log("Geocoding Query:", geocodeQuery);
+
+    console.log("FINAL CLEANED GEOCODE QUERY:", geocodeQuery);
 
     let latitude = null;
     let longitude = null;
+    let mapplsEloc = null;
+    let mapplsAddress = null;
 
     try {
-      // Pass the structured query object to the geocoder
-      const coords = await geocodeAddress(geocodeQuery); 
+      // 🔹 Both in parallel: OpenCage (lat/lng) + Mappls (eLoc)
+      const [coords, mappls] = await Promise.all([
+        geocodeAddress(geocodeQuery),
+        geocodeEloc(geocodeQuery),
+      ]);
+
       latitude = coords.lat;
       longitude = coords.lng;
-      console.log("Geocoding coordinates:", coords);
+
+      mapplsEloc = mappls.eLoc;
+      mapplsAddress = mappls.formattedAddress;
+
+      console.log("Geocode Success:", {
+        latitude,
+        longitude,
+        mapplsEloc,
+        mapplsAddress,
+      });
     } catch (err) {
-      console.error("Geocoding failed:", err.message);
-      // It's acceptable to proceed without coords, but log a warning.
+      console.error("Geocode Error:", err.message);
+      // we still save PG without coords/eLoc if geocode fails
     }
 
-    // ⭐ Store all structured fields for better data quality
     const pg = await PG.create({
       title,
       propertyType,
-      location, // Stored as 'District, State'
-      address, // Stored as the main streetAddress line
-      streetAddress, // NEW: Full address line
-      pincode, // NEW
-      district, // NEW
-      state, // NEW
+      location,
+      address: cleanedStreet || streetAddress,
+      streetAddress: cleanedStreet || streetAddress,
+      pincode,
+      district,
+      state,
       monthlyRent,
       deposit,
       occupancyType,
@@ -82,18 +105,18 @@ export const createPG = async (req, res) => {
       owner: userId,
       latitude,
       longitude,
+      mapplsEloc,
+      mapplsAddress,
     });
 
-    res.json({
-      success: true,
-      message: "PG listing created successfully",
-      pg,
-    });
+    res.json({ success: true, pg });
   } catch (error) {
     console.error("PG CREATE ERROR:", error);
-    res.status(500).json({ success: false, message: "Server Error" });
+    res.status(500).json({ message: "Server Error" });
   }
 };
+
+
 
 //  PUBLIC – FETCH ALL PGs
 export const getAllPGs = async (req, res) => {

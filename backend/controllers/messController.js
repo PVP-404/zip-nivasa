@@ -1,21 +1,75 @@
 import Mess from "../models/Mess.js";
-
+import { geocodeAddress } from "../utils/geocode.js";
+import { geocodeEloc } from "../utils/mapplsGeocode.js";
 //  Add Mess
+// Add Mess
 export const addMess = async (req, res) => {
   try {
-    const imagePaths = req.files ? req.files.map(f => `/uploads/pgs/${f.filename}`) : [];
+    const imagePaths = req.files
+      ? req.files.map((f) => `/uploads/pgs/${f.filename}`)
+      : [];
 
     const messData = {
       ...req.body,
       images: imagePaths,
     };
 
-    if (typeof messData.menu === "string") messData.menu = JSON.parse(messData.menu);
+    if (typeof messData.menu === "string") {
+      messData.menu = JSON.parse(messData.menu);
+    }
 
-    const newMess = new Mess(messData);
+    // 🔹 Optional: if frontend sends structured fields
+    const {
+      streetAddress,
+      pincode,
+      district,
+      state,
+      location, // e.g. "Nigdi, Pune"
+    } = messData;
+
+    let latitude = null;
+    let longitude = null;
+    let mapplsEloc = null;
+    let mapplsAddress = null;
+
+    if (streetAddress && district && state && pincode) {
+      const geocodeQuery = {
+        address: streetAddress,
+        city: district,
+        state,
+        pincode,
+      };
+
+      try {
+        const [coords, mappls] = await Promise.all([
+          geocodeAddress(geocodeQuery),
+          geocodeEloc(geocodeQuery),
+        ]);
+
+        latitude = coords.lat;
+        longitude = coords.lng;
+        mapplsEloc = mappls.eLoc;
+        mapplsAddress = mappls.formattedAddress;
+      } catch (e) {
+        console.error("Mess geocode error:", e.message);
+      }
+    }
+
+    const newMess = new Mess({
+      ...messData,
+      latitude,
+      longitude,
+      mapplsEloc,
+      mapplsAddress,
+      // you can also derive location here if needed:
+      location: location || `${district || ""}, ${state || ""}`.trim(),
+    });
+
     const savedMess = await newMess.save();
 
-    res.status(201).json({ success: true, message: "Mess added successfully!", mess: savedMess });
+    res
+      .status(201)
+      .json({ success: true, message: "Mess added successfully!", mess: savedMess });
   } catch (err) {
     res.status(500).json({ success: false, message: err.message });
   }

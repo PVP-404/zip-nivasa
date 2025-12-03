@@ -2,56 +2,64 @@
 import axios from "axios";
 
 /**
- * Geocodes a structured address using OpenCage.
- * @param {{address: string, city: string, state: string, pincode: string}} structuredAddress - Address components.
- * @returns {{lat: number, lng: number}} - Latitude and longitude.
+ * Clean raw address coming from frontend.
+ * Removes S.No., Nr., double commas, extra spaces.
+ */
+function cleanAddress(raw) {
+  if (!raw) return "";
+
+  return raw
+    .replace(/S\.?No\.?\s*\d+/gi, "") // remove S.No. 133/1
+    .replace(/Nr\s+/gi, "Near ")      // Nr → Near
+    .replace(/\s{2,}/g, " ")          // extra spaces
+    .replace(/,\s*,/g, ", ")          // double commas
+    .trim();
+}
+
+/**
+ * Geocode using OpenCage
+ * structuredAddress: { address, city, state, pincode }
  */
 export async function geocodeAddress(structuredAddress) {
   try {
     const apiKey = process.env.OPENCAGE_KEY;
-    if (!apiKey) {
-      throw new Error("OPENCAGE_KEY missing in environment variables.");
-    }
+    if (!apiKey) throw new Error("OPENCAGE_KEY missing");
 
-    const { address, city, state, pincode } = structuredAddress;
-    
-    // Construct a high-quality query string
-    const fullAddress = `${address}, ${city}, ${state} ${pincode}`;
-    
-    if (!address || !city || !state || !pincode) {
-        // Log error but allow for partial address geocoding, if possible
-        console.warn("Partial address components provided for geocoding.");
-    }
-    
-    if (!fullAddress || fullAddress.trim() === "") {
-      throw new Error("Address query cannot be empty.");
-    }
+    const cleanedAddress = cleanAddress(structuredAddress.address || "");
 
-    const url = "https://api.opencagedata.com/geocode/v1/json";
+    // ✅ Use full structured address for better precision
+    const parts = [];
+    if (cleanedAddress) parts.push(cleanedAddress);
+    if (structuredAddress.city) parts.push(structuredAddress.city);
+    if (structuredAddress.state) parts.push(structuredAddress.state);
+    if (structuredAddress.pincode) parts.push(structuredAddress.pincode);
 
-    const response = await axios.get(url, {
-      params: {
-        key: apiKey,
-        q: fullAddress, // Use the structured, joined address
-        limit: 1,
-        countrycode: 'in', // Force India for better accuracy
-      },
-    });
+    const fullAddress = parts.join(", ");
+
+    console.log("OpenCage Final Query →", fullAddress);
+
+    const response = await axios.get(
+      "https://api.opencagedata.com/geocode/v1/json",
+      {
+        params: {
+          key: apiKey,
+          q: fullAddress,
+          limit: 1,
+          countrycode: "in",
+        },
+      }
+    );
 
     const result = response.data.results?.[0];
-    if (!result) {
-      throw new Error("No result returned from OpenCage.");
-    }
+    if (!result) throw new Error("No OpenCage result");
 
-    const lat = result.geometry.lat;
-    const lng = result.geometry.lng;
-
-    console.log("OpenCage →", { lat, lng, address: result.formatted });
-
-    return { lat, lng };
-
+    return {
+      lat: result.geometry.lat,
+      lng: result.geometry.lng,
+      cleanedAddress,
+    };
   } catch (error) {
-    console.error("OpenCage Geocode Error:", error.response?.data || error.message);
+    console.error("OpenCage Error:", error.response?.data || error.message);
     throw error;
   }
 }

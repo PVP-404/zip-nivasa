@@ -1,18 +1,15 @@
+// backend/models/pgModel.js
 import mongoose from "mongoose";
 
 const pgSchema = new mongoose.Schema(
   {
     title: { type: String, required: true },
     propertyType: { type: String, required: true },
-    
-    // ⭐ Existing Fields - Kept for compatibility/derived data
-    // 'location' will typically store a high-level view (e.g., "Pune, Maharashtra")
-    location: { type: String, required: true }, 
-    // 'address' might be used for a full, concatenated address, but now 'streetAddress' is more precise
-    address: { type: String, required: true }, 
 
-    // ⭐ NEW: Structured Address Fields for Accuracy (Added after 'address')
-    streetAddress: { type: String, required: true }, // Building name, street, etc.
+    location: { type: String, required: true },
+    address: { type: String, required: true },
+
+    streetAddress: { type: String, required: true },
     pincode: { type: String, required: true, minlength: 6, maxlength: 6 },
     district: { type: String, required: true },
     state: { type: String, required: true },
@@ -23,7 +20,6 @@ const pgSchema = new mongoose.Schema(
 
     amenities: { type: [String], default: [] },
     description: { type: String, required: true },
-
     images: { type: [String], default: [] },
 
     owner: { type: mongoose.Schema.Types.ObjectId, ref: "User", required: true },
@@ -32,10 +28,14 @@ const pgSchema = new mongoose.Schema(
     inquiries: { type: Number, default: 0 },
     beds: { type: Number, default: 1 },
     available: { type: Boolean, default: true },
-    
-    // Latitude and Longitude are crucial for proximity search
+
+    // 🔹 Lat/Lng from OpenCage (for distance & Leaflet)
     latitude: { type: Number },
     longitude: { type: Number },
+
+    // 🔹 Mappls identifiers
+    mapplsEloc: { type: String },          // e.g. "TA2D4C"
+    mapplsAddress: { type: String },       // formattedAddress from Mappls
   },
   { timestamps: true }
 );
