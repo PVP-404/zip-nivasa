@@ -1,55 +1,58 @@
 import axios from "axios";
 
-function cleanAddress(raw) {
-  if (!raw) return "";
+// Try OpenCage with smart fallback: remove first segment until success
+export async function geocodeAddress(structured) {
+  const apiKey = process.env.OPENCAGE_KEY;
+  if (!apiKey) throw new Error("OPENCAGE_KEY missing");
 
-  return raw
-    .replace(/S\.?No\.?\s*\d+/gi, "") // remove S.No. 133/1
-    .replace(/Nr\s+/gi, "Near ")      // Nr → Near
-    .replace(/\s{2,}/g, " ")          // extra spaces
-    .replace(/,\s*,/g, ", ")          // double commas
+  // Build the full string
+  let full = `${structured.address}, ${structured.city}, ${structured.state} ${structured.pincode}`
+    .replace(/,\s*,/g, ",")   // remove empty commas
+    .replace(/\s{2,}/g, " ")  // extra spaces
     .trim();
-}
 
-export async function geocodeAddress(structuredAddress) {
-  try {
-    const apiKey = process.env.OPENCAGE_KEY;
-    if (!apiKey) throw new Error("OPENCAGE_KEY missing");
+  console.log("👉 Starting OpenCage with:", full);
 
-    const cleanedAddress = cleanAddress(structuredAddress.address || "");
+  // Split address into comma-separated segments
+  let parts = full.split(",").map(s => s.trim()).filter(Boolean);
 
-    const parts = [];
-    if (cleanedAddress) parts.push(cleanedAddress);
-    if (structuredAddress.city) parts.push(structuredAddress.city);
-    if (structuredAddress.state) parts.push(structuredAddress.state);
-    if (structuredAddress.pincode) parts.push(structuredAddress.pincode);
+  // Try again and again removing first part each time
+  while (parts.length > 0) {
+    const query = parts.join(", ");
+    console.log("🔎 Trying OpenCage Query →", query);
 
-    const fullAddress = parts.join(", ");
+    try {
+      const response = await axios.get(
+        "https://api.opencagedata.com/geocode/v1/json",
+        {
+          params: {
+            key: apiKey,
+            q: query,
+            limit: 1,
+            no_annotations: 1,
+            countrycode: "in"
+          }
+        }
+      );
 
-    console.log("OpenCage Final Query →", fullAddress);
+      const result = response.data.results?.[0];
 
-    const response = await axios.get(
-      "https://api.opencagedata.com/geocode/v1/json",
-      {
-        params: {
-          key: apiKey,
-          q: fullAddress,
-          limit: 1,
-          countrycode: "in",
-        },
+      if (result) {
+        console.log("✅ OpenCage SUCCESS →", query);
+        return {
+          lat: result.geometry.lat,
+          lng: result.geometry.lng,
+          usedQuery: query,
+        };
       }
-    );
+    } catch (err) {
+      console.log("❌ OpenCage Error:", err.response?.data || err.message);
+    }
 
-    const result = response.data.results?.[0];
-    if (!result) throw new Error("No OpenCage result");
-
-    return {
-      lat: result.geometry.lat,
-      lng: result.geometry.lng,
-      cleanedAddress,
-    };
-  } catch (error) {
-    console.error("OpenCage Error:", error.response?.data || error.message);
-    throw error;
+    // Remove the FIRST segment and retry
+    console.log("⚠ No result. Removing first segment:", parts[0]);
+    parts.shift();
   }
+
+  throw new Error("OpenCage failed for all fallback queries.");
 }

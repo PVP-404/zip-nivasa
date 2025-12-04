@@ -36,11 +36,11 @@ export const createPG = async (req, res) => {
     // Clean street address
     const cleanedStreet = streetAddress
       ? streetAddress
-          .replace(/S\.?No\.?\s*\d+/gi, "")
-          .replace(/Nr\s+/gi, "Near ")
-          .replace(/\s{2,}/g, " ")
-          .replace(/,\s*,/g, ", ")
-          .trim()
+        .replace(/S\.?No\.?\s*\d+/gi, "")
+        .replace(/Nr\s+/gi, "Near ")
+        .replace(/\s{2,}/g, " ")
+        .replace(/,\s*,/g, ", ")
+        .trim()
       : "";
 
     const geocodeQuery = {
