@@ -216,7 +216,7 @@ POST /api/mess/create
 POST /api/mess/special
 GET  /api/mess/:id
 
-🗂️ Folder Structure
+Folder Structure
 zip-nivasa/
  ├── backend/
  │    ├── controllers/
