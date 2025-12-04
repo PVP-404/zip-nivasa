@@ -1,6 +1,8 @@
 
 import Message from "../models/Message.js";
 import User from "../models/User.js";
+import { io, onlineUsers } from "../server.js";
+
 
 export const sendMessage = async (req, res) => {
   try {

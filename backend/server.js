@@ -183,6 +183,7 @@ cron.schedule("0 0 * * *", async () => {
     console.error(" Error resetting daily specials:", err.message);
   }
 });
+export { io, onlineUsers };
 
 // Start server
 httpServer.listen(PORT, () => {
