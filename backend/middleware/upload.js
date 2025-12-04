@@ -1,10 +1,7 @@
+// backend/middlewares/upload.js
 import multer from "multer";
 
-const storage = multer.diskStorage({
-  destination: (req, file, cb) => cb(null, "uploads/pgs"),
-  filename: (req, file, cb) =>
-    cb(null, Date.now() + "-" + file.originalname),
-});
+const storage = multer.memoryStorage(); // Use memory, not disk
 
 const upload = multer({ storage });
 
