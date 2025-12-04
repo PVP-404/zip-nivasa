@@ -1,300 +1,548 @@
 // frontend/src/pages/pgs/PGDetails.jsx
+
 import React, { useEffect, useState } from "react";
 import { useParams, Link } from "react-router-dom";
 import Header from "../../components/Header";
 import Footer from "../../components/Footer";
 import Sidebar from "../../components/Sidebar";
+import PGMapModal from "../../components/maps/PGMapModal";
+import AppLayout from "../../layouts/AppLayout";
 
-const Icon = ({ path, className = "w-5 h-5" }) => (
-  <svg className={className} fill="currentColor" viewBox="0 0 20 20"><path d={path} /></svg>
+/* ------------------ ICON COMPONENT ------------------ */
+const Icon = ({ path, className = "w-5 h-5", stroke = false }) => (
+  <svg
+    className={className}
+    fill={stroke ? "none" : "currentColor"}
+    stroke={stroke ? "currentColor" : "none"}
+    strokeWidth={stroke ? "2" : "0"}
+    viewBox="0 0 24 24"
+    xmlns="http://www.w3.org/2000/svg"
+  >
+    <path d={path} strokeLinecap="round" strokeLinejoin="round" />
+  </svg>
 );
 
-const StarRating = ({ rating = 4.5 }) => (
-  <div className="flex items-center gap-1">
+/* ------------------ RATING STARS ------------------ */
+const StarRating = ({ rating = 4.5, size = "w-5 h-5" }) => (
+  <div className="flex items-center gap-0.5">
     {[...Array(5)].map((_, i) => (
-      <svg key={i} className={`w-5 h-5 ${i < Math.floor(rating) ? "text-yellow-400" : "text-gray-300"}`} fill="currentColor" viewBox="0 0 20 20">
+      <svg
+        key={i}
+        className={`${size} ${i < Math.floor(rating) ? "text-yellow-500" : "text-gray-300"
+          }`}
+        viewBox="0 0 20 20"
+        fill="currentColor"
+      >
         <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z" />
       </svg>
     ))}
-    <span className="ml-2 text-sm font-semibold text-gray-700">{rating}</span>
+    <span className="ml-1 text-sm font-semibold text-gray-700">({rating})</span>
   </div>
 );
 
+/* ------------------ MAIN COMPONENT ------------------ */
 const PGDetails = () => {
   const { id } = useParams();
   const [pg, setPg] = useState(null);
   const [recommendations, setRecommendations] = useState([]);
   const [loading, setLoading] = useState(true);
   const [selectedImage, setSelectedImage] = useState(0);
+  const [isMapOpen, setIsMapOpen] = useState(false);
 
+  /* ------------------ FETCH PG DATA ------------------ */
   useEffect(() => {
     const fetchData = async () => {
       try {
         const [pgRes, allRes] = await Promise.all([
           fetch(`http://localhost:5000/api/pgs/${id}`),
-          fetch(`http://localhost:5000/api/pgs`)
+          fetch(`http://localhost:5000/api/pgs`),
         ]);
+
         const pgData = await pgRes.json();
         const allData = await allRes.json();
-        
+
         setPg(pgData.pg);
-        setRecommendations(allData.filter((p) => p._id !== id).slice(0, 3));
+        setRecommendations(
+          allData.pgs.filter((p) => p._id !== id).slice(0, 3)
+        );
       } catch (err) {
-        console.error("Fetch error:", err);
+        console.error("Error fetching PG:", err);
       } finally {
         setLoading(false);
       }
     };
+
     fetchData();
   }, [id]);
 
   if (loading || !pg)
     return (
       <div className="flex h-screen bg-gray-50">
-        <Sidebar />
+        
         <div className="flex-1 flex flex-col overflow-hidden">
-          <Header />
-          <div className="flex-1 flex justify-center items-center">
+          
+          <Sidebar />
+          <div className="flex flex-1 justify-center items-center">
             <div className="text-center">
               <div className="w-16 h-16 border-4 border-indigo-600 border-t-transparent animate-spin rounded-full mx-auto mb-4"></div>
-              <p className="text-gray-600">Loading property details...</p>
+              <p className="text-gray-600">
+                Loading premium student accommodation details...
+              </p>
             </div>
           </div>
         </div>
       </div>
     );
 
-  const images = pg.images?.length > 0 ? pg.images : ["https://via.placeholder.com/800x600"];
+  /* ------------------ VARIABLES ------------------ */
+
+  const images =
+    pg.images?.length > 0
+      ? pg.images
+      : ["https://via.placeholder.com/1200x600?text=No+Image+Available"];
+
   const rating = pg.rating || 4.5;
 
+  const fullAddress =
+    pg.streetAddress && pg.pincode && pg.district && pg.state
+      ? `${pg.streetAddress}, ${pg.district}, ${pg.state} - ${pg.pincode}`
+      : `${pg.address}, ${pg.location}`;
+
+  // Prefer Mappls formatted address if present
+  const displayAddress = pg.mapplsAddress || fullAddress;
+
+  /* ------------------ eLoc + External Map Links ------------------ */
+  const mapplsELOC = pg.mapplsEloc || pg.eloc || null;
+
+  const mapplsLink = mapplsELOC ? `https://mappls.com/${mapplsELOC}` : null;
+
+  const googleSearch = encodeURIComponent(
+    `${pg.title} ${displayAddress || ""}`
+  );
+
+  // We are NOT using lat/lng for the modal now – everything via eLoc/address
+
+  /* ------------------ MAIN JSX ------------------ */
   return (
-    <div className="flex h-screen bg-gray-50 overflow-hidden">
-      <Sidebar />
+    <AppLayout>
+      <div className="flex h-screen bg-white overflow-hidden">
+      
       <div className="flex-1 flex flex-col overflow-hidden">
-        <Header />
+        
+
+        {/* MAP MODAL - now driven by eLoc/address only */}
+        <PGMapModal
+          open={isMapOpen}
+          onClose={() => setIsMapOpen(false)}
+          eloc={mapplsELOC}
+          address={displayAddress}
+          pg={pg}
+        />
+
         <main className="flex-1 overflow-y-auto">
           <div className="max-w-7xl mx-auto px-4 sm:px-6 py-8">
-            {/* Breadcrumb */}
+            {/* BREADCRUMB */}
             <nav className="mb-6 text-sm">
               <ol className="flex items-center gap-2 text-gray-600">
-                <li><Link to="/" className="hover:text-indigo-600">Home</Link></li>
+                <li>
+                  <Link to="/" className="hover:text-indigo-600">
+                    Home
+                  </Link>
+                </li>
                 <li>›</li>
-                <li><Link to="/dashboard" className="hover:text-indigo-600">Dashboard</Link></li>
+                <li>
+                  <Link
+                    to="/dashboard/student"
+                    className="hover:text-indigo-600"
+                  >
+                    Student Dashboard
+                  </Link>
+                </li>
                 <li>›</li>
-                <li className="text-gray-900 font-medium truncate">{pg.title}</li>
+                <li className="text-gray-900 font-medium truncate">
+                  {pg.title}
+                </li>
               </ol>
             </nav>
 
-            {/* Header */}
-            <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6 mb-6">
-              <div className="flex flex-col lg:flex-row lg:justify-between lg:items-start gap-6">
-                <div className="flex-1">
-                  <h1 className="text-3xl font-bold text-gray-900 mb-2">{pg.title}</h1>
-                  <StarRating rating={rating} />
-                  <div className="flex flex-wrap items-center gap-4 text-sm text-gray-600 mt-4">
-                    <span className="flex items-center gap-1.5">
-                      <Icon path="M5.05 4.05a7 7 0 119.9 9.9L10 18.9l-4.95-4.95a7 7 0 010-9.9zM10 11a2 2 0 100-4 2 2 0 000 4z" className="w-4 h-4" />
-                      {pg.location}
-                    </span>
-                    <span>•</span>
-                    <span className="flex items-center gap-1.5">
-                      <Icon path="M10.707 2.293a1 1 0 00-1.414 0l-7 7a1 1 0 001.414 1.414L4 10.414V17a1 1 0 001 1h2a1 1 0 001-1v-2a1 1 0 011-1h2a1 1 0 011 1v2a1 1 0 001 1h2a1 1 0 001-1v-6.586l.293.293a1 1 0 001.414-1.414l-7-7z" className="w-4 h-4" />
-                      {pg.propertyType || "PG"}
-                    </span>
-                    <span>•</span>
-                    <span>{pg.beds || 0} Beds</span>
-                  </div>
-                </div>
-                <div className="lg:min-w-[200px]">
-                  <div className="bg-gradient-to-br from-indigo-50 to-purple-50 border-2 border-indigo-200 px-6 py-4 rounded-xl text-center">
-                    <p className="text-sm text-gray-600 mb-1">Monthly Rent</p>
-                    <p className="text-4xl font-bold text-indigo-600">₹{pg.monthlyRent.toLocaleString()}</p>
-                    <p className="text-xs text-gray-500 mt-1">+ maintenance</p>
-                  </div>
-                </div>
-              </div>
-            </div>
+            {/* HEADER + GALLERY */}
+            <div className="bg-white rounded-xl mb-8">
+              <h1 className="text-4xl font-extrabold text-gray-900 mb-2">
+                {pg.title}
+              </h1>
 
-            {/* Images Gallery */}
-            <div className="mb-8">
-              <div className="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
-                <div className="relative">
-                  <img
-                    src={pg.images?.length > 0 ? `http://localhost:5000${images[selectedImage]}` : images[selectedImage]}
-                    className="w-full h-96 object-cover"
-                    alt={`PG ${selectedImage + 1}`}
+              <div className="flex flex-wrap items-center gap-4 text-base text-gray-600 mb-6">
+                <StarRating rating={rating} size="w-4 h-4" />
+                <span className="text-gray-400">•</span>
+                <span className="flex items-center gap-1.5 font-medium">
+                  <Icon
+                    path="M12 2C6.477 2 2 6.477 2 12s4.477 10 10 10 10-4.477 10-10S17.523 2 12 2zm0 14a1 1 0 100-2 1 1 0 000 2zm0-6a1 1 0 000 2h1a1 1 0 100-2h-1z"
+                    className="w-5 h-5"
+                    stroke
                   />
-                  {images.length > 1 && (
-                    <>
-                      <button onClick={() => setSelectedImage((selectedImage - 1 + images.length) % images.length)} className="absolute left-4 top-1/2 -translate-y-1/2 bg-white/90 hover:bg-white p-2 rounded-full shadow-lg transition-colors">
-                        <Icon path="M12.707 5.293a1 1 0 010 1.414L9.414 10l3.293 3.293a1 1 0 01-1.414 1.414l-4-4a1 1 0 010-1.414l4-4a1 1 0 011.414 0z" className="w-5 h-5 text-gray-700" />
-                      </button>
-                      <button onClick={() => setSelectedImage((selectedImage + 1) % images.length)} className="absolute right-4 top-1/2 -translate-y-1/2 bg-white/90 hover:bg-white p-2 rounded-full shadow-lg transition-colors">
-                        <Icon path="M7.293 14.707a1 1 0 010-1.414L10.586 10 7.293 6.707a1 1 0 011.414-1.414l4 4a1 1 0 010 1.414l-4 4a1 1 0 01-1.414 0z" className="w-5 h-5 text-gray-700" />
-                      </button>
-                    </>
-                  )}
+                  {pg.propertyType}
+                </span>
+                <span className="text-gray-400">•</span>
+                <span className="flex items-center gap-1.5">
+                  <Icon
+                    path="M17.657 16.657L13.414 20.9A2 2 0 0110.5 20.9L6.343 16.657A8 8 0 1117.657 16.657z"
+                    className="w-5 h-5"
+                    stroke
+                  />
+                  {pg.location}
+                </span>
+                <span className="text-gray-400">•</span>
+                <span>{pg.beds} Beds Available</span>
+              </div>
+
+              {/* IMAGE GALLERY */}
+              <div className="grid grid-cols-1 lg:grid-cols-4 lg:gap-4">
+                <div className="lg:col-span-3 bg-gray-100 rounded-xl overflow-hidden shadow-lg">
+                  <img
+                    src={
+                      pg.images?.length > 0
+                        ? `http://localhost:5000${images[selectedImage]}`
+                        : images[selectedImage]
+                    }
+                    className="w-full h-[450px] object-cover"
+                    alt="PG main"
+                  />
                 </div>
+
                 {images.length > 1 && (
-                  <div className="flex gap-2 p-4 overflow-x-auto">
-                    {images.map((img, i) => (
-                      <button key={i} onClick={() => setSelectedImage(i)} className={`flex-shrink-0 w-20 h-20 rounded-lg overflow-hidden border-2 transition-all ${selectedImage === i ? "border-indigo-600 ring-2 ring-indigo-200" : "border-gray-200 hover:border-gray-300"}`}>
-                        <img src={pg.images?.length > 0 ? `http://localhost:5000${img}` : img} className="w-full h-full object-cover" alt={`Thumbnail ${i + 1}`} />
+                  <div className="hidden lg:block space-y-3 pt-2 lg:pt-0">
+                    {images.slice(0, 4).map((img, i) => (
+                      <button
+                        key={i}
+                        onClick={() => setSelectedImage(i)}
+                        className={`w-full h-24 rounded-lg overflow-hidden border-2 transition-all ${selectedImage === i
+                            ? "border-indigo-600 ring-2 ring-indigo-200"
+                            : "border-gray-200 hover:border-indigo-400"
+                          }`}
+                      >
+                        <img
+                          src={
+                            pg.images?.length
+                              ? `http://localhost:5000${img}`
+                              : img
+                          }
+                          className="w-full h-full object-cover"
+                          alt={`PG thumbnail ${i + 1}`}
+                        />
                       </button>
                     ))}
+                    {images.length > 4 && (
+                      <div className="w-full h-24 rounded-lg flex items-center justify-center bg-gray-100 text-gray-500 text-sm font-semibold border-2 border-gray-200">
+                        +{images.length - 4} More Photos
+                      </div>
+                    )}
                   </div>
                 )}
               </div>
             </div>
 
-            <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-              {/* Main Content */}
-              <div className="lg:col-span-2 space-y-6">
-                {/* Description */}
-                <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
-                  <h2 className="text-xl font-bold text-gray-900 mb-4 flex items-center gap-2">
-                    <Icon path="M13 6a3 3 0 11-6 0 3 3 0 016 0zM18 8a2 2 0 11-4 0 2 2 0 014 0zM14 15a4 4 0 00-8 0v3h8v-3zM6 8a2 2 0 11-4 0 2 2 0 014 0zM16 18v-3a5.972 5.972 0 00-.75-2.906A3.005 3.005 0 0119 15v3h-3zM4.75 12.094A5.973 5.973 0 004 15v3H1v-3a3 3 0 013.75-2.906z" />
-                    About this Property
+            {/* MAIN GRID */}
+            <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+              {/* LEFT SIDE */}
+              <div className="lg:col-span-2 space-y-8">
+                {/* LOCATION & MAP BUTTONS */}
+                <div className="bg-white rounded-xl shadow-md border border-gray-100 p-6">
+                  <h2 className="text-2xl font-bold mb-4 flex items-center gap-2 text-indigo-700">
+                    <Icon
+                      path="M17.657 16.657L13.414 20.9A2 2 0 0110.5 20.9L6.343 16.657A8 8 0 1117.657 16.657z"
+                      className="w-6 h-6"
+                      stroke
+                    />
+                    Full Location
                   </h2>
-                  <p className="text-gray-700 leading-relaxed">{pg.description || "A comfortable and well-maintained property with modern amenities."}</p>
+
+                  <p className="text-lg font-medium text-gray-800 mb-4">
+                    {displayAddress}
+                  </p>
+
+                  <div className="flex gap-4 mt-4 flex-wrap">
+                    {/* IN-APP MAP MODAL (Mappls eLoc / address) */}
+                    <button
+                      onClick={() => setIsMapOpen(true)}
+                      disabled={!mapplsELOC && !displayAddress}
+                      className={`flex items-center gap-2 px-5 py-2.5 rounded-xl font-semibold transition ${mapplsELOC || displayAddress
+                          ? "bg-indigo-600 text-white hover:bg-indigo-700 shadow-lg shadow-indigo-200"
+                          : "bg-gray-200 text-gray-500 cursor-not-allowed "
+                        }`}
+                    >
+                      <Icon
+                        path="M17.657 16.657L13.414 20.9A2 2 0 0110.5 20.9L6.343 16.657A8 8 0 1117.657 16.657z"
+                        className="w-5 h-5"
+                        stroke
+                      />
+                      View on Map
+                    </button>
+
+                    {/* 2️⃣ OPEN IN MAPPLS (ELOC) */}
+                    {/* {mapplsLink && (
+                      // <a
+                      //   href={mapplsLink}
+                      //   target="_blank"
+                      //   rel="noopener noreferrer"
+                      //   className="flex items-center gap-2 px-5 py-2.5 rounded-xl bg-blue-600 text-white font-semibold hover:bg-blue-700 transition shadow-lg shadow-blue-200"
+                      // >
+                      //   <img
+                      //     src="https://apis.mappls.com/mappls-web/maps/images/mappls-icon.svg"
+                      //     className="w-5 h-5"
+                      //     alt="Mappls"
+                      //   />
+                      //   Open in Mappls
+                      // </a>
+                    )} */}
+
+                    {/* 3️⃣ GOOGLE MAPS DIRECTIONS */}
+                    <a
+                      href={`https://www.google.com/maps/search/?api=1&query=${googleSearch}`}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="flex items-center gap-2 px-5 py-2.5 rounded-xl bg-red-600 text-white font-semibold hover:bg-red-700 transition shadow-lg shadow-red-200"
+                    >
+                      <img
+                        src="https://www.google.com/images/branding/product/1x/maps_48dp.png"
+                        className="w-5 h-5 rounded-full"
+                        alt="Google Maps Logo"
+                      />
+                      Directions
+                    </a>
+                  </div>
                 </div>
 
-                {/* Amenities */}
+                {/* ABOUT */}
+                <div className="bg-white rounded-xl shadow-md border border-gray-100 p-6">
+                  <h2 className="text-2xl font-bold mb-4 flex items-center gap-2 text-gray-900">
+                    <Icon
+                      path="M4 6h16M4 12h16M4 18h16"
+                      className="w-6 h-6"
+                      stroke
+                    />
+                    Property Overview
+                  </h2>
+                  <p className="text-gray-700 leading-relaxed">
+                    {pg.description}
+                  </p>
+                </div>
+
+                {/* AMENITIES */}
                 {pg.amenities?.length > 0 && (
-                  <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
-                    <h2 className="text-xl font-bold text-gray-900 mb-4 flex items-center gap-2">
-                      <Icon path="M9 6a3 3 0 11-6 0 3 3 0 016 0zM17 6a3 3 0 11-6 0 3 3 0 016 0zM12.93 17c.046-.327.07-.66.07-1a6.97 6.97 0 00-1.5-4.33A5 5 0 0119 16v1h-6.07zM6 11a5 5 0 015 5v1H1v-1a5 5 0 015-5z" />
+                  <div className="bg-white rounded-xl shadow-md border border-gray-100 p-6">
+                    <h2 className="text-2xl font-bold mb-4 flex items-center gap-2 text-gray-900">
+                      <Icon
+                        path="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"
+                        className="w-6 h-6"
+                        stroke
+                      />
                       Amenities & Facilities
                     </h2>
-                    <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
+
+                    <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
                       {pg.amenities.map((a, i) => (
-                        <div key={i} className="flex items-center gap-2 text-gray-700 bg-gray-50 rounded-lg p-3">
-                          <div className="w-8 h-8 bg-green-100 rounded-full flex items-center justify-center flex-shrink-0">
-                            <Icon path="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" className="w-4 h-4 text-green-600" />
-                          </div>
-                          <span className="text-sm font-medium">{a}</span>
+                        <div
+                          key={i}
+                          className="flex items-center gap-3 bg-indigo-50 p-3 rounded-lg border border-indigo-100 text-sm font-medium text-indigo-800 transition hover:bg-indigo-100"
+                        >
+                          <Icon
+                            path="M5 13l4 4L19 7"
+                            className="w-5 h-5 text-indigo-600"
+                            stroke
+                          />
+                          <span className="truncate">{a}</span>
                         </div>
                       ))}
                     </div>
                   </div>
                 )}
 
-                {/* Important Info */}
-                <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
-                  <h2 className="text-xl font-bold text-gray-900 mb-4 flex items-center gap-2">
-                    <Icon path="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
-                    Important Information
-                  </h2>
-                  <div className="space-y-3 text-gray-700">
-                    {["Security deposit may be required", "Notice period for vacating typically 1 month", "Contact owner for complete terms and conditions"].map((info, i) => (
-                      <div key={i} className="flex items-start gap-3">
-                        <Icon path="M10 18a8 8 0 100-16 8 8 0 000 16zm1-12a1 1 0 10-2 0v4a1 1 0 00.293.707l2.828 2.829a1 1 0 101.415-1.415L11 9.586V6z" className="w-5 h-5 text-indigo-600 flex-shrink-0 mt-0.5" />
-                        <p className="text-sm">{info}</p>
-                      </div>
-                    ))}
-                  </div>
-                </div>
-              </div>
+                {/* PROPERTY DETAILS */}
+                <div className="bg-white rounded-xl shadow-md border border-gray-100 p-6">
+                  <h3 className="text-2xl font-bold text-gray-900 mb-4 flex items-center gap-2">
+                    <Icon
+                      path="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"
+                      className="w-6 h-6"
+                      stroke
+                    />
+                    Key Property Specifications
+                  </h3>
 
-              {/* Contact Sidebar */}
-              <div className="space-y-6">
-                {/* ✅ Contact Owner */}
-<div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
-  <h3 className="text-lg font-bold text-gray-900 mb-4">Contact Owner</h3>
-
-  {/* ✅ CALL BUTTON */}
-  
-
-  {/* ✅ WHATSAPP BUTTON */}
-  {/* CALL */}
-<a
-  href={`tel:${pg.owner?.phone || ""}`}
-  className="w-full bg-green-600 text-white px-6 py-3 rounded-lg font-semibold hover:bg-green-700 transition-all shadow-md hover:shadow-lg flex items-center justify-center gap-2 mb-3"
->
-  Call Owner
-</a>
-
-{/* WHATSAPP */}
-<a
-  href={`https://wa.me/${pg.owner?.phone || ""}?text=Hi, I am interested in your PG: ${encodeURIComponent(pg.title || "")}`}
-  target="_blank"
-  rel="noreferrer"
-  className="w-full bg-green-500 text-white px-6 py-3 rounded-lg font-semibold hover:bg-green-600 transition-all shadow-md hover:shadow-lg flex items-center justify-center gap-2 mb-3"
->
-  WhatsApp
-</a>
-
-{/* MESSAGE */}
-<Link
-  to={`/chat/${pg.owner?._id}`}
-  className="w-full bg-indigo-600 text-white px-6 py-3 rounded-lg font-semibold hover:bg-indigo-700 transition-all flex items-center justify-center gap-2"
->
-  Message Owner
-</Link>
-
-
-  <p className="text-xs text-gray-500 text-center mt-4">
-    Response time: Within 24 hours
-  </p>
-</div>
-
-
-                {/* Property Details */}
-                <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
-                  <h3 className="text-lg font-bold text-gray-900 mb-4">Property Details</h3>
-                  <div className="space-y-3">
+                  <div className="space-y-4">
                     {[
-                      { label: "Property Type", value: pg.propertyType || "PG" },
-                      { label: "Available Beds", value: pg.beds || 0 },
-                      { label: "Monthly Rent", value: `₹${pg.monthlyRent.toLocaleString()}`, highlight: true },
-                      { label: "Rating", value: rating, isRating: true }
+                      { label: "Property Type", value: pg.propertyType },
+                      { label: "Occupancy Type", value: pg.occupancyType },
+                      { label: "Available Beds", value: pg.beds },
+                      {
+                        label: "Security Deposit",
+                        value: `₹${pg.deposit.toLocaleString()}`,
+                      },
+                      {
+                        label: "Monthly Rent",
+                        value: `₹${pg.monthlyRent.toLocaleString()}`,
+                        highlight: true,
+                      },
+                      { label: "Rating", value: rating, isRating: true },
                     ].map((item, i) => (
-                      <div key={i} className="flex justify-between items-center py-2 border-b border-gray-100 last:border-0">
-                        <span className="text-gray-600 text-sm">{item.label}</span>
-                        {item.isRating ? <StarRating rating={item.value} /> : (
-                          <span className={`font-semibold ${item.highlight ? "text-indigo-600" : "text-gray-900"}`}>{item.value}</span>
+                      <div
+                        key={i}
+                        className="flex justify-between items-center pb-2 border-b border-gray-100 last:border-b-0"
+                      >
+                        <span className="text-gray-600 font-medium text-base">
+                          {item.label}
+                        </span>
+
+                        {item.isRating ? (
+                          <StarRating rating={item.value} size="w-4 h-4" />
+                        ) : (
+                          <span
+                            className={`font-bold text-base ${item.highlight
+                                ? "text-indigo-600"
+                                : "text-gray-900"
+                              }`}
+                          >
+                            {item.value}
+                          </span>
                         )}
                       </div>
                     ))}
                   </div>
                 </div>
               </div>
+
+              {/* RIGHT SIDE */}
+              <div className="lg:col-span-1">
+                <div className="sticky top-4 space-y-6">
+                  {/* RENT CARD */}
+                  <div className="bg-gradient-to-br from-indigo-50 to-purple-50 border-2 border-indigo-200 px-8 py-6 rounded-xl text-center shadow-lg">
+                    <p className="text-base text-gray-600 mb-1">Starting From</p>
+                    <p className="text-5xl font-extrabold text-indigo-700">
+                      ₹{pg.monthlyRent.toLocaleString()}
+                    </p>
+                    <p className="text-sm text-gray-500 mt-1 font-medium">
+                      per month (Excl. maintenance)
+                    </p>
+                  </div>
+
+                  {/* CONTACT OWNER */}
+                  <div className="bg-white rounded-xl shadow-lg border p-6">
+                    <h3 className="text-xl font-bold text-gray-900 mb-4 text-center">
+                      Ready to Book? Connect Now!
+                    </h3>
+
+                    <a
+                      href={`tel:${pg.owner?.phone}`}
+                      className="w-full bg-green-600 text-white px-6 py-3 rounded-lg font-bold text-lg hover:bg-green-700 transition shadow-md flex justify-center items-center gap-2 mb-3"
+                    >
+                      <Icon
+                        path="M3 5a2 2 0 012-2h3.28a1 1 0 01.948.684l1.498 4.493a1 1 0 01-.502 1.21l-2.257 1.13a11.042 11.042 0 005.516 5.516l1.13-2.257a1 1 0 011.21-.502l4.493 1.498a1 1 0 01.684.949V19a2 2 0 01-2 2h-1C9.716 21 3 14.284 3 6V5z"
+                        className="w-5 h-5"
+                      />
+                      Call Owner
+                    </a>
+
+                    <a
+                      href={`https://wa.me/${pg.owner?.phone}?text=Hi%2C%20I%20am%20interested%20in%20your%20PG:%20${encodeURIComponent(
+                        pg.title
+                      )}`}
+                      target="_blank"
+                      rel="noreferrer"
+                      className="w-full bg-green-500 text-white px-6 py-3 rounded-lg font-bold text-lg hover:bg-green-600 transition shadow-md flex justify-center items-center gap-2 mb-3"
+                    >
+                      <Icon
+                        path="M8 9a1 1 0 100-2 1 1 0 000 2zM15 11a1 1 0 100-2 1 1 0 000 2zM12 9a1 1 0 100-2 1 1 0 000 2z"
+                        className="w-5 h-5"
+                      />
+                      WhatsApp Inquiry
+                    </a>
+
+                    <Link
+                      to={`/chat/${pg.owner?._id}`}
+                      className="w-full bg-indigo-600 text-white px-6 py-3 rounded-lg font-bold text-lg hover:bg-indigo-700 transition flex justify-center items-center gap-2"
+                    >
+                      <Icon
+                        path="M7 8h10M7 12h4m-4 8h10a2 2 0 002-2V5a2 2 0 00-2-2H7a2 2 0 00-2 2v14a2 2 0 002 2z"
+                        className="w-5 h-5"
+                        stroke
+                      />
+                      Message Owner In-App
+                    </Link>
+
+                    <p className="text-xs text-gray-500 text-center mt-4">
+                      All communications are protected by Zip Nivasa Privacy Policy.
+                    </p>
+                  </div>
+                </div>
+              </div>
             </div>
 
-            {/* Recommendations */}
+            {/* SIMILAR LISTINGS */}
             {recommendations.length > 0 && (
-              <div className="mt-12 mb-8">
-                <div className="flex items-center justify-between mb-6">
-                  <h2 className="text-2xl font-bold text-gray-900">Similar Properties</h2>
-                  <Link to="/dashboard" className="text-indigo-600 hover:text-indigo-700 font-medium text-sm flex items-center gap-1">
-                    View All
-                    <Icon path="M7.293 14.707a1 1 0 010-1.414L10.586 10 7.293 6.707a1 1 0 011.414-1.414l4 4a1 1 0 010 1.414l-4 4a1 1 0 01-1.414 0z" className="w-4 h-4" />
+              <div className="mt-16 mb-8">
+                <div className="flex items-center justify-between mb-8">
+                  <h2 className="text-3xl font-bold text-gray-900">
+                    Find Similar Accommodations
+                  </h2>
+                  <Link
+                    to="/dashboard/student"
+                    className="text-indigo-600 font-medium hover:text-indigo-700 text-base flex items-center gap-1"
+                  >
+                    View All{" "}
+                    <Icon
+                      path="M17 8l4 4m0 0l-4 4m4-4H3"
+                      className="w-5 h-5"
+                      stroke
+                    />
                   </Link>
                 </div>
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
                   {recommendations.map((rec) => (
-                    <Link key={rec._id} to={`/services/pg/${rec._id}`} className="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden hover:shadow-lg transition-all group">
+                    <Link
+                      key={rec._id}
+                      to={`/services/pg/${rec._id}`}
+                      className="bg-white rounded-xl border shadow-md hover:shadow-xl transition overflow-hidden group"
+                    >
                       <div className="relative h-48 overflow-hidden">
-                        <img src={rec.images?.[0] ? `http://localhost:5000${rec.images[0]}` : "https://via.placeholder.com/400"} className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-300" alt={rec.title} />
-                        <div className="absolute top-3 right-3 bg-white px-3 py-1.5 rounded-lg shadow-md">
-                          <p className="text-sm font-bold text-indigo-600">₹{rec.monthlyRent.toLocaleString()}</p>
-                        </div>
-                        <div className="absolute top-3 left-3 bg-white/90 backdrop-blur-sm px-2 py-1 rounded-lg flex items-center gap-1">
-                          <svg className="w-4 h-4 text-yellow-400" fill="currentColor" viewBox="0 0 20 20">
-                            <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z" />
-                          </svg>
-                          <span className="text-sm font-semibold text-gray-700">{rec.rating || 4.5}</span>
+                        <img
+                          src={
+                            rec.images?.[0]
+                              ? `http://localhost:5000${rec.images[0]}`
+                              : "https://via.placeholder.com/400"
+                          }
+                          className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
+                          alt={rec.title}
+                        />
+
+                        <div className="absolute top-3 right-3 bg-white px-4 py-1.5 rounded-lg shadow-md">
+                          <p className="text-lg font-bold text-indigo-600">
+                            ₹{rec.monthlyRent.toLocaleString()}
+                          </p>
                         </div>
                       </div>
+
                       <div className="p-5">
-                        <h3 className="font-semibold text-lg text-gray-900 mb-2 truncate group-hover:text-indigo-600 transition-colors">{rec.title}</h3>
+                        <h3 className="font-bold text-xl text-gray-900 mb-1">
+                          {rec.title}
+                        </h3>
+
                         <p className="text-sm text-gray-600 flex items-center gap-1 mb-3">
-                          <Icon path="M5.05 4.05a7 7 0 119.9 9.9L10 18.9l-4.95-4.95a7 7 0 010-9.9zM10 11a2 2 0 100-4 2 2 0 000 4z" className="w-4 h-4" />
+                          <Icon
+                            path="M17.657 16.657L13.414 20.9A2 2 0 0110.5 20.9L6.343 16.657A8 8 0 1117.657 16.657z"
+                            className="w-4 h-4 text-gray-400"
+                            stroke
+                          />
                           {rec.location}
                         </p>
-                        <div className="flex items-center justify-between">
-                          <span className="text-xs text-gray-500">{rec.propertyType || "PG"}</span>
-                          <span className="text-indigo-600 font-medium text-sm group-hover:underline">View Details →</span>
+
+                        <div className="flex justify-between items-center pt-2 border-t border-gray-100">
+                          <span className="text-xs text-indigo-600 font-semibold bg-indigo-50 px-2 py-0.5 rounded">
+                            {rec.propertyType}
+                          </span>
+
+                          <span className="text-indigo-600 text-base font-semibold group-hover:underline">
+                            View Details →
+                          </span>
                         </div>
                       </div>
                     </Link>
@@ -303,10 +551,12 @@ const PGDetails = () => {
               </div>
             )}
           </div>
+
           <Footer />
         </main>
       </div>
     </div>
+      </AppLayout>
   );
 };
 

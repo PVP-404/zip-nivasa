@@ -1,4 +1,3 @@
-// frontend/src/pages/chat/ChatPageWrapper.jsx
 import React from "react";
 import { useParams } from "react-router-dom";
 import ChatPage from "./ChatPage";

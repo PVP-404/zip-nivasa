@@ -1,14 +1,49 @@
 <!doctype html>
 <html lang="en">
-  <head>
-    <meta charset="UTF-8" />
-    <link rel="icon" type="image/png" href="/fevicon/zip-nivasa-logo.png" />
 
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>ZipNivasa</title>
-  </head>
-  <body>
-    <div id="root"></div>
-    <script type="module" src="/src/main.jsx"></script>
-  </body>
+<head>
+  <meta charset="UTF-8" />
+  <link rel="icon" type="image/png" href="/fevicon/zip-nivasa-logo.png" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+
+  <title>ZipNivasa</title>
+
+
+<script>
+  window.onMapplsReady = () => {
+    console.log("✅ Mappls SDK Loaded Successfully");
+    window.__mapplsLoaded = true;
+  };
+</script>
+
+<script
+  src="https://apis.mappls.com/advancedmaps/api/424859f1dbfa9424dd169361cbd2c5e8/map_sdk?v=3.0&layer=vector&callback=onMapplsReady">
+</script>
+
+<script
+  src="https://apis.mappls.com/advancedmaps/api/424859f1dbfa9424dd169361cbd2c5e8/map_autosuggest?v=3.0">
+</script>
+<script
+  src="https://apis.mappls.com/advancedmaps/api/424859f1dbfa9424dd169361cbd2c5e8/map_sdk_plugins?v=3.0"
+></script>
+
+
+
+<link
+  rel="stylesheet"
+  href="https://unpkg.com/leaflet.markercluster@1.4.1/dist/MarkerCluster.css"
+/>
+<link
+  rel="stylesheet"
+  href="https://unpkg.com/leaflet.markercluster@1.4.1/dist/MarkerCluster.Default.css"
+/>
+
+
+</head>
+
+<body>
+  <div id="root"></div>
+  <script type="module" src="/src/main.jsx"></script>
+</body>
+
 </html>

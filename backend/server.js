@@ -15,6 +15,8 @@ import authRoutes from "./routes/authRoutes.js";
 import chatRoutes from "./routes/chatRoutes.js";
 import profileRoutes from "./routes/profileRoutes.js";
 
+import utilityRoutes from './routes/utilityRoutes.js';
+
 // Models
 import Message from "./models/Message.js";
 
@@ -22,7 +24,11 @@ import Message from "./models/Message.js";
 import messOwnerRoutes from "./routes/messOwnerRoutes.js";
 import messRoutes from "./routes/messRoutes.js";
 
+import mapRoutes from "./routes/mapRoutes.js";
+
 dotenv.config();
+console.log("Mappls key loaded:", !!process.env.MAPPLS_REST_KEY);
+
 
 // __dirname support
 const __filename = fileURLToPath(import.meta.url);
@@ -52,7 +58,8 @@ connectDB();
 app.use("/api/auth", authRoutes);
 app.use("/api/pgs", pgRoutes);
 app.use("/api/chat", chatRoutes);
-
+app.use("/api/map", mapRoutes);
+app.use('/api/utilities', utilityRoutes);
 // Test route
 app.get("/", (req, res) => {
   res.send("Zip Nivasa Backend Running ✅");
@@ -80,14 +87,14 @@ const onlineUsers = new Map(); // userId -> socketId
 io.on("connection", (socket) => {
   console.log("User connected:", socket.id);
 
-  // ✅ Register userId with socket
+  // Register userId with socket
   socket.on("register", (userId) => {
     if (!userId) return;
     onlineUsers.set(userId, socket.id);
     io.emit("online_users", Array.from(onlineUsers.keys()));
   });
 
-  // ✅ Typing events
+  // Typing events
   socket.on("typing", ({ sender, receiver }) => {
     const rSock = onlineUsers.get(receiver);
     if (rSock) io.to(rSock).emit("typing", { sender });
@@ -98,14 +105,14 @@ io.on("connection", (socket) => {
     if (rSock) io.to(rSock).emit("stop_typing", { sender });
   });
 
-  // ✅ SAVE MESSAGE + EMIT (IMPORTANT)
+  //  SAVE MESSAGE + EMIT (IMPORTANT)
   socket.on("send_message", async (data) => {
     try {
       const { sender, receiver, message } = data;
 
       if (!sender || !receiver || !message?.trim()) return;
 
-      // ✅ Save message to DB
+      //  Save message to DB
       const saved = await Message.create({
         sender,
         receiver,
@@ -121,13 +128,13 @@ io.on("connection", (socket) => {
         readAt: saved.readAt,
       };
 
-      // ✅ Send to receiver if online
+      //  Send to receiver if online
       const receiverSocket = onlineUsers.get(receiver);
       if (receiverSocket) {
         io.to(receiverSocket).emit("receive_message", msgToSend);
       }
 
-      // ✅ Echo to sender
+      //  Echo to sender
       const senderSocket = onlineUsers.get(sender);
       if (senderSocket) {
         io.to(senderSocket).emit("receive_message", msgToSend);
@@ -136,8 +143,20 @@ io.on("connection", (socket) => {
       console.error("❌ Socket Error:", err);
     }
   });
+  //  Mark messages as read (real-time)
+socket.on("read_messages", ({ readerId, partnerId }) => {
+  const partnerSocket = onlineUsers.get(partnerId);
 
-  // ✅ Disconnect
+  if (partnerSocket) {
+    io.to(partnerSocket).emit("message_read", {
+      readerId,
+      partnerId,
+      readAt: new Date().toISOString(),
+    });
+  }
+});
+
+  //Disconnect
   socket.on("disconnect", () => {
     for (const [uid, sid] of onlineUsers.entries()) {
       if (sid === socket.id) {
@@ -148,14 +167,7 @@ io.on("connection", (socket) => {
     io.emit("online_users", Array.from(onlineUsers.keys()));
   });
 });
-
-// Start server
-httpServer.listen(PORT, () => {
-  console.log(`✅ Server + Socket.io running on port ${PORT}`);
-});
-
-
-// 🕛 Reset today's specials every midnight
+// Reset today's specials every midnight
 cron.schedule("0 0 * * *", async () => {
   try {
     await Mess.updateMany({}, { 
@@ -166,8 +178,16 @@ cron.schedule("0 0 * * *", async () => {
         "specialToday.date": new Date()
       } 
     });
-    console.log("✅ Daily specials reset successfully at midnight");
+    console.log(" Daily specials reset successfully at midnight");
   } catch (err) {
-    console.error("❌ Error resetting daily specials:", err.message);
+    console.error(" Error resetting daily specials:", err.message);
   }
 });
+
+// Start server
+httpServer.listen(PORT, () => {
+  console.log(` Server + Socket.io running on port ${PORT}`);
+});
+
+
+

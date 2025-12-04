@@ -1,7 +1,7 @@
 // ✅ frontend/src/App.jsx
 
 import { BrowserRouter as Router, Routes, Route } from "react-router-dom";
-
+import PGNearMe from "./pages/pgs/PGNearMe";
 // Public Pages
 import Home from "./pages/Home";
 import Login from "./pages/Login";
@@ -45,6 +45,9 @@ import RoleProtectedRoute from "./components/RoleProtectedRoute";
 import ChatPageWrapper from "./pages/chat/ChatPageWrapper";
 import ChatList from "./pages/chat/ChatList";      // ✅ FIXED IMPORT
 import Inbox from "./pages/chat/Inbox";            // ✅ KEEP if required
+
+
+
 
 function App() {
   return (
@@ -165,6 +168,10 @@ function App() {
             </ProtectedRoute>
           }
         />
+
+       
+        <Route path="/pgs/near-me" element={<PGNearMe/>} />
+
 
 
         {/* ✅ Laundry Dashboard */}
