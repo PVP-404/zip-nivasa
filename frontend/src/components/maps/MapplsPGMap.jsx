@@ -14,7 +14,7 @@ const MapplsPGMap = ({ center, title, address, monthlyRent, onLocationSelect }) 
   const loaded = useMapplsLoader();
 
   /* --------------------------------------------------------
-     1) Fetch location suggestions from Mappls (FAST & ACCURATE)
+     1) Fetch location suggestions from Mappls 
   ---------------------------------------------------------*/
   const fetchSuggestions = async (value) => {
     if (!value || value.length < 2) {

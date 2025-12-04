@@ -1,4 +1,3 @@
-// Backend/controllers/profileController.js
 import User from "../models/User.js";
 import Tenant from "../models/Tenant.js";
 import PGOwner from "../models/PGOwner.js";

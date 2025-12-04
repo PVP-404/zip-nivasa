@@ -1,4 +1,3 @@
-// frontend/src/components/maps/LeafletMap.jsx
 import React, { useState, useEffect, useCallback, useRef } from "react";
 import {
   MapContainer,
@@ -11,9 +10,6 @@ import {
 import L from "leaflet";
 import "leaflet/dist/leaflet.css";
 
-/* ---------------------------------------------------------------
-   FIX DEFAULT MARKER ICON (Leaflet bug with bundlers)
----------------------------------------------------------------- */
 delete L.Icon.Default.prototype._getIconUrl;
 L.Icon.Default.mergeOptions({
   iconRetinaUrl:
@@ -22,10 +18,6 @@ L.Icon.Default.mergeOptions({
   shadowUrl: "https://unpkg.com/leaflet@1.9.4/dist/images/marker-shadow.png",
 });
 
-/* ---------------------------------------------------------------
-   DISTINCT USER LOCATION ICON (animated cyan dual ring)
-   - Highly visible, different from PG pins
----------------------------------------------------------------- */
 const userLocationIcon = L.divIcon({
   className: "user-location-icon",
   html: `
@@ -39,9 +31,6 @@ const userLocationIcon = L.divIcon({
   popupAnchor: [0, -20],
 });
 
-/* ---------------------------------------------------------------
-   CUSTOM PG ICON (solid indigo circular pin with home glyph)
----------------------------------------------------------------- */
 const pgIcon = L.divIcon({
   className: "custom-pg-icon",
   html: `
@@ -59,9 +48,6 @@ const pgIcon = L.divIcon({
   popupAnchor: [0, -26],
 });
 
-/* ---------------------------------------------------------------
-   HOVER POPUP PG MARKERS
----------------------------------------------------------------- */
 const MarkerWithHoverPopup = ({ marker }) => {
   const markerRef = useRef(null);
 
@@ -92,9 +78,6 @@ const MarkerWithHoverPopup = ({ marker }) => {
   );
 };
 
-/* ---------------------------------------------------------------
-   SMOOTH MAP FLY ANIMATION
----------------------------------------------------------------- */
 const ChangeMapView = ({ center, zoom }) => {
   const map = useMap();
   useEffect(() => {
@@ -105,9 +88,6 @@ const ChangeMapView = ({ center, zoom }) => {
   return null;
 };
 
-/* ---------------------------------------------------------------
-   FAST AUTOCOMPLETE (Geoapify)
----------------------------------------------------------------- */
 const SearchInput = ({ onSelectLocation }) => {
   const [query, setQuery] = useState("");
   const [results, setResults] = useState([]);
@@ -205,9 +185,6 @@ const SearchInput = ({ onSelectLocation }) => {
   );
 };
 
-/* ---------------------------------------------------------------
-   MAIN MAP COMPONENT
----------------------------------------------------------------- */
 const LeafletMap = ({
   center,
   markers = [],

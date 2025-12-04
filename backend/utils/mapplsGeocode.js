@@ -48,7 +48,7 @@ export async function geocodeEloc(input) {
   const query = parts.join(", ");
   console.log("Mappls Final Query →", query);
 
-  // 1️⃣ Try backend Bearer authentication
+  //  Try backend Bearer authentication
   try {
     const oauthToken = await getMapplsToken();
     console.log("Trying Mappls Bearer token…");
@@ -80,11 +80,10 @@ export async function geocodeEloc(input) {
     console.log("❌ Mappls Bearer failed:", err.message);
   }
 
-  // 2️⃣ Fallback to Browser-style access_token
   try {
     console.log("Trying Mappls Browser-style…");
 
-    const token = await getMapplsToken(); // reuse same token
+    const token = await getMapplsToken(); 
     const response = await axios.get(
       "https://atlas.mappls.com/api/places/geocode",
       {

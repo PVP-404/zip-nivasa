@@ -1,4 +1,3 @@
-// backend/routes/utilityRoutes.js
 
 import express from "express";
 import { lookupPincode } from "../utils/pincodeLookup.js"; // Import the utility function

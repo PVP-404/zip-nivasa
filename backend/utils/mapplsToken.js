@@ -1,13 +1,10 @@
-// backend/utils/mapplsToken.js
+
 import axios from "axios";
 import qs from "qs";
 
 let cachedToken = null;
 let tokenExpiry = 0;
 
-/**
- * Get Mappls OAuth token (auto-cached until expiry)
- */
 export async function getMapplsToken() {
   const now = Date.now();
 
@@ -32,7 +29,7 @@ export async function getMapplsToken() {
   const { access_token, expires_in } = res.data;
 
   cachedToken = access_token;
-  tokenExpiry = now + (expires_in - 60) * 1000; // refresh 1 min before expiry
+  tokenExpiry = now + (expires_in - 60) * 1000; 
 
   return cachedToken;
 }

@@ -1,5 +1,4 @@
-// backend/controllers/mapController.js
-import PG from "../models/pgModel.js";
+import PG from "../models/PGModel.js";
 import Mess from "../models/Mess.js";
 import { distanceKm } from "../utils/distance.js";
 
@@ -10,7 +9,6 @@ export const mapHealth = (req, res) => {
   });
 };
 
-// 🔹 GET /api/map/nearby?lat=..&lng=..&radiusKm=..
 export const getNearbyPGsAndMesses = async (req, res) => {
   try {
     const { lat, lng, radiusKm = 4 } = req.query;

@@ -1,5 +1,5 @@
 // backend/services/pgService.js
-import PG from "../models/pgModel.js";
+import PG from "../models/PGModel.js";
 
 // ✅ Create PG listing (if you use this anywhere else)
 export const createPGService = async (data) => {

@@ -1,5 +1,5 @@
 // backend/controllers/pgController.js
-import PG from "../models/pgModel.js";
+import PG from "../models/PGModel.js";
 import User from "../models/User.js";
 import { geocodeAddress } from "../utils/geocode.js";
 import { geocodeEloc } from "../utils/mapplsGeocode.js";
@@ -169,7 +169,7 @@ export const getPGsByOwner = async (req, res) => {
   }
 };
 
-// ⭐ PG NEAR ME (for Leaflet radius search)
+//  PG NEAR ME (for Leaflet radius search)
 export const getPGsNearMe = async (req, res) => {
   try {
     const { lat, lng, radiusKm = 4 } = req.query;

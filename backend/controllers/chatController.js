@@ -1,8 +1,7 @@
-// backend/controllers/chatController.js
+
 import Message from "../models/Message.js";
 import User from "../models/User.js";
 
-/** Save a message (REST fallback) */
 export const sendMessage = async (req, res) => {
   try {
     const { receiver, message } = req.body;
@@ -52,12 +51,11 @@ export const getConversations = async (req, res) => {
       $or: [{ sender: myId }, { receiver: myId }]
     }).sort({ createdAt: -1 });
 
-    const map = new Map(); // otherId -> { lastMessage, unreadCount }
+    const map = new Map();
     for (const m of msgs) {
       const otherId = String(m.sender) === String(myId) ? String(m.receiver) : String(m.sender);
       if (!map.has(otherId)) map.set(otherId, { lastMessage: m, unreadCount: 0 });
 
-      // unread if they sent to me and readAt is null
       if (String(m.receiver) === String(myId) && String(m.sender) === String(otherId) && !m.readAt) {
         map.get(otherId).unreadCount += 1;
       }
@@ -82,7 +80,6 @@ export const getConversations = async (req, res) => {
   }
 };
 
-/** Mark messages from a partner as read (set readAt) */
 export const markAsRead = async (req, res) => {
   try {
     const myId = req.user.id;
@@ -93,7 +90,7 @@ export const markAsRead = async (req, res) => {
       { $set: { readAt: new Date() } }
     );
 
-    // 🔵 Notify sender live
+    // Notify sender live
     const partnerSocket = onlineUsers.get(partnerId);
     if (partnerSocket) {
       io.to(partnerSocket).emit("message_read", {

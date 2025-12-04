@@ -87,14 +87,14 @@ const onlineUsers = new Map(); // userId -> socketId
 io.on("connection", (socket) => {
   console.log("User connected:", socket.id);
 
-  // ✅ Register userId with socket
+  // Register userId with socket
   socket.on("register", (userId) => {
     if (!userId) return;
     onlineUsers.set(userId, socket.id);
     io.emit("online_users", Array.from(onlineUsers.keys()));
   });
 
-  // ✅ Typing events
+  // Typing events
   socket.on("typing", ({ sender, receiver }) => {
     const rSock = onlineUsers.get(receiver);
     if (rSock) io.to(rSock).emit("typing", { sender });
@@ -105,14 +105,14 @@ io.on("connection", (socket) => {
     if (rSock) io.to(rSock).emit("stop_typing", { sender });
   });
 
-  // ✅ SAVE MESSAGE + EMIT (IMPORTANT)
+  //  SAVE MESSAGE + EMIT (IMPORTANT)
   socket.on("send_message", async (data) => {
     try {
       const { sender, receiver, message } = data;
 
       if (!sender || !receiver || !message?.trim()) return;
 
-      // ✅ Save message to DB
+      //  Save message to DB
       const saved = await Message.create({
         sender,
         receiver,
@@ -128,13 +128,13 @@ io.on("connection", (socket) => {
         readAt: saved.readAt,
       };
 
-      // ✅ Send to receiver if online
+      //  Send to receiver if online
       const receiverSocket = onlineUsers.get(receiver);
       if (receiverSocket) {
         io.to(receiverSocket).emit("receive_message", msgToSend);
       }
 
-      // ✅ Echo to sender
+      //  Echo to sender
       const senderSocket = onlineUsers.get(sender);
       if (senderSocket) {
         io.to(senderSocket).emit("receive_message", msgToSend);
@@ -156,7 +156,7 @@ socket.on("read_messages", ({ readerId, partnerId }) => {
   }
 });
 
-  // ✅ Disconnect
+  //Disconnect
   socket.on("disconnect", () => {
     for (const [uid, sid] of onlineUsers.entries()) {
       if (sid === socket.id) {
@@ -167,7 +167,7 @@ socket.on("read_messages", ({ readerId, partnerId }) => {
     io.emit("online_users", Array.from(onlineUsers.keys()));
   });
 });
-// 🕛 Reset today's specials every midnight
+// Reset today's specials every midnight
 cron.schedule("0 0 * * *", async () => {
   try {
     await Mess.updateMany({}, { 
@@ -178,15 +178,15 @@ cron.schedule("0 0 * * *", async () => {
         "specialToday.date": new Date()
       } 
     });
-    console.log("✅ Daily specials reset successfully at midnight");
+    console.log(" Daily specials reset successfully at midnight");
   } catch (err) {
-    console.error("❌ Error resetting daily specials:", err.message);
+    console.error(" Error resetting daily specials:", err.message);
   }
 });
 
 // Start server
 httpServer.listen(PORT, () => {
-  console.log(`✅ Server + Socket.io running on port ${PORT}`);
+  console.log(` Server + Socket.io running on port ${PORT}`);
 });
 
 

@@ -1,4 +1,3 @@
-// frontend/src/hooks/useMapplsLoader.js
 import { useEffect, useState } from "react";
 
 export default function useMapplsLoader() {

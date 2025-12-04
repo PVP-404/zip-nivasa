@@ -45,11 +45,11 @@ const messSchema = new mongoose.Schema(
       },
     ],
 
-    // 🔹 For PG/Mess near me:
+    //  For PG/Mess near me:
     latitude: { type: Number },
     longitude: { type: Number },
 
-    // 🔹 Mappls eLoc + formatted address
+    //  Mappls eLoc + formatted address
     mapplsEloc: { type: String },
     mapplsAddress: { type: String },
   },
