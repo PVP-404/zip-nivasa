@@ -3,6 +3,7 @@ import React, { useState, useEffect } from "react";
 import Sidebar from "../../components/Sidebar";
 import Header from "../../components/Header";
 import Footer from "../../components/Footer";
+import AppLayout from "../../layouts/AppLayout";
 
 import {
   getMessesByOwner,
@@ -531,109 +532,78 @@ const MessOwnerDashboard = () => {
 
   /* ------------------ MAIN UI ------------------ */
   return (
-    <div className="min-h-screen bg-gray-50 relative">
+  <AppLayout>
+    <div className="pt-20 px-6 pb-6 w-full">
 
-      {/* 1. Fixed Sidebar */}
-      <div className="fixed top-0 left-0 h-full w-64 z-30">
-        <Sidebar />
+      {/* Dashboard Header */}
+      <div className="flex justify-between items-center mb-8 border-b pb-4">
+        <div>
+          <h1 className="text-4xl font-extrabold text-transparent bg-gradient-to-r from-blue-600 to-indigo-600 bg-clip-text">
+            {owner ? owner.messName : "Mess Owner Dashboard"}
+          </h1>
+          <p className="text-gray-500 mt-1 text-base">
+            {owner
+              ? `📍 ${owner.messLocation || "Unknown"} • ${owner.messType || "N/A"}`
+              : "Manage your services and grow your business."}
+          </p>
+        </div>
+
+        <button className="px-5 py-2.5 bg-blue-600 text-white rounded-lg shadow-md hover:bg-blue-700 transition font-semibold">
+          ➕ Add New Mess
+        </button>
       </div>
 
-      {/* 2. Main Content Wrapper */}
-      <div className="ml-64 flex flex-col min-h-screen">
-
-        {/* 3. Fixed Header */}
-        <header className="fixed top-0 right-0 left-64 bg-white z-20 shadow-md border-b">
-          <Header />
-        </header>
-
-        {/* 4. Scrollable Main Content (pt-20 pushes content below the fixed header) */}
-        <main className="flex-1 pt-20 px-6 pb-6">
-          <div className="max-w-7xl mx-auto">
-
-            {/* Dashboard Header/Title */}
-            <div className="flex justify-between items-center mb-8 border-b pb-4">
-              <div>
-                <h1 className="text-4xl font-extrabold text-transparent bg-gradient-to-r from-blue-600 to-indigo-600 bg-clip-text">
-                  {owner ? owner.messName : "Mess Owner Dashboard"}
-                </h1>
-                <p className="text-gray-500 mt-1 text-base">
-                  {owner
-                    ? `📍 ${owner.messLocation || "Unknown"} • ${owner.messType || "N/A"}`
-                    : "Manage your services and grow your business."}
-                </p>
-              </div>
-
-              <button className="px-5 py-2.5 bg-blue-600 text-white rounded-lg shadow-md hover:bg-blue-700 transition font-semibold">
-                ➕ Add New Mess
-              </button>
-            </div>
-
-
-            {/* Stats */}
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 mb-10">
-              <StatCard
-                title="My Messes"
-                value={data.subscribers.length}
-                color="bg-blue-500"
-                subtitle="Active customers"
-                icon={<FaUsers className="w-5 h-5" />}
-              />
-              <StatCard
-                title="New Inquiries"
-                value={newInquiries}
-                color="bg-purple-500"
-                subtitle="Pending responses"
-                icon={<FaEnvelopeOpenText className="w-5 h-5" />}
-              />
-              <StatCard
-                title="Average Rating"
-                value={`${avgRating} ★`}
-                color="bg-yellow-500"
-                subtitle={`${data.reviews.length} total reviews`}
-                icon={<FaStar className="w-5 h-5" />}
-              />
-            </div>
-
-            {/* Tabs & Content Area */}
-            <div className="mt-10 bg-white rounded-xl shadow-2xl p-6 border border-gray-100">
-              <div className="flex space-x-1 border-b mb-6 -mt-6 -mx-6 px-6 pt-6">
-                <TabButton
-                  active={activeTab === "subscribers"}
-                  onClick={() => setActiveTab("subscribers")}
-                >
-                  Listings & Subscribers
-                </TabButton>
-                <TabButton
-                  active={activeTab === "inquiries"}
-                  onClick={() => setActiveTab("inquiries")}
-                  badge={newInquiries}
-                >
-                  Inquiries
-                </TabButton>
-                <TabButton
-                  active={activeTab === "reviews"}
-                  onClick={() => setActiveTab("reviews")}
-                >
-                  Reviews
-                </TabButton>
-                <TabButton
-                  active={activeTab === "special"}
-                  onClick={() => setActiveTab("special")}
-                >
-                  Today's Special
-                </TabButton>
-              </div>
-
-              <div className="py-4">{renderContent()}</div>
-            </div>
-          </div>
-        </main>
-
-        {/* 5. Footer (Visible only when scrolled to the bottom of the main content) */}
-        <Footer />
+      {/* Stats */}
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 mb-10 w-full">
+        <StatCard
+          title="My Messes"
+          value={data.subscribers.length}
+          color="bg-blue-500"
+          subtitle="Active customers"
+          icon={<FaUsers className="w-5 h-5" />}
+        />
+        <StatCard
+          title="New Inquiries"
+          value={newInquiries}
+          color="bg-purple-500"
+          subtitle="Pending responses"
+          icon={<FaEnvelopeOpenText className="w-5 h-5" />}
+        />
+        <StatCard
+          title="Average Rating"
+          value={`${avgRating} ★`}
+          color="bg-yellow-500"
+          subtitle={`${data.reviews.length} total reviews`}
+          icon={<FaStar className="w-5 h-5" />}
+        />
       </div>
+
+      {/* Tabs */}
+      <div className="mt-10 bg-white rounded-xl shadow-2xl p-6 border border-gray-100 w-full">
+        <div className="flex space-x-1 border-b mb-6 -mt-6 -mx-6 px-6 pt-6">
+          <TabButton active={activeTab === "subscribers"} onClick={() => setActiveTab("subscribers")}>
+            Listings & Subscribers
+          </TabButton>
+          <TabButton active={activeTab === "inquiries"} onClick={() => setActiveTab("inquiries")} badge={newInquiries}>
+            Inquiries
+          </TabButton>
+          <TabButton active={activeTab === "reviews"} onClick={() => setActiveTab("reviews")}>
+            Reviews
+          </TabButton>
+          <TabButton active={activeTab === "special"} onClick={() => setActiveTab("special")}>
+            Today’s Special
+          </TabButton>
+        </div>
+
+        <div className="py-4 w-full">{renderContent()}</div>
+      </div>
+
+      {/* Footer */}
+      <Footer />
     </div>
-  );
+  </AppLayout>
+);
+
 };
 
 export default MessOwnerDashboard;

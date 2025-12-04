@@ -5,7 +5,6 @@ import { motion, AnimatePresence } from "framer-motion";
 import Header from "../../components/Header";
 import Footer from "../../components/Footer";
 import Sidebar from "../../components/Sidebar";
-import MainLayout from "../../layouts/MainLayout";
 
 // --- Icons (Inline SVGs for performance) ---
 const HomeIcon = () => (

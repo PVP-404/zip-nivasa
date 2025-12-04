@@ -6,10 +6,6 @@ import { geocodeEloc } from "../utils/mapplsGeocode.js";
 
 import { calculateDistanceKm } from "../services/pgService.js";
 
-//  CREATE PG LISTING (with Mappls Geocoding)
-
-// CREATE PG LISTING
-//  CREATE PG LISTING (with Mappls Geocoding)
 export const createPG = async (req, res) => {
   try {
     const userId = req.user.id;
@@ -37,7 +33,7 @@ export const createPG = async (req, res) => {
     const location = `${district}, ${state}`;
     const images = req.files?.map((f) => `/uploads/pgs/${f.filename}`) || [];
 
-    // ✅ CLEAN STREET ADDRESS (remove S.No, Nr, extra commas)
+    // Clean street address
     const cleanedStreet = streetAddress
       ? streetAddress
           .replace(/S\.?No\.?\s*\d+/gi, "")
@@ -47,12 +43,11 @@ export const createPG = async (req, res) => {
           .trim()
       : "";
 
-    // ✅ PASS FULL STRUCTURED ADDRESS TO GEOCODERS
     const geocodeQuery = {
-      address: cleanedStreet || streetAddress || "",
-      city: district || "",   // "Pune"
-      state: state || "",     // "Maharashtra"
-      pincode: pincode || "", // "4110xx"
+      address: cleanedStreet || streetAddress,
+      city: district,
+      state: state,
+      pincode: pincode,
     };
 
     console.log("FINAL CLEANED GEOCODE QUERY:", geocodeQuery);
@@ -62,28 +57,28 @@ export const createPG = async (req, res) => {
     let mapplsEloc = null;
     let mapplsAddress = null;
 
-    try {
-      // 🔹 Both in parallel: OpenCage (lat/lng) + Mappls (eLoc)
-      const [coords, mappls] = await Promise.all([
-        geocodeAddress(geocodeQuery),
-        geocodeEloc(geocodeQuery),
-      ]);
+    // RUN BOTH IN PARALLEL SAFELY
+    const [ocRes, mapplsRes] = await Promise.allSettled([
+      geocodeAddress(geocodeQuery),  // OpenCage
+      geocodeEloc(geocodeQuery),     // Mappls
+    ]);
 
-      latitude = coords.lat;
-      longitude = coords.lng;
+    // MAPPLS SUCCESS
+    if (mapplsRes.status === "fulfilled") {
+      mapplsEloc = mapplsRes.value.eLoc;
+      mapplsAddress = mapplsRes.value.formattedAddress;
+      console.log("✔ SAVED MAPPLS:", mapplsEloc, mapplsAddress);
+    } else {
+      console.log("❌ Mappls failed:", mapplsRes.reason);
+    }
 
-      mapplsEloc = mappls.eLoc;
-      mapplsAddress = mappls.formattedAddress;
-
-      console.log("Geocode Success:", {
-        latitude,
-        longitude,
-        mapplsEloc,
-        mapplsAddress,
-      });
-    } catch (err) {
-      console.error("Geocode Error:", err.message);
-      // we still save PG without coords/eLoc if geocode fails
+    // OPENCAGE SUCCESS
+    if (ocRes.status === "fulfilled") {
+      latitude = ocRes.value.lat;
+      longitude = ocRes.value.lng;
+      console.log("✔ SAVED LAT/LNG:", latitude, longitude);
+    } else {
+      console.log("❌ OpenCage failed:", ocRes.reason);
     }
 
     const pg = await PG.create({
@@ -110,11 +105,13 @@ export const createPG = async (req, res) => {
     });
 
     res.json({ success: true, pg });
+
   } catch (error) {
     console.error("PG CREATE ERROR:", error);
     res.status(500).json({ message: "Server Error" });
   }
 };
+
 
 
 

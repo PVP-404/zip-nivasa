@@ -1,10 +1,6 @@
-// backend/utils/mapplsGeocode.js
 import axios from "axios";
 import { getMapplsToken } from "./mapplsToken.js";
 
-/**
- * Clean address for Mappls (same logic as OpenCage, but independent)
- */
 function cleanAddressForMappls(raw) {
   if (!raw) return "";
 
@@ -16,12 +12,16 @@ function cleanAddressForMappls(raw) {
     .trim();
 }
 
-/**
- * Normalise and geocode with Mappls – returns { eLoc, formattedAddress }
- * Accepts either:
- *  - string: "Gurudwara Road, Nigdi, Pimpri-Chinchwad, Pune"
- *  - object: { address, city, state, pincode }
- */
+function extractResult(data) {
+  const { copResults } = data || {};
+  if (!copResults) return null;
+
+  if (Array.isArray(copResults)) return copResults[0];
+  if (typeof copResults === "object") return copResults;
+
+  return null;
+}
+
 export async function geocodeEloc(input) {
   let addressStr = "";
   let city = "";
@@ -32,7 +32,6 @@ export async function geocodeEloc(input) {
     addressStr = input;
   } else if (input && typeof input === "object") {
     addressStr = input.address || "";
-    // support 'city' or 'district'
     city = input.city || input.district || "";
     state = input.state || "";
     pincode = input.pincode || "";
@@ -40,7 +39,6 @@ export async function geocodeEloc(input) {
 
   const cleaned = cleanAddressForMappls(addressStr);
 
-  // ✅ Build query similar to what you tested in browser
   const parts = [];
   if (cleaned) parts.push(cleaned);
   if (city) parts.push(city);
@@ -48,45 +46,71 @@ export async function geocodeEloc(input) {
   if (pincode) parts.push(pincode);
 
   const query = parts.join(", ");
-
   console.log("Mappls Final Query →", query);
 
-  const token = await getMapplsToken(); // "access_token" from Mappls
+  // 1️⃣ Try backend Bearer authentication
+  try {
+    const oauthToken = await getMapplsToken();
+    console.log("Trying Mappls Bearer token…");
 
-  const response = await axios.get(
-    "https://atlas.mappls.com/api/places/geocode",
-    {
-      params: {
-        address: query,
-        itemCount: 1,
-        region: "IND",
-      },
-      headers: {
-        "Content-Type": "application/json",
-        accept: "application/json",
-        // Mappls REST: Authorization: <access_token>
-        Authorization: token,
-      },
+    const response = await axios.get(
+      "https://atlas.mappls.com/api/places/geocode",
+      {
+        params: {
+          address: query,
+          itemCount: 1,
+          region: "IND",
+        },
+        headers: {
+          Accept: "application/json",
+          Authorization: `Bearer ${oauthToken}`,
+        },
+      }
+    );
+
+    const result = extractResult(response.data);
+    if (result) {
+      console.log("✔ Mappls (Bearer) Success");
+      return {
+        eLoc: result.eLoc,
+        formattedAddress: result.formattedAddress,
+      };
     }
-  );
-
-  const { copResults } = response.data;
-
-  // 🔥 IMPORTANT: Mappls returns EITHER array or single object
-  let result = null;
-  if (Array.isArray(copResults)) {
-    result = copResults[0];
-  } else if (copResults && typeof copResults === "object") {
-    result = copResults;
-  }
-  console.log(result);
-
-  if (!result) {
-    throw new Error("Mappls geocode: no result");
+  } catch (err) {
+    console.log("❌ Mappls Bearer failed:", err.message);
   }
 
-  return {
-    eLoc: result.eLoc,
-    formattedAddress: result.formattedAddress,
-  };
+  // 2️⃣ Fallback to Browser-style access_token
+  try {
+    console.log("Trying Mappls Browser-style…");
+
+    const token = await getMapplsToken(); // reuse same token
+    const response = await axios.get(
+      "https://atlas.mappls.com/api/places/geocode",
+      {
+        params: {
+          address: query,
+          itemCount: 1,
+          extraparam: "true",
+          access_token: token,
+        },
+        headers: {
+          Accept: "application/json",
+          "X-MAPPLS-APIKEY": process.env.MAPPLS_REST_KEY,
+        },
+      }
+    );
+
+    const result = extractResult(response.data);
+    if (!result) throw new Error("Browser fallback returned no result");
+
+    console.log("✔ Mappls Browser-mode Success");
+    return {
+      eLoc: result.eLoc,
+      formattedAddress: result.formattedAddress,
+    };
+  } catch (err) {
+    console.log("❌ Mappls Browser-mode failed:", err.message);
+    throw new Error("Mappls geocode failed in both modes");
+  }
 }

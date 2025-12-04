@@ -6,6 +6,7 @@ import Header from "../../components/Header";
 import Footer from "../../components/Footer";
 import Sidebar from "../../components/Sidebar";
 import PGMapModal from "../../components/maps/PGMapModal";
+import AppLayout from "../../layouts/AppLayout";
 
 /* ------------------ ICON COMPONENT ------------------ */
 const Icon = ({ path, className = "w-5 h-5", stroke = false }) => (
@@ -27,9 +28,8 @@ const StarRating = ({ rating = 4.5, size = "w-5 h-5" }) => (
     {[...Array(5)].map((_, i) => (
       <svg
         key={i}
-        className={`${size} ${
-          i < Math.floor(rating) ? "text-yellow-500" : "text-gray-300"
-        }`}
+        className={`${size} ${i < Math.floor(rating) ? "text-yellow-500" : "text-gray-300"
+          }`}
         viewBox="0 0 20 20"
         fill="currentColor"
       >
@@ -78,9 +78,10 @@ const PGDetails = () => {
   if (loading || !pg)
     return (
       <div className="flex h-screen bg-gray-50">
-        <Sidebar />
+        
         <div className="flex-1 flex flex-col overflow-hidden">
-          <Header />
+          
+          <Sidebar />
           <div className="flex flex-1 justify-center items-center">
             <div className="text-center">
               <div className="w-16 h-16 border-4 border-indigo-600 border-t-transparent animate-spin rounded-full mx-auto mb-4"></div>
@@ -123,10 +124,11 @@ const PGDetails = () => {
 
   /* ------------------ MAIN JSX ------------------ */
   return (
-    <div className="flex h-screen bg-white overflow-hidden">
-      <Sidebar />
+    <AppLayout>
+      <div className="flex h-screen bg-white overflow-hidden">
+      
       <div className="flex-1 flex flex-col overflow-hidden">
-        <Header />
+        
 
         {/* MAP MODAL - now driven by eLoc/address only */}
         <PGMapModal
@@ -213,11 +215,10 @@ const PGDetails = () => {
                       <button
                         key={i}
                         onClick={() => setSelectedImage(i)}
-                        className={`w-full h-24 rounded-lg overflow-hidden border-2 transition-all ${
-                          selectedImage === i
+                        className={`w-full h-24 rounded-lg overflow-hidden border-2 transition-all ${selectedImage === i
                             ? "border-indigo-600 ring-2 ring-indigo-200"
                             : "border-gray-200 hover:border-indigo-400"
-                        }`}
+                          }`}
                       >
                         <img
                           src={
@@ -260,15 +261,14 @@ const PGDetails = () => {
                   </p>
 
                   <div className="flex gap-4 mt-4 flex-wrap">
-                    {/* 1️⃣ IN-APP MAP MODAL (Mappls eLoc / address) */}
+                    {/* IN-APP MAP MODAL (Mappls eLoc / address) */}
                     <button
                       onClick={() => setIsMapOpen(true)}
                       disabled={!mapplsELOC && !displayAddress}
-                      className={`flex items-center gap-2 px-5 py-2.5 rounded-xl font-semibold transition ${
-                        mapplsELOC || displayAddress
+                      className={`flex items-center gap-2 px-5 py-2.5 rounded-xl font-semibold transition ${mapplsELOC || displayAddress
                           ? "bg-indigo-600 text-white hover:bg-indigo-700 shadow-lg shadow-indigo-200"
-                          : "bg-gray-200 text-gray-500 cursor-not-allowed"
-                      }`}
+                          : "bg-gray-200 text-gray-500 cursor-not-allowed "
+                        }`}
                     >
                       <Icon
                         path="M17.657 16.657L13.414 20.9A2 2 0 0110.5 20.9L6.343 16.657A8 8 0 1117.657 16.657z"
@@ -279,21 +279,21 @@ const PGDetails = () => {
                     </button>
 
                     {/* 2️⃣ OPEN IN MAPPLS (ELOC) */}
-                    {mapplsLink && (
-                      <a
-                        href={mapplsLink}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        className="flex items-center gap-2 px-5 py-2.5 rounded-xl bg-blue-600 text-white font-semibold hover:bg-blue-700 transition shadow-lg shadow-blue-200"
-                      >
-                        <img
-                          src="https://mappls.com/images/mappls-square-logo.svg"
-                          className="w-5 h-5"
-                          alt="Mappls"
-                        />
-                        Open in Mappls
-                      </a>
-                    )}
+                    {/* {mapplsLink && (
+                      // <a
+                      //   href={mapplsLink}
+                      //   target="_blank"
+                      //   rel="noopener noreferrer"
+                      //   className="flex items-center gap-2 px-5 py-2.5 rounded-xl bg-blue-600 text-white font-semibold hover:bg-blue-700 transition shadow-lg shadow-blue-200"
+                      // >
+                      //   <img
+                      //     src="https://apis.mappls.com/mappls-web/maps/images/mappls-icon.svg"
+                      //     className="w-5 h-5"
+                      //     alt="Mappls"
+                      //   />
+                      //   Open in Mappls
+                      // </a>
+                    )} */}
 
                     {/* 3️⃣ GOOGLE MAPS DIRECTIONS */}
                     <a
@@ -396,11 +396,10 @@ const PGDetails = () => {
                           <StarRating rating={item.value} size="w-4 h-4" />
                         ) : (
                           <span
-                            className={`font-bold text-base ${
-                              item.highlight
+                            className={`font-bold text-base ${item.highlight
                                 ? "text-indigo-600"
                                 : "text-gray-900"
-                            }`}
+                              }`}
                           >
                             {item.value}
                           </span>
@@ -557,6 +556,7 @@ const PGDetails = () => {
         </main>
       </div>
     </div>
+      </AppLayout>
   );
 };
 

@@ -68,7 +68,7 @@ const AllPGs = () => {
   const locationHook = useLocation();
 
   // 🔵 YOUTUBE Layout: sidebar open/close
-  const [isSidebarOpen, setIsSidebarOpen] = useState(true);
+  const [isSidebarOpen, setIsSidebarOpen] = useState(false);
 
   const [pgs, setPgs] = useState([]);
   const [loading, setLoading] = useState(true);

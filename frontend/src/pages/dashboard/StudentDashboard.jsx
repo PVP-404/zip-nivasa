@@ -83,7 +83,7 @@ const StudentDashboard = () => {
   const [selectedMess, setSelectedMess] = useState(null);
   const [activeService, setActiveService] = useState("housing");
   const [loading, setLoading] = useState(true);
-  const [isSidebarOpen, setIsSidebarOpen] = useState(true);
+  const [isSidebarOpen, setIsSidebarOpen] = useState(false);
 
   const overlayRef = useRef(null);
   const searchInputRef = useRef(null);
@@ -231,8 +231,7 @@ const StudentDashboard = () => {
                   Hi, {username}
                 </h1>
                 <p className="text-sm text-slate-500 mt-1">
-                  Discover nearby PGs, messes, and daily services tailored for
-                  students.
+                  Find. Connect. Live
                 </p>
               </div>
 

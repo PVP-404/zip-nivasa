@@ -16,7 +16,7 @@ const PGOwnerDashboard = () => {
   const [error, setError] = useState(null);
   const [activeTab, setActiveTab] = useState("listings");
 
-  const [isSidebarOpen, setIsSidebarOpen] = useState(true);
+  const [isSidebarOpen, setIsSidebarOpen] = useState(false);
 
   const token = localStorage.getItem("token");
   const role = localStorage.getItem("role");
