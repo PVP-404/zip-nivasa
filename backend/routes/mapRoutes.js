@@ -1,4 +1,3 @@
-// backend/routes/mapRoutes.js
 import express from "express";
 import { mapHealth, getNearbyPGsAndMesses } from "../controllers/mapController.js";
 

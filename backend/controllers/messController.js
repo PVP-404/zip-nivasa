@@ -3,8 +3,6 @@ import { geocodeAddress } from "../utils/geocode.js";
 import { geocodeEloc } from "../utils/mapplsGeocode.js";
 import { uploadToCloudinary } from "../utils/uploadToCloudinary.js";
 
-//  Add Mess
-// Add Mess
 export const addMess = async (req, res) => {
   try {
     let imagePaths = [];
@@ -25,13 +23,12 @@ export const addMess = async (req, res) => {
       messData.menu = JSON.parse(messData.menu);
     }
 
-    // 🔹 Optional: if frontend sends structured fields
     const {
       streetAddress,
       pincode,
       district,
       state,
-      location, // e.g. "Nigdi, Pune"
+      location, 
     } = messData;
 
     let latitude = null;
@@ -68,7 +65,6 @@ export const addMess = async (req, res) => {
       longitude,
       mapplsEloc,
       mapplsAddress,
-      // you can also derive location here if needed:
       location: location || `${district || ""}, ${state || ""}`.trim(),
     });
 
@@ -81,8 +77,6 @@ export const addMess = async (req, res) => {
     res.status(500).json({ success: false, message: err.message });
   }
 };
-
-//  Get mess by ID
 export const getMessById = async (req, res) => {
   try {
     const mess = await Mess.findById(req.params.id);
@@ -95,7 +89,6 @@ export const getMessById = async (req, res) => {
   }
 };
 
-// Get All Mess
 export const getAllMesses = async (req, res) => {
   try {
     const messes = await Mess.find();
@@ -105,7 +98,6 @@ export const getAllMesses = async (req, res) => {
   }
 };
 
-//  Get messes by owner
 export const getMessesByOwner = async (req, res) => {
   try {
     const messes = await Mess.find({ messOwnerId: req.params.ownerId })
@@ -117,7 +109,6 @@ export const getMessesByOwner = async (req, res) => {
   }
 };
 
-//  Update Mess
 export const updateMess = async (req, res) => {
   try {
     const updated = await Mess.findByIdAndUpdate(req.params.id, req.body, { new: true });
@@ -127,7 +118,6 @@ export const updateMess = async (req, res) => {
   }
 };
 
-//  Delete Mess
 export const deleteMess = async (req, res) => {
   try {
     await Mess.findByIdAndDelete(req.params.id);
@@ -137,7 +127,6 @@ export const deleteMess = async (req, res) => {
   }
 };
 
-//  Publish Today's Special
 export const publishSpecial = async (req, res) => {
   try {
     const mess = await Mess.findOne({ messOwnerId: req.body.messOwnerId });
@@ -153,7 +142,6 @@ export const publishSpecial = async (req, res) => {
   }
 };
 
-//  Add Rating
 export const addRating = async (req, res) => {
   try {
     const mess = await Mess.findById(req.params.id);

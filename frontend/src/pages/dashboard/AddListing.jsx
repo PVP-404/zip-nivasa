@@ -20,7 +20,6 @@ const UploadIcon = () => (
 const XCircleIcon = () => (
     <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 20 20"><path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clipRule="evenodd" /></svg>
 );
-// ⭐ NEW Icon for loading state
 const SpinnerIcon = () => (
     <svg className="animate-spin -ml-1 mr-3 h-5 w-5 text-blue-500" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
         <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
@@ -37,19 +36,17 @@ const steps = [
 const AddListing = () => {
   const [currentStep, setCurrentStep] = useState(1);
   const [loading, setLoading] = useState(false);
-  // ⭐ NEW: Pincode lookup state
+
   const [pincodeLookupLoading, setPincodeLookupLoading] = useState(false); 
   const [pincodeError, setPincodeError] = useState(null);
 
   const [formData, setFormData] = useState({
     title: "",
     propertyType: "",
-    // ⭐ LOCATION fields split for accuracy
-    streetAddress: "", // New primary address line
+    streetAddress: "", 
     pincode: "",
     district: "",
     state: "",
-    // The previous 'location' and 'address' fields are now derived or renamed
     monthlyRent: "",
     deposit: "",
     occupancyType: "",
@@ -59,14 +56,12 @@ const AddListing = () => {
     images: [],
   });
 
-  // Calculate validity of current step to enable/disable Next button
   const isStepValid = useMemo(() => {
     switch (currentStep) {
       case 1:
         return (
           formData.title.trim() !== "" &&
           formData.propertyType !== "" &&
-          // ⭐ Validation requires all new address fields
           formData.streetAddress.trim() !== "" &&
           /^\d{6}$/.test(formData.pincode) &&
           formData.district.trim() !== "" &&
@@ -94,17 +89,14 @@ const AddListing = () => {
     setFormData({ ...formData, [name]: value });
   };
   
-  // ⭐ Pincode Lookup Handler
   const handlePincodeChange = (e) => {
     const pincode = e.target.value;
     setFormData((prev) => ({ ...prev, pincode: pincode }));
     setPincodeError(null);
 
-    // Trigger lookup when 6 digits are entered
     if (pincode.length === 6 && /^\d{6}$/.test(pincode)) {
         performPincodeLookup(pincode);
     } else if (pincode.length !== 6) {
-        // Clear district and state if pincode is incomplete
         setFormData((prev) => ({ ...prev, district: "", state: "" }));
     }
   };
@@ -114,11 +106,7 @@ const AddListing = () => {
     setPincodeError(null);
 
     try {
-        // NOTE: Pincode lookup needs to be handled via your own backend to prevent CORS issues
-        // and hide the API key, if one were used. We'll simulate a fetch to your backend endpoint.
-        // For this example, we assume you've created a backend endpoint (e.g., /api/pincode/lookup/:pincode)
-        
-        // Simulating the backend call:
+
         const response = await fetch(`http://localhost:5000/api/utilities/pincode/${pincode}`);
         
         if (!response.ok) {
@@ -133,8 +121,6 @@ const AddListing = () => {
                 ...prev,
                 district: data.district,
                 state: data.state,
-                // You can also populate the old 'location' field if needed for legacy compatibility
-                // location: `${data.district}, ${data.state}`,
             }));
         } else {
             setPincodeError("Invalid Pincode or no location data found.");
@@ -197,11 +183,9 @@ const AddListing = () => {
     try {
       const submitData = new FormData();
 
-      // Basic Fields
       submitData.append("title", formData.title);
       submitData.append("propertyType", formData.propertyType);
       
-      // ⭐ Append NEW STRUCTURED ADDRESS FIELDS
       submitData.append("streetAddress", formData.streetAddress); 
       submitData.append("pincode", formData.pincode);
       submitData.append("district", formData.district);
@@ -212,7 +196,6 @@ const AddListing = () => {
       submitData.append("occupancyType", formData.occupancyType);
       submitData.append("description", formData.description);
 
-      // Combine default amenities with custom ones
       let finalAmenities = [...formData.amenities];
       if (formData.customAmenities.trim()) {
         const customList = formData.customAmenities
@@ -223,7 +206,6 @@ const AddListing = () => {
       }
       submitData.append("amenities", JSON.stringify(finalAmenities));
 
-      // Append Images
       formData.images.forEach((image) => {
         submitData.append("images", image);
       });
@@ -243,7 +225,6 @@ const AddListing = () => {
 
       alert("Listing submitted successfully!");
       
-      // Reset Form
       setFormData({
         title: "", propertyType: "", streetAddress: "", pincode: "", district: "", state: "",
         monthlyRent: "", deposit: "", occupancyType: "",
@@ -261,14 +242,12 @@ const AddListing = () => {
 
   const occupancyOptions = [
     { value: "single", label: "Single" },
-    // ... (rest of occupancyOptions)
     { value: "double", label: "Double" },
     { value: "triple", label: "Triple" },
     { value: "four_plus", label: "4+ Occupancy" },
   ];
 
   const amenityOptions = [
-    // ... (amenity options)
     "Wi-Fi", "Laundry", "Parking", "Attached Bathroom", "AC", "TV",
     "Wardrobe", "Mess Service", "Security", "Power Backup", "Gym"
   ];
@@ -289,7 +268,6 @@ const AddListing = () => {
                 <p className="text-sm text-gray-500">All fields marked with <span className="text-red-500">*</span> are mandatory.</p>
             </div>
 
-            {/* Title & Type */}
             <div className="grid md:grid-cols-2 gap-6">
                 <div>
                     <label className="block mb-2 text-sm font-semibold text-gray-700">
@@ -325,7 +303,6 @@ const AddListing = () => {
                 </div>
             </div>
 
-            {/* ⭐ NEW: Structured Address Fields */}
             <h3 className="text-lg font-bold text-gray-800 pt-4 border-t mt-4">Property Location</h3>
 
             <div className="grid md:grid-cols-3 gap-6">
@@ -367,7 +344,7 @@ const AddListing = () => {
                         placeholder="e.g., Pune"
                         className="w-full border border-gray-300 rounded-lg p-3 focus:ring-2 focus:ring-blue-500 outline-none bg-gray-50 disabled:bg-gray-100"
                         required
-                        disabled={formData.pincode.length === 6 && !pincodeError} // Auto-filled if lookup is successful
+                        disabled={formData.pincode.length === 6 && !pincodeError} 
                     />
                 </div>
 
@@ -383,7 +360,7 @@ const AddListing = () => {
                         placeholder="e.g., Maharashtra"
                         className="w-full border border-gray-300 rounded-lg p-3 focus:ring-2 focus:ring-blue-500 outline-none bg-gray-50 disabled:bg-gray-100"
                         required
-                        disabled={formData.pincode.length === 6 && !pincodeError} // Auto-filled if lookup is successful
+                        disabled={formData.pincode.length === 6 && !pincodeError} 
                     />
                 </div>
             </div>
@@ -394,7 +371,7 @@ const AddListing = () => {
               </label>
               <input
                 type="text"
-                name="streetAddress" // Updated name
+                name="streetAddress" 
                 value={formData.streetAddress}
                 onChange={handleInputChange}
                 placeholder="Flat No, Building Name, Street, Landmark"
@@ -409,7 +386,6 @@ const AddListing = () => {
         );
 
       case 2:
-        // ... (Step 2 content remains the same)
         return (
           <motion.div
             key="step2"
@@ -522,7 +498,6 @@ const AddListing = () => {
                 ))}
               </div>
 
-              {/* Custom Amenities Input */}
               <div className="mt-3">
                  <label className="block mb-1 text-xs font-semibold text-gray-500 uppercase tracking-wide">
                     Other Amenities
@@ -544,7 +519,6 @@ const AddListing = () => {
         );
 
       case 3:
-        // ... (Step 3 content remains the same)
         return (
           <motion.div
             key="step3"
@@ -594,8 +568,6 @@ const AddListing = () => {
                 </div>
               </div>
             </div>
-
-            {/* Image Previews */}
             {formData.images.length > 0 && (
               <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-4 mt-4">
                 {formData.images.map((file, index) => (
@@ -643,10 +615,8 @@ const AddListing = () => {
 
           <div className="bg-white rounded-2xl shadow-xl border border-gray-100 overflow-hidden">
             
-            {/* Progress Header */}
             <div className="bg-gray-50 px-8 py-6 border-b border-gray-100">
                 <div className="flex items-center justify-between relative">
-                     {/* Connecting Line */}
                      <div className="absolute left-0 top-1/2 transform -translate-y-1/2 w-full h-1 bg-gray-200 -z-0 rounded-full mx-4"></div>
                      <div 
                         className="absolute left-0 top-1/2 transform -translate-y-1/2 h-1 bg-blue-600 -z-0 rounded-full mx-4 transition-all duration-500 ease-out"
@@ -674,13 +644,11 @@ const AddListing = () => {
                 </div>
             </div>
 
-            {/* Form Content */}
             <form onSubmit={handleSubmit} className="p-8">
               <AnimatePresence mode="wait">
                 {renderStep()}
               </AnimatePresence>
 
-              {/* Navigation Buttons */}
               <div className="flex justify-between items-center mt-10 pt-6 border-t border-gray-100">
                 {currentStep > 1 ? (
                   <button

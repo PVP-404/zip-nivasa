@@ -24,7 +24,6 @@ export const getNearbyPGsAndMesses = async (req, res) => {
       });
     }
 
-    // PGs with coordinates
     const allPgs = await PG.find({
       latitude: { $ne: null },
       longitude: { $ne: null },

@@ -1,4 +1,3 @@
-// frontend/src/pages/tenant/Payments.jsx
 import React, { useEffect, useMemo, useState } from "react";
 import Header from "../../components/Header";
 import Footer from "../../components/Footer";
@@ -86,7 +85,6 @@ const Payments = () => {
             </div>
           )}
 
-          {/* Summary Cards */}
           <section className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
             <div className="bg-white border rounded-xl p-5">
               <p className="text-gray-500">Total Paid</p>
@@ -113,7 +111,6 @@ const Payments = () => {
             </div>
           </section>
 
-          {/* Pay Form */}
           <section className="bg-white border rounded-xl p-6 mb-10">
             <h2 className="text-xl font-bold mb-4">Pay Rent</h2>
             <div className="grid md:grid-cols-3 gap-4 items-end">
@@ -144,7 +141,6 @@ const Payments = () => {
             </div>
           </section>
 
-          {/* History */}
           <section>
             <h2 className="text-xl font-bold mb-4">Payment History</h2>
             {loading ? (

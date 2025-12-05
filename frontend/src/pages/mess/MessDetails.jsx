@@ -1,4 +1,3 @@
-// frontend/pages/mess/MessDetails.jsx
 import React, { useEffect, useState } from "react";
 import { useParams, Link } from "react-router-dom";
 
@@ -98,7 +97,6 @@ const MessDetails = () => {
 
         <main className="flex-1 overflow-y-auto">
           
-          {/* HERO SECTION */}
           <div className="relative h-72 bg-gradient-to-r from-indigo-700 to-blue-600">
             {mess.images?.length > 0 && (
               <>
@@ -143,7 +141,6 @@ const MessDetails = () => {
             </div>
           </div>
 
-          {/* TABS */}
           <div className="sticky top-0 bg-white border-b z-40">
             <div className="flex gap-4 max-w-6xl mx-auto px-6 py-3 overflow-x-auto">
               {["overview", "menu", "photos", "reviews"].map((t) => (
@@ -164,11 +161,9 @@ const MessDetails = () => {
 
           <div className="max-w-6xl mx-auto px-6 py-8">
 
-            {/* 📌 OVERVIEW */}
             {activeTab === "overview" && (
               <div className="space-y-6">
 
-                {/* Description */}
                 {mess.description && (
                   <div className="bg-white p-6 rounded-xl shadow-sm border">
                     <h2 className="text-xl font-semibold text-gray-800 mb-3">
@@ -178,7 +173,6 @@ const MessDetails = () => {
                   </div>
                 )}
 
-                {/* Special Today */}
                 {mess.specialToday && (
                   <div className="bg-gradient-to-br from-orange-50 to-yellow-50 p-6 rounded-xl shadow border">
                     <div className="flex items-center gap-3 mb-3">
@@ -189,7 +183,6 @@ const MessDetails = () => {
                   </div>
                 )}
 
-                {/* Stats Grid */}
                 <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
                   <StatItem icon={<Users />} label="Capacity" value={mess.capacity} />
                   <StatItem icon={<Calendar />} label="Monthly Price" value={`₹${mess.price}`} />
@@ -199,7 +192,6 @@ const MessDetails = () => {
               </div>
             )}
 
-            {/* 📌 MENU */}
             {activeTab === "menu" && (
               <div className="bg-white p-6 rounded-xl shadow-sm border">
                 <h2 className="text-xl font-semibold mb-4 flex items-center gap-2">
@@ -209,7 +201,6 @@ const MessDetails = () => {
               </div>
             )}
 
-            {/* 📌 PHOTOS */}
             {activeTab === "photos" && (
               <div className="bg-white p-6 rounded-xl shadow-sm border">
                 <h2 className="text-xl font-semibold mb-4 flex items-center gap-2">
@@ -242,11 +233,9 @@ const MessDetails = () => {
               </div>
             )}
 
-            {/* 📌 REVIEWS */}
             {activeTab === "reviews" && (
               <div className="space-y-6">
 
-                {/* Add Review */}
                 <div className="bg-white rounded-xl shadow-sm border p-6">
 
                   <div className="flex justify-between items-center mb-4">
@@ -291,8 +280,6 @@ const MessDetails = () => {
                     </div>
                   )}
                 </div>
-
-                {/* All Reviews */}
                 <div className="bg-white rounded-xl shadow-sm border p-6">
                   <h3 className="text-xl font-semibold mb-4">
                     All Reviews ({mess.ratings?.length || 0})
@@ -316,7 +303,6 @@ const MessDetails = () => {
         </main>
       </div>
 
-      {/* IMAGE MODAL */}
       {imageModalOpen && (
         <div className="fixed inset-0 bg-black/90 flex items-center justify-center z-50">
           <button
@@ -339,7 +325,6 @@ const MessDetails = () => {
 
 export default MessDetails;
 
-// REUSABLE COMPONENTS
 const StatItem = ({ icon, label, value }) => (
   <div className="bg-white p-6 rounded-xl shadow-sm border flex flex-col items-center">
     <div className="text-indigo-600 mb-2">{icon}</div>

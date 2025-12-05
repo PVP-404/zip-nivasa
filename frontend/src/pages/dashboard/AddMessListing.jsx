@@ -1,5 +1,3 @@
-// src/pages/dashboard/AddMessListing.jsx
-
 import { addMess } from "../../services/messService";
 import React, { useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
@@ -7,7 +5,6 @@ import Header from "../../components/Header";
 import Footer from "../../components/Footer";
 import Sidebar from "../../components/Sidebar";
 
-// --- 1. Reusable Input Field Component ---
 const InputField = ({ label, id, name, type = "text", value, onChange, placeholder, error, textarea, required }) => (
   <div>
     <label htmlFor={id} className="block mb-2 font-semibold text-gray-700">{label}</label>
@@ -26,7 +23,6 @@ const InputField = ({ label, id, name, type = "text", value, onChange, placehold
   </div>
 );
 
-// --- 2. Main Component ---
 const initialDailyMenu = {
   monday: { lunch: "", dinner: "" }, tuesday: { lunch: "", dinner: "" },
   wednesday: { lunch: "", dinner: "" }, thursday: { lunch: "", dinner: "" },
@@ -45,7 +41,6 @@ const AddMessListing = () => {
   const [formData, setFormData] = useState(initialFormData);
   const [errors, setErrors] = useState({});
 
-  // Unified Input Change Handler
   const handleInputChange = (e) => {
     const { name, value } = e.target;
     setFormData(prev => ({ ...prev, [name]: value }));
@@ -58,7 +53,6 @@ const AddMessListing = () => {
     setErrors(prev => ({ ...prev, images: "" }));
   };
 
-  // Subscription Handlers
   const updateSubscriptions = (newSubscriptions) => {
     setFormData(prev => ({ ...prev, subscriptions: newSubscriptions }));
   };
@@ -131,14 +125,13 @@ const AddMessListing = () => {
       const ownerId = localStorage.getItem("ownerId");
       if (!ownerId) return alert("Owner ID missing. Please log in again.");
 
-      // Map frontend data to backend expected format
       const messData = {
         messOwnerId: ownerId,
         title: formData.messName,
         description: formData.description,
         location: formData.location,
         price: formData.subscriptions.length > 0 ? parseInt(formData.subscriptions[0].price) : 0,
-        type: "Veg", // Assuming default type, modify as needed
+        type: "Veg",
         menu: Object.values(formData.dailyMenu).flatMap(meal => [meal.lunch, meal.dinner]).filter(Boolean),
         contact: formData.contactNumber,
         specialToday: {
@@ -150,20 +143,18 @@ const AddMessListing = () => {
       const response = await addMess(messData);
 
       if (response.success) {
-        alert("Mess listing saved successfully! 🎉");
-        setFormData(initialFormData); // Reset form
+        alert("Mess listing saved successfully! ");
+        setFormData(initialFormData);
         setCurrentStep(1);
       } else {
         alert("Failed to save mess.");
       }
     } catch (err) {
-      console.error("❌ Error saving mess:", err);
+      console.error("Error saving mess:", err);
       alert("Server error. Check console for details.");
     }
   };
 
-
-  // --- Step Renderer Functions ---
 
   const renderStep1 = () => (
     <motion.div key="step1" initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -20 }} transition={{ duration: 0.3 }} className="space-y-6">
@@ -184,7 +175,6 @@ const AddMessListing = () => {
     <motion.div key="step2" initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -20 }} transition={{ duration: 0.3 }} className="space-y-6">
       <h2 className="text-2xl font-bold text-gray-800">2. Plans & Media</h2>
       
-      {/* Image Upload */}
       <div>
         <label htmlFor="images" className="block mb-2 font-semibold text-gray-700">Upload Images</label>
         <input type="file" id="images" accept="image/*" multiple onChange={handleImageChange}
@@ -201,7 +191,6 @@ const AddMessListing = () => {
         )}
       </div>
 
-      {/* Subscription Plans */}
       <div>
         <label className="block mb-2 font-semibold text-gray-700">Subscription Plans</label>
         {formData.subscriptions.map((sub, index) => (
@@ -232,7 +221,6 @@ const AddMessListing = () => {
         </button>
       </div>
 
-      {/* Weekly Menu Section */}
       <div className="mt-8">
         <h3 className="text-xl font-bold text-gray-800 mb-4">Weekly Menu</h3>
         <p className="text-gray-600 text-sm mb-4">Provide a sample weekly menu to help customers decide.</p>

@@ -138,7 +138,6 @@ const SearchInput = ({ onSelectLocation }) => {
     setLoading(false);
   };
 
-  // 60ms debounce
   const handleChange = (e) => {
     const value = e.target.value;
     setQuery(value);
@@ -220,26 +219,21 @@ const LeafletMap = ({
           attribution="© OpenStreetMap"
         />
 
-        {/* Search radius – different colors from user pin */}
         {radiusKm && (
           <Circle
             center={[center.lat, center.lng]}
             radius={radiusKm * 1000}
             pathOptions={{
-              color: "#06B6D4", // cyan stroke to match user pin family
+              color: "#06B6D4",
               fillColor: "#22D3EE",
               fillOpacity: 0.12,
               weight: 2,
             }}
           />
         )}
-
-        {/* USER LOCATION PIN (distinct cyan with pulse) */}
         <Marker position={[center.lat, center.lng]} icon={userLocationIcon}>
           <Popup>{center.address}</Popup>
         </Marker>
-
-        {/* PG MARKERS */}
         {markers
           .filter((m) => !m.isCenter)
           .map((m) => (
@@ -247,12 +241,9 @@ const LeafletMap = ({
           ))}
       </MapContainer>
 
-      {/* Floating area badge */}
       <div className="absolute bottom-4 left-1/2 -translate-x-1/2 bg-white/90 shadow-xl rounded-full px-4 py-2 text-xs backdrop-blur">
         <span className="font-semibold">📍 Area:</span> {center.address}
       </div>
-
-      {/* Inline styles for custom icons and animations */}
       <style jsx>{`
         /* User location animated icon */
         .ul-wrap {

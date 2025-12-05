@@ -42,22 +42,18 @@ const Login = () => {
         alert(data?.message || "Login failed");
         return;
       }
-
-      // ✅ Save JWT and user data
       localStorage.setItem("token", data.token);
       localStorage.setItem("userId", data.user.id);
       localStorage.setItem("role", data.user.role);
       localStorage.setItem("username", data.user.name);
       localStorage.setItem("email", data.user.email);
 
-      // ✅ Fix: also save ownerId if role = messowner / pgowner
       if (data.user.role === "messowner" || data.user.role === "pgowner") {
         localStorage.setItem("ownerId", data.user.id);
       }
 
       console.log("LOGIN RESPONSE:", data);
 
-      // ✅ Role-based redirect
       switch (data.user.role) {
         case "tenant":
         case "student":
@@ -86,7 +82,6 @@ const Login = () => {
 
   return (
     <div className="min-h-screen flex flex-col md:flex-row items-center justify-center bg-gradient-to-r from-sky-50 via-indigo-50 to-purple-50">
-      {/* LEFT IMAGE */}
       <div className="hidden md:block md:w-1/2 h-screen relative">
         <img
           src={roleImages[roleParam.toLowerCase()] || roleImages.student}
@@ -98,7 +93,6 @@ const Login = () => {
         </div>
       </div>
 
-      {/* LOGIN FORM */}
       <motion.div
         className="w-full md:w-1/2 flex items-center justify-center p-8"
         initial={{ opacity: 0, scale: 0.95 }}

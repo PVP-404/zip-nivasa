@@ -2,6 +2,7 @@
 import Message from "../models/Message.js";
 import User from "../models/User.js";
 import { io, onlineUsers } from "../server.js";
+import { notifyNewMessage } from "../utils/pushNotifications.js";
 
 
 export const sendMessage = async (req, res) => {
@@ -16,6 +17,18 @@ export const sendMessage = async (req, res) => {
       receiver,
       message: message.trim(),
       readAt: null,
+    });
+
+    await sendPushNotification(receiver, {
+      title: "New Message",
+      body: `${req.user.name}: ${message.substring(0, 40)}...`,
+      data: { chatUserId: req.user.id }
+    });
+
+    notifyNewMessage({
+      senderId: req.user.id,
+      receiverId: receiver,
+      text: message.trim(),
     });
 
     return res.json({ success: true, msg });
@@ -92,7 +105,6 @@ export const markAsRead = async (req, res) => {
       { $set: { readAt: new Date() } }
     );
 
-    // Notify sender live
     const partnerSocket = onlineUsers.get(partnerId);
     if (partnerSocket) {
       io.to(partnerSocket).emit("message_read", {

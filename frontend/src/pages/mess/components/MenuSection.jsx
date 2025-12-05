@@ -1,4 +1,3 @@
-// frontend/pages/mess/components/MenuSection.jsx
 import React from "react";
 
 const DAYS = [
@@ -11,24 +10,6 @@ const DAYS = [
   "Sunday",
 ];
 
-/**
- * Expected menu format:
- * menu = [
- *   "Monday Lunch",
- *   "Monday Dinner",
- *   "Tuesday Lunch",
- *   "Tuesday Dinner",
- *   ...
- * ]
- *
- * We map: 
- * index 0 → Monday Lunch
- * index 1 → Monday Dinner
- * index 2 → Tuesday Lunch
- * index 3 → Tuesday Dinner
- * ...
- */
-
 const MenuSection = ({ menu }) => {
   if (!menu || menu.length === 0) {
     return (
@@ -39,9 +20,8 @@ const MenuSection = ({ menu }) => {
     );
   }
 
-  // Convert array → day-wise structure (2 items per day)
   const normalisedMenu = DAYS.map((day, index) => {
-    const lunchIndex = index * 2;      // 0, 2, 4, 6, ...
+    const lunchIndex = index * 2;      
     const dinnerIndex = lunchIndex + 1;
 
     const lunch =
@@ -83,7 +63,6 @@ const MenuSection = ({ menu }) => {
               </span>
             </div>
 
-            {/* Lunch Section */}
             <div className="mb-3">
               <p className="text-xs font-semibold text-gray-500 uppercase mb-1">
                 Lunch
@@ -104,7 +83,6 @@ const MenuSection = ({ menu }) => {
               )}
             </div>
 
-            {/* Dinner Section */}
             <div>
               <p className="text-xs font-semibold text-gray-500 uppercase mb-1">
                 Dinner

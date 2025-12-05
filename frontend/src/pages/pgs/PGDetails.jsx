@@ -1,5 +1,3 @@
-// frontend/src/pages/pgs/PGDetails.jsx
-
 import React, { useEffect, useState } from "react";
 import { useParams, Link } from "react-router-dom";
 import Header from "../../components/Header";
@@ -8,7 +6,6 @@ import Sidebar from "../../components/Sidebar";
 import PGMapModal from "../../components/maps/PGMapModal";
 import AppLayout from "../../layouts/AppLayout";
 
-/* ------------------ ICON COMPONENT ------------------ */
 const Icon = ({ path, className = "w-5 h-5", stroke = false }) => (
   <svg
     className={className}
@@ -22,7 +19,6 @@ const Icon = ({ path, className = "w-5 h-5", stroke = false }) => (
   </svg>
 );
 
-/* ------------------ RATING STARS ------------------ */
 const StarRating = ({ rating = 4.5, size = "w-5 h-5" }) => (
   <div className="flex items-center gap-0.5">
     {[...Array(5)].map((_, i) => (
@@ -39,8 +35,6 @@ const StarRating = ({ rating = 4.5, size = "w-5 h-5" }) => (
     <span className="ml-1 text-sm font-semibold text-gray-700">({rating})</span>
   </div>
 );
-
-/* ------------------ MAIN COMPONENT ------------------ */
 const PGDetails = () => {
   const { id } = useParams();
   const [pg, setPg] = useState(null);
@@ -49,7 +43,6 @@ const PGDetails = () => {
   const [selectedImage, setSelectedImage] = useState(0);
   const [isMapOpen, setIsMapOpen] = useState(false);
 
-  /* ------------------ FETCH PG DATA ------------------ */
   useEffect(() => {
     const fetchData = async () => {
       try {
@@ -94,8 +87,6 @@ const PGDetails = () => {
       </div>
     );
 
-  /* ------------------ VARIABLES ------------------ */
-
   const images =
     pg.images?.length > 0
       ? pg.images
@@ -108,10 +99,8 @@ const PGDetails = () => {
       ? `${pg.streetAddress}, ${pg.district}, ${pg.state} - ${pg.pincode}`
       : `${pg.address}, ${pg.location}`;
 
-  // Prefer Mappls formatted address if present
   const displayAddress = pg.mapplsAddress || fullAddress;
 
-  /* ------------------ eLoc + External Map Links ------------------ */
   const mapplsELOC = pg.mapplsEloc || pg.eloc || null;
 
   const mapplsLink = mapplsELOC ? `https://mappls.com/${mapplsELOC}` : null;
@@ -120,17 +109,12 @@ const PGDetails = () => {
     `${pg.title} ${displayAddress || ""}`
   );
 
-  // We are NOT using lat/lng for the modal now – everything via eLoc/address
-
-  /* ------------------ MAIN JSX ------------------ */
   return (
     <AppLayout>
       <div className="flex h-screen bg-white overflow-hidden">
       
       <div className="flex-1 flex flex-col overflow-hidden">
         
-
-        {/* MAP MODAL - now driven by eLoc/address only */}
         <PGMapModal
           open={isMapOpen}
           onClose={() => setIsMapOpen(false)}
@@ -141,7 +125,6 @@ const PGDetails = () => {
 
         <main className="flex-1 overflow-y-auto">
           <div className="max-w-7xl mx-auto px-4 sm:px-6 py-8">
-            {/* BREADCRUMB */}
             <nav className="mb-6 text-sm">
               <ol className="flex items-center gap-2 text-gray-600">
                 <li>
@@ -155,7 +138,6 @@ const PGDetails = () => {
                     to="/dashboard/student"
                     className="hover:text-indigo-600"
                   >
-                    Student Dashboard
                   </Link>
                 </li>
                 <li>›</li>
@@ -165,7 +147,6 @@ const PGDetails = () => {
               </ol>
             </nav>
 
-            {/* HEADER + GALLERY */}
             <div className="bg-white rounded-xl mb-8">
               <h1 className="text-4xl font-extrabold text-gray-900 mb-2">
                 {pg.title}
@@ -195,7 +176,6 @@ const PGDetails = () => {
                 <span>{pg.beds} Beds Available</span>
               </div>
 
-              {/* IMAGE GALLERY */}
               <div className="grid grid-cols-1 lg:grid-cols-4 lg:gap-4">
                 <div className="lg:col-span-3 bg-gray-100 rounded-xl overflow-hidden shadow-lg">
                   <img
@@ -236,11 +216,8 @@ const PGDetails = () => {
               </div>
             </div>
 
-            {/* MAIN GRID */}
             <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-              {/* LEFT SIDE */}
               <div className="lg:col-span-2 space-y-8">
-                {/* LOCATION & MAP BUTTONS */}
                 <div className="bg-white rounded-xl shadow-md border border-gray-100 p-6">
                   <h2 className="text-2xl font-bold mb-4 flex items-center gap-2 text-indigo-700">
                     <Icon
@@ -256,7 +233,6 @@ const PGDetails = () => {
                   </p>
 
                   <div className="flex gap-4 mt-4 flex-wrap">
-                    {/* IN-APP MAP MODAL (Mappls eLoc / address) */}
                     <button
                       onClick={() => setIsMapOpen(true)}
                       disabled={!mapplsELOC && !displayAddress}
@@ -273,24 +249,6 @@ const PGDetails = () => {
                       View on Map
                     </button>
 
-                    {/* 2️⃣ OPEN IN MAPPLS (ELOC) */}
-                    {/* {mapplsLink && (
-                      // <a
-                      //   href={mapplsLink}
-                      //   target="_blank"
-                      //   rel="noopener noreferrer"
-                      //   className="flex items-center gap-2 px-5 py-2.5 rounded-xl bg-blue-600 text-white font-semibold hover:bg-blue-700 transition shadow-lg shadow-blue-200"
-                      // >
-                      //   <img
-                      //     src="https://apis.mappls.com/mappls-web/maps/images/mappls-icon.svg"
-                      //     className="w-5 h-5"
-                      //     alt="Mappls"
-                      //   />
-                      //   Open in Mappls
-                      // </a>
-                    )} */}
-
-                    {/* 3️⃣ GOOGLE MAPS DIRECTIONS */}
                     <a
                       href={`https://www.google.com/maps/search/?api=1&query=${googleSearch}`}
                       target="_blank"
@@ -306,8 +264,6 @@ const PGDetails = () => {
                     </a>
                   </div>
                 </div>
-
-                {/* ABOUT */}
                 <div className="bg-white rounded-xl shadow-md border border-gray-100 p-6">
                   <h2 className="text-2xl font-bold mb-4 flex items-center gap-2 text-gray-900">
                     <Icon
@@ -321,8 +277,6 @@ const PGDetails = () => {
                     {pg.description}
                   </p>
                 </div>
-
-                {/* AMENITIES */}
                 {pg.amenities?.length > 0 && (
                   <div className="bg-white rounded-xl shadow-md border border-gray-100 p-6">
                     <h2 className="text-2xl font-bold mb-4 flex items-center gap-2 text-gray-900">
@@ -351,8 +305,6 @@ const PGDetails = () => {
                     </div>
                   </div>
                 )}
-
-                {/* PROPERTY DETAILS */}
                 <div className="bg-white rounded-xl shadow-md border border-gray-100 p-6">
                   <h3 className="text-2xl font-bold text-gray-900 mb-4 flex items-center gap-2">
                     <Icon
@@ -404,11 +356,8 @@ const PGDetails = () => {
                   </div>
                 </div>
               </div>
-
-              {/* RIGHT SIDE */}
               <div className="lg:col-span-1">
                 <div className="sticky top-4 space-y-6">
-                  {/* RENT CARD */}
                   <div className="bg-gradient-to-br from-indigo-50 to-purple-50 border-2 border-indigo-200 px-8 py-6 rounded-xl text-center shadow-lg">
                     <p className="text-base text-gray-600 mb-1">Starting From</p>
                     <p className="text-5xl font-extrabold text-indigo-700">
@@ -418,8 +367,6 @@ const PGDetails = () => {
                       per month (Excl. maintenance)
                     </p>
                   </div>
-
-                  {/* CONTACT OWNER */}
                   <div className="bg-white rounded-xl shadow-lg border p-6">
                     <h3 className="text-xl font-bold text-gray-900 mb-4 text-center">
                       Ready to Book? Connect Now!
@@ -470,8 +417,6 @@ const PGDetails = () => {
                 </div>
               </div>
             </div>
-
-            {/* SIMILAR LISTINGS */}
             {recommendations.length > 0 && (
               <div className="mt-16 mb-8">
                 <div className="flex items-center justify-between mb-8">

@@ -1,4 +1,3 @@
-// frontend/src/pages/chat/ChatList.jsx
 import React, { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 import Sidebar from "../../components/Sidebar";

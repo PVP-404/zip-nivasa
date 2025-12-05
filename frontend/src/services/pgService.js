@@ -1,4 +1,3 @@
-// frontend/src/services/pgService.js
 import api from "../utils/api";
 
 export const fetchPGById = (id) => api.get(`/pgs/${id}`);

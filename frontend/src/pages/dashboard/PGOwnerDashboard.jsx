@@ -1,4 +1,3 @@
-// src/pages/dashboard/PGOwnerDashboard.jsx
 import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 
@@ -21,12 +20,10 @@ const PGOwnerDashboard = () => {
   const token = localStorage.getItem("token");
   const role = localStorage.getItem("role");
 
-  // 🔐 Redirect invalid role
   useEffect(() => {
     if (!token || role !== "pgowner") navigate("/login");
   }, []);
 
-  // 🔵 Fetch profile
   const fetchUserProfile = async () => {
     try {
       const res = await fetch("http://localhost:5000/api/auth/me", {
@@ -47,7 +44,6 @@ const PGOwnerDashboard = () => {
     }
   };
 
-  // 🔵 Fetch PG listings
   const fetchListings = async () => {
     try {
       const res = await fetch("http://localhost:5000/api/pgs/owner/list", {
@@ -61,13 +57,11 @@ const PGOwnerDashboard = () => {
     }
   };
 
-  // 🔵 Load data on mount
   useEffect(() => {
     const load = async () => {
       await fetchUserProfile();
       await fetchListings();
 
-      // temp dummy inquiries
       setInquiries([
         {
           id: "i1",
@@ -86,7 +80,6 @@ const PGOwnerDashboard = () => {
     load();
   }, []);
 
-  // 🔧 Actions
   const handleAddListing = () => navigate("/dashboard/add-listing");
   const handleEditListing = (id) => navigate(`/dashboard/edit-listing/${id}`);
   const handleDeleteListing = (id) => {
@@ -100,9 +93,6 @@ const PGOwnerDashboard = () => {
       prev.map((i) => (i.id === id ? { ...i, status: "Contacted" } : i))
     );
 
-  // ===========================
-  // LOADING SCREEN
-  // ===========================
   if (loading)
     return (
       <div className="flex flex-col min-h-screen">
@@ -117,9 +107,6 @@ const PGOwnerDashboard = () => {
       </div>
     );
 
-  // ===========================
-  // ERROR SCREEN
-  // ===========================
   if (error)
     return (
       <div className="flex flex-col min-h-screen bg-gray-50">
@@ -142,22 +129,13 @@ const PGOwnerDashboard = () => {
       </div>
     );
 
-  // ===========================
-  // MAIN FINAL UI
-  // ===========================
   return (
     <div className="min-h-screen flex flex-col bg-gray-50">
-      {/* HEADER (full width) */}
       <Header onToggleSidebar={() => setIsSidebarOpen((p) => !p)} />
 
       <div className="flex flex-1 min-h-0">
-        {/* SIDEBAR (YouTube style) */}
         <Sidebar isOpen={isSidebarOpen} />
-
-        {/* MAIN CONTENT */}
         <main className="flex-1 px-4 sm:px-6 md:px-8 py-6 overflow-y-auto">
-
-          {/* Welcome Section */}
           <div className="mb-8 flex items-center justify-between">
             <div>
               <h1 className="text-3xl font-bold text-gray-900">
@@ -180,9 +158,7 @@ const PGOwnerDashboard = () => {
             </div>
           </div>
 
-          {/* Stats Cards */}
           <section className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
-            {/* Total Listings */}
             <div className="bg-white p-6 rounded-xl shadow-sm border hover:shadow-md transition">
               <div className="flex justify-between mb-3">
                 <div className="bg-blue-50 p-3 rounded-lg">
@@ -199,8 +175,6 @@ const PGOwnerDashboard = () => {
                 {listings.length}
               </p>
             </div>
-
-            {/* Available beds */}
             <div className="bg-white p-6 rounded-xl shadow-sm border hover:shadow-md transition">
               <div className="flex justify-between mb-3">
                 <div className="bg-green-50 p-3 rounded-lg">
@@ -214,8 +188,6 @@ const PGOwnerDashboard = () => {
                 {listings.reduce((acc, pg) => acc + (pg.beds || 0), 0)}
               </p>
             </div>
-
-            {/* New inquiries */}
             <div className="bg-white p-6 rounded-xl shadow-sm border hover:shadow-md transition">
               <div className="flex justify-between mb-3">
                 <div className="bg-purple-50 p-3 rounded-lg">
@@ -237,9 +209,6 @@ const PGOwnerDashboard = () => {
             </div>
           </section>
 
-          {/* ===========================
-              TABS
-          =========================== */}
           <div className="mb-6 bg-white rounded-xl inline-flex p-1 border shadow-sm">
             {["listings", "inquiries"].map((tab) => (
               <button
@@ -256,9 +225,6 @@ const PGOwnerDashboard = () => {
             ))}
           </div>
 
-          {/* ===========================
-              LISTINGS TAB
-          =========================== */}
           {activeTab === "listings" && (
             <>
               <div className="flex justify-between mb-6">
@@ -327,13 +293,9 @@ const PGOwnerDashboard = () => {
                         <p className="text-gray-600 text-sm">
                           {pg.location}
                         </p>
-
-                        {/* Beds */}
                         <p className="text-gray-700 text-sm mt-2">
                           Beds: <span className="font-semibold">{pg.beds}</span>
                         </p>
-
-                        {/* Amenities */}
                         {pg.amenities?.length > 0 && (
                           <div className="flex flex-wrap gap-2 mt-3">
                             {pg.amenities.slice(0, 3).map((am, i) => (
@@ -374,9 +336,6 @@ const PGOwnerDashboard = () => {
             </>
           )}
 
-          {/* ===========================
-              INQUIRIES TAB
-          =========================== */}
           {activeTab === "inquiries" && (
             <div>
               <h2 className="text-2xl font-bold text-gray-900 mb-4">
@@ -448,7 +407,6 @@ const PGOwnerDashboard = () => {
         </main>
       </div>
 
-      {/* FOOTER */}
       <Footer />
     </div>
   );

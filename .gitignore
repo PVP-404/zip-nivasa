@@ -26,16 +26,8 @@ backend/.env
 backend/uploads/
 backend/logs/
 backend/*.log
+backend/config/firebase-service-account.json
 
-# -------------------------------
-# ☕ SPRING BOOT BACKEND
-# -------------------------------
-**/target/
-*.iml
-*.class
-.mvn/
-application.properties
-application.yml
 
 # -------------------------------
 # 📦 OS / TOOLING

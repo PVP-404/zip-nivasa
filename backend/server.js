@@ -17,6 +17,12 @@ import profileRoutes from "./routes/profileRoutes.js";
 
 import utilityRoutes from './routes/utilityRoutes.js';
 
+//notification
+import notificationRoutes from "./routes/notificationRoutes.js";
+import { notifyNewMessage } from "./utils/pushNotifications.js";
+import userNotificationRoutes from "./routes/userNotificationRoutes.js";
+import { addNotification } from "./controllers/userNotificationController.js";
+
 // Models
 import Message from "./models/Message.js";
 
@@ -60,6 +66,8 @@ app.use("/api/pgs", pgRoutes);
 app.use("/api/chat", chatRoutes);
 app.use("/api/map", mapRoutes);
 app.use('/api/utilities', utilityRoutes);
+app.use("/api/notifications", notificationRoutes);
+app.use("/api/user-notifications", userNotificationRoutes);
 // Test route
 app.get("/", (req, res) => {
   res.send("Zip Nivasa Backend Running ✅");
@@ -110,9 +118,10 @@ io.on("connection", (socket) => {
     try {
       const { sender, receiver, message } = data;
 
+      // Validation
       if (!sender || !receiver || !message?.trim()) return;
 
-      //  Save message to DB
+      // Save message to DB
       const saved = await Message.create({
         sender,
         receiver,
@@ -128,33 +137,52 @@ io.on("connection", (socket) => {
         readAt: saved.readAt,
       };
 
-      //  Send to receiver if online
+      // Send to receiver if online
       const receiverSocket = onlineUsers.get(receiver);
       if (receiverSocket) {
         io.to(receiverSocket).emit("receive_message", msgToSend);
       }
 
-      //  Echo to sender
+      // Echo back to sender
       const senderSocket = onlineUsers.get(sender);
       if (senderSocket) {
         io.to(senderSocket).emit("receive_message", msgToSend);
       }
+
+      // Save notification to DB (for Notification Page)
+      await addNotification({
+        userId: receiver,
+        senderId: sender,
+        title: "New Message",
+        body: message.substring(0, 40) + "...",
+        chatUserId: sender,
+      });
+
+      // Send Firebase Push Notification
+      await notifyNewMessage({
+        senderId: sender,
+        receiverId: receiver,
+        text: message.trim(),
+      });
+
     } catch (err) {
-      console.error("❌ Socket Error:", err);
+      console.error("Socket Error:", err);
     }
   });
-  //  Mark messages as read (real-time)
-socket.on("read_messages", ({ readerId, partnerId }) => {
-  const partnerSocket = onlineUsers.get(partnerId);
 
-  if (partnerSocket) {
-    io.to(partnerSocket).emit("message_read", {
-      readerId,
-      partnerId,
-      readAt: new Date().toISOString(),
-    });
-  }
-});
+
+  //  Mark messages as read (real-time)
+  socket.on("read_messages", ({ readerId, partnerId }) => {
+    const partnerSocket = onlineUsers.get(partnerId);
+
+    if (partnerSocket) {
+      io.to(partnerSocket).emit("message_read", {
+        readerId,
+        partnerId,
+        readAt: new Date().toISOString(),
+      });
+    }
+  });
 
   //Disconnect
   socket.on("disconnect", () => {
@@ -170,13 +198,13 @@ socket.on("read_messages", ({ readerId, partnerId }) => {
 // Reset today's specials every midnight
 cron.schedule("0 0 * * *", async () => {
   try {
-    await Mess.updateMany({}, { 
-      $set: { 
+    await Mess.updateMany({}, {
+      $set: {
         "specialToday.lunch": "",
         "specialToday.dinner": "",
         "specialToday.imageUrl": "",
         "specialToday.date": new Date()
-      } 
+      }
     });
     console.log(" Daily specials reset successfully at midnight");
   } catch (err) {

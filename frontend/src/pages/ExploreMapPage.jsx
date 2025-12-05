@@ -1,4 +1,3 @@
-// frontend/src/pages/ExploreMapPage.jsx
 import React, { useEffect, useState } from "react";
 import axios from "axios";
 import ZipNivasaMap from "../components/ZipNivasaMap";
@@ -11,7 +10,7 @@ const ExploreMapPage = () => {
   const [allMarkers, setAllMarkers] = useState([]);
   const [filteredMarkers, setFilteredMarkers] = useState([]);
   const [filterType, setFilterType] = useState("pg");
-  const [center, setCenter] = useState({ lat: 18.5204, lng: 73.8567 }); // Pune
+  const [center, setCenter] = useState({ lat: 18.5204, lng: 73.8567 }); 
 
   useEffect(() => {
     const fetchLocations = async () => {
@@ -49,10 +48,8 @@ const ExploreMapPage = () => {
               Explore PGs on Map
             </h1>
 
-            {/* Search */}
             <MapSearchBar onLocationSelected={handleLocationSelected} />
 
-            {/* Filters – future: add mess/laundry */}
             <div className="flex gap-2 mb-2">
               {["pg", "all"].map((type) => (
                 <button
@@ -69,7 +66,6 @@ const ExploreMapPage = () => {
               ))}
             </div>
 
-            {/* Main Map */}
             <ZipNivasaMap
               markers={filteredMarkers}
               initialCenter={center}

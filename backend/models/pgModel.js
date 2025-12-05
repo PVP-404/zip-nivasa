@@ -1,4 +1,3 @@
-// backend/models/pgModel.js
 import mongoose from "mongoose";
 
 const pgSchema = new mongoose.Schema(
@@ -28,14 +27,11 @@ const pgSchema = new mongoose.Schema(
     inquiries: { type: Number, default: 0 },
     beds: { type: Number, default: 1 },
     available: { type: Boolean, default: true },
-
-    // 🔹 Lat/Lng from OpenCage (for distance & Leaflet)
     latitude: { type: Number },
     longitude: { type: Number },
 
-    // 🔹 Mappls identifiers
-    mapplsEloc: { type: String },          // e.g. "TA2D4C"
-    mapplsAddress: { type: String },       // formattedAddress from Mappls
+    mapplsEloc: { type: String },          
+    mapplsAddress: { type: String },       
   },
   { timestamps: true }
 );

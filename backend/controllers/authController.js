@@ -7,15 +7,12 @@ import PGOwner from "../models/PGOwner.js";
 import MessOwner from "../models/MessOwner.js";
 import LaundryOwner from "../models/LaundryOwner.js";
 
-
-//  Ensure JWT Secret exists
 const ensureJwt = () => {
   if (!process.env.JWT_SECRET || process.env.JWT_SECRET.trim() === "") {
     throw new Error("JWT_SECRET is not set in environment");
   }
 };
 
-//  REGISTER USER
 export const register = async (req, res) => {
   try {
     ensureJwt();
@@ -29,7 +26,6 @@ export const register = async (req, res) => {
       });
     }
 
-    // Check duplicate
     const already = await User.findOne({ email });
     if (already) {
       return res.status(409).json({
@@ -38,7 +34,6 @@ export const register = async (req, res) => {
       });
     }
 
-    // Create role-specific document
     let roleDoc = null;
     let roleModelName = null;
 
@@ -73,10 +68,8 @@ export const register = async (req, res) => {
         return res.status(400).json({ success: false, message: "Invalid role" });
     }
 
-    // Hash password
     const hashedPassword = await bcrypt.hash(password, 10);
 
-    // Create main user
     const user = await User.create({
       name,
       email,
@@ -87,7 +80,6 @@ export const register = async (req, res) => {
       roleModel: roleModelName,
     });
 
-    // Backlink userId in role model
     await roleDoc.updateOne({ userId: user._id });
 
     return res.json({
@@ -101,8 +93,6 @@ export const register = async (req, res) => {
     return res.status(500).json({ success: false, message: "Server error" });
   }
 };
-
-//  LOGIN USER
 export const login = async (req, res) => {
   try {
     ensureJwt();
@@ -138,7 +128,6 @@ export const login = async (req, res) => {
   }
 };
 
-//  GET LOGGED-IN USER PROFILE
 export const getMe = async (req, res) => {
   try {
     const user = await User.findById(req.user.id).select("-password");

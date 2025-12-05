@@ -4,13 +4,11 @@ const API = "http://localhost:5000/api/mess";
 
 export const addMess = async (data) => {
     const formData = new FormData();
-
-    // Append all data fields
     Object.entries(data).forEach(([key, value]) => {
         if (key === "images" && Array.isArray(value)) {
-            value.forEach(img => formData.append("images", img)); // multiple images
+            value.forEach(img => formData.append("images", img));
         } else if (typeof value === "object") {
-            formData.append(key, JSON.stringify(value)); // serialize objects
+            formData.append(key, JSON.stringify(value)); 
         } else {
             formData.append(key, value);
         }
@@ -48,10 +46,6 @@ export const publishSpecial = async (data) => {
     return res.data;
 };
 
-// export const getAllMess = async () => {
-//   const res = await fetch(API);
-//   return res.json();
-// };
 
 export const getMessById = async (id) => {
     const res = await axios.get(`${API}/${id}`);

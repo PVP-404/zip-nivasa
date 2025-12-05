@@ -1,7 +1,7 @@
 import React from 'react';
 import { motion } from 'framer-motion';
 import { FaLinkedin, FaFacebook, FaInstagram, FaTwitter } from 'react-icons/fa';
-import { Link } from 'react-router-dom'; // ✅ Added import
+import { Link } from 'react-router-dom';
 
 const Footer = () => {
   return (
@@ -13,7 +13,6 @@ const Footer = () => {
       viewport={{ once: true, amount: 0.3 }}
     >
       <div className="max-w-7xl mx-auto grid grid-cols-1 md:grid-cols-4 gap-12">
-        {/* Company Info */}
         <div className="flex flex-col items-center md:items-start text-center md:text-left">
           <h3 className="text-3xl font-extrabold text-white mb-2">
             Zip-Nivasa
@@ -53,7 +52,6 @@ const Footer = () => {
           </div>
         </div>
 
-        {/* Quick Links */}
         <div className="text-center md:text-left">
           <h4 className="text-xl font-semibold text-white mb-4">Quick Links</h4>
           <ul className="space-y-2">
@@ -62,7 +60,6 @@ const Footer = () => {
           </ul>
         </div>
 
-        {/* Legal */}
         <div className="text-center md:text-left">
           <h4 className="text-xl font-semibold text-white mb-4">Legal</h4>
           <ul className="space-y-2">
@@ -72,7 +69,6 @@ const Footer = () => {
           </ul>
         </div>
 
-        {/* Contact Info */}
         <div className="text-center md:text-left">
           <h4 className="text-xl font-semibold text-white mb-4">Contact</h4>
           <p className="text-sm mb-2">Email: contact@zipnivasa.com</p>
