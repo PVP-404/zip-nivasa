@@ -1,20 +1,15 @@
-// backend/services/pgService.js
 import PG from "../models/PGModel.js";
 
-// ✅ Create PG listing (if you use this anywhere else)
 export const createPGService = async (data) => {
   const pg = new PG(data);
   return await pg.save();
 };
 
-// ✅ Fetch all PG listings (latest first)
 export const getAllPGsService = async () => {
   return await PG.find().sort({ createdAt: -1 });
 };
-
-// ✅ Distance in KM between two points (Haversine)
 export const calculateDistanceKm = (lat1, lon1, lat2, lon2) => {
-  const R = 6371; // Earth radius in km
+  const R = 6371;
 
   const toRad = (deg) => (deg * Math.PI) / 180;
   const dLat = toRad(lat2 - lat1);

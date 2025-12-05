@@ -1,4 +1,3 @@
-// src/pages/dashboard/StudentDashboard.jsx
 import React, { useState, useEffect, useRef } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { LocateFixed } from "lucide-react";
@@ -7,7 +6,6 @@ import Footer from "../../components/Footer";
 import Sidebar from "../../components/Sidebar";
 import { getAllMesses } from "../../services/messService";
 
-// --- Mock Laundry Data (unchanged core data) ---
 const mockLaundryList = [
   {
     id: 1,
@@ -27,7 +25,6 @@ const mockLaundryList = [
   },
 ];
 
-// --- Image Slideshow (same logic, smoother UI) ---
 const ImageSlideshow = ({ images = [], alt, className }) => {
   const [currentIndex, setCurrentIndex] = useState(0);
 
@@ -87,7 +84,6 @@ const StudentDashboard = () => {
   const overlayRef = useRef(null);
   const searchInputRef = useRef(null);
 
-  // --- Data Fetch (PGs) ---
   const fetchPGs = async () => {
     try {
       const res = await fetch("http://localhost:5000/api/pgs");
@@ -113,7 +109,6 @@ const StudentDashboard = () => {
     }
   };
 
-  // --- Data Fetch (Messes) ---
   const fetchMesses = async () => {
     try {
       const res = await getAllMesses();
@@ -133,14 +128,12 @@ const StudentDashboard = () => {
     loadData();
   }, []);
 
-  // Close modal on ESC
   useEffect(() => {
     const onKey = (e) => e.key === "Escape" && setSelectedMess(null);
     window.addEventListener("keydown", onKey);
     return () => window.removeEventListener("keydown", onKey);
   }, []);
 
-  // Filtering
   const filtered = {
     mess: messes.filter((m) =>
       (m.title || m.name || "").toLowerCase().includes(query.toLowerCase())
@@ -220,7 +213,7 @@ const StudentDashboard = () => {
         <Sidebar isOpen={isSidebarOpen} />
 
         <main className="flex-1 w-full overflow-y-auto custom-scrollbar">
-          {/* Top hero / welcome strip */}
+          
           <div className="px-4 sm:px-6 md:px-8 pt-4 pb-3 sticky top-0 z-20 bg-gradient-to-r from-slate-50 via-slate-50 to-slate-50/95 backdrop-blur">
             <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
               <div>
@@ -234,8 +227,6 @@ const StudentDashboard = () => {
                   Find. Connect. Live
                 </p>
               </div>
-
-              {/* PG Near Me CTA */}
               <div className="flex items-center gap-3">
                 <Link
                   to="/pgs/near-me"
@@ -247,10 +238,7 @@ const StudentDashboard = () => {
               </div>
             </div>
           </div>
-
-          {/* Main content area */}
           <div className="px-4 sm:px-6 md:px-8 pb-10">
-            {/* SERVICE SELECTION TABS */}
             <section className="mt-4 mb-6">
               <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
                 {services.map((s) => (
@@ -291,7 +279,6 @@ const StudentDashboard = () => {
               </div>
             </section>
 
-            {/* SEARCH & COUNTS */}
             <div className="flex flex-col sm:flex-row justify-between items-center mb-6 gap-4 sticky top-[4.5rem] sm:top-[4.75rem] bg-slate-50/95 backdrop-blur z-10 py-2">
               <div className="self-start sm:self-center">
                 <h3 className="text-xl font-semibold text-slate-900">
@@ -318,8 +305,6 @@ const StudentDashboard = () => {
                 />
               </div>
             </div>
-
-            {/* CARD GRID */}
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 2xl:grid-cols-4 gap-6">
               {loading && (
                 <>
@@ -346,7 +331,6 @@ const StudentDashboard = () => {
                 </div>
               )}
 
-              {/* HOUSING CARDS */}
               {!loading &&
                 activeService === "housing" &&
                 filtered.housing.map((pg) => (
@@ -416,7 +400,6 @@ const StudentDashboard = () => {
                   </div>
                 ))}
 
-              {/* MESS CARDS */}
               {!loading &&
                 activeService === "mess" &&
                 filtered.mess.map((mess) => {
@@ -489,8 +472,6 @@ const StudentDashboard = () => {
                     </div>
                   );
                 })}
-
-              {/* LAUNDRY CARDS */}
               {!loading &&
                 activeService === "laundry" &&
                 filtered.laundry.map((laundry) => (

@@ -1,70 +1,72 @@
-// ✅ frontend/src/App.jsx
-
 import { BrowserRouter as Router, Routes, Route } from "react-router-dom";
+import React, { useState, useEffect } from "react";
+
 import PGNearMe from "./pages/pgs/PGNearMe";
-// Public Pages
+
 import Home from "./pages/Home";
 import Login from "./pages/Login";
 import Register from "./pages/Register";
 import AboutUs from "./pages/AboutUs";
 import AllMesses from "./pages/mess/AllMesses";
+import Notifications from "./pages/Notifications";
 
-// Dashboards
 import StudentDashboard from "./pages/dashboard/StudentDashboard";
 import PGOwnerDashboard from "./pages/dashboard/PGOwnerDashboard";
 import LaundryDashboard from "./pages/dashboard/LaundryDashboard";
 import MessOwnerDashboard from "./pages/dashboard/MessOwnerDashboard";
 
-// PG Pages
 import AllPGs from "./pages/pgs/AllPGs";
 import PGDetails from "./pages/pgs/PGDetails";
 import SearchPGResults from "./pages/pgs/SearchPGResults";
 
-
-
-// Tenant Pages
 import MyBookings from "./pages/tenant/MyBookings";
 import Payments from "./pages/tenant/Payments";
 import Complaints from "./pages/tenant/Complaints";
 import Profile from "./pages/profile/Profile";
 
-//mess pages
-// Mess Details Page
 import MessDetails from "./pages/mess/MessDetails";
 
-
-// Other Pages
 import AddListing from "./pages/dashboard/AddListing";
 import AddMessListing from "./pages/dashboard/AddMessListing";
 
-// Auth Guards
 import ProtectedRoute from "./components/ProtectedRoute";
 import RoleProtectedRoute from "./components/RoleProtectedRoute";
 
-// ✅ Chat Pages
 import ChatPageWrapper from "./pages/chat/ChatPageWrapper";
-import ChatList from "./pages/chat/ChatList";      // ✅ FIXED IMPORT
-import Inbox from "./pages/chat/Inbox";            // ✅ KEEP if required
+import ChatList from "./pages/chat/ChatList";
+import Inbox from "./pages/chat/Inbox";
 
-
-
+import FCMInitializer from "./features/FCMInitializer";
+import NotificationToast from "./features/NotificationToast";
+import { subscribeForegroundNotifications } from "./services/fcm";
 
 function App() {
+  const [notif, setNotif] = useState(null);
+
+  useEffect(() => {
+    subscribeForegroundNotifications((newNotif) => {
+      setNotif(newNotif);
+    });
+  }, []);
+
   return (
     <Router>
+      <FCMInitializer />
+      {notif && (
+        <NotificationToast notif={notif} onClose={() => setNotif(null)} />
+      )}
+
       <Routes>
 
-        {/* ✅ Public Routes */}
         <Route path="/" element={<Home />} />
         <Route path="/login" element={<Login />} />
         <Route path="/register" element={<Register />} />
         <Route path="/about" element={<AboutUs />} />
 
-        {/* ✅ PG LISTING - Public */}
         <Route path="/pgs/all" element={<AllPGs />} />
         <Route path="/services/pg/:id" element={<PGDetails />} />
+        <Route path="/notifications" element={<Notifications />} />
 
-        {/* ✅ Chat Route */}
         <Route
           path="/chat/:id"
           element={
@@ -74,7 +76,6 @@ function App() {
           }
         />
 
-        {/* ✅ Chat List for all roles */}
         <Route
           path="/messages"
           element={
@@ -84,7 +85,6 @@ function App() {
           }
         />
 
-        {/* ✅ Inbox (Optional — keep if needed) */}
         <Route
           path="/inbox"
           element={
@@ -94,7 +94,6 @@ function App() {
           }
         />
 
-        {/* ✅ Student Dashboard */}
         <Route
           path="/dashboard/student"
           element={
@@ -104,7 +103,6 @@ function App() {
           }
         />
 
-        {/* ✅ Student Pages */}
         <Route
           path="/dashboard/student/bookings"
           element={
@@ -113,7 +111,6 @@ function App() {
             </RoleProtectedRoute>
           }
         />
-
         <Route
           path="/dashboard/student/payments"
           element={
@@ -122,7 +119,6 @@ function App() {
             </RoleProtectedRoute>
           }
         />
-
         <Route
           path="/dashboard/student/complaints"
           element={
@@ -141,7 +137,6 @@ function App() {
           }
         />
 
-        {/* ✅ PG Owner Dashboard */}
         <Route
           path="/dashboard/pgowner"
           element={
@@ -150,8 +145,6 @@ function App() {
             </RoleProtectedRoute>
           }
         />
-
-        {/* ✅ Mess Owner Dashboard */}
         <Route
           path="/dashboard/messowner"
           element={
@@ -160,6 +153,7 @@ function App() {
             </RoleProtectedRoute>
           }
         />
+
         <Route
           path="/mess/:id"
           element={
@@ -169,12 +163,8 @@ function App() {
           }
         />
 
-       
-        <Route path="/pgs/near-me" element={<PGNearMe/>} />
+        <Route path="/pgs/near-me" element={<PGNearMe />} />
 
-
-
-        {/* ✅ Laundry Dashboard */}
         <Route
           path="/dashboard/laundry"
           element={
@@ -184,7 +174,6 @@ function App() {
           }
         />
 
-        {/* ✅ Owner Add Listing */}
         <Route
           path="/dashboard/add-listing"
           element={
@@ -202,12 +191,11 @@ function App() {
             </RoleProtectedRoute>
           }
         />
-        <Route path="/accommodations" element={<SearchPGResults />} />
 
+        <Route path="/accommodations" element={<SearchPGResults />} />
         <Route path="/messes" element={<AllMesses />} />
 
-        {/* ✅ Fallback */}
-        <Route path="*" element={<h1>404 - Page Not Found</h1>} />
+        <Route path="*" element={<h1>404 Page Not Found</h1>} />
       </Routes>
     </Router>
   );

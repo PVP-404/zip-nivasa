@@ -1,5 +1,3 @@
-// frontend/src/components/mess/MessList.jsx
-
 import React from "react";
 import { FaStar } from "react-icons/fa";
 
@@ -18,7 +16,6 @@ const MessList = ({ messes, onSelect }) => {
             className="bg-white rounded-lg shadow-sm border border-gray-200 p-5 hover:shadow-md transition-shadow cursor-pointer"
             onClick={() => onSelect(mess)}
           >
-            {/* Header */}
             <div className="flex justify-between items-start mb-3">
               <div>
                 <h4 className="font-semibold text-lg text-gray-900 truncate">
@@ -32,7 +29,6 @@ const MessList = ({ messes, onSelect }) => {
               </span>
             </div>
 
-            {/* Rating */}
             <div className="flex items-center gap-1 mb-3">
               <FaStar className="text-yellow-400 w-4 h-4" />
               <span className="text-sm font-semibold text-gray-700">
@@ -40,15 +36,13 @@ const MessList = ({ messes, onSelect }) => {
               </span>
             </div>
 
-            {/* Price */}
             <p className="text-lg font-bold text-gray-900 mb-4">
               ₹{mess.price}/month
             </p>
 
-            {/* CTA Button */}
             <button
               onClick={(e) => {
-                e.stopPropagation(); // prevent parent click
+                e.stopPropagation(); 
                 onSelect(mess);
               }}
               className="w-full bg-indigo-600 text-white py-2.5 rounded-lg font-medium hover:bg-indigo-700 transition-colors"

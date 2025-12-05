@@ -1,4 +1,3 @@
-// Backend/routes/profileRoutes.js
 import express from "express";
 import { protect } from "../middleware/auth.js";
 import { getProfile, updateProfile } from "../controllers/profileController.js";

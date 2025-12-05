@@ -35,7 +35,6 @@ export const createPG = async (req, res) => {
 
     const location = `${district}, ${state}`;
 
-    // Upload to Cloudinary
     let images = [];
 
     if (req.files && req.files.length > 0) {
@@ -45,7 +44,6 @@ export const createPG = async (req, res) => {
     }
 
 
-    // Clean street address
     const cleanedStreet = streetAddress
       ? streetAddress
         .replace(/S\.?No\.?\s*\d+/gi, "")
@@ -69,28 +67,25 @@ export const createPG = async (req, res) => {
     let mapplsEloc = null;
     let mapplsAddress = null;
 
-    // RUN BOTH IN PARALLEL SAFELY
     const [ocRes, mapplsRes] = await Promise.allSettled([
-      geocodeAddress(geocodeQuery),  // OpenCage
-      geocodeEloc(geocodeQuery),     // Mappls
+      geocodeAddress(geocodeQuery),  
+      geocodeEloc(geocodeQuery),     
     ]);
 
-    // MAPPLS SUCCESS
     if (mapplsRes.status === "fulfilled") {
       mapplsEloc = mapplsRes.value.eLoc;
       mapplsAddress = mapplsRes.value.formattedAddress;
-      console.log("✔ SAVED MAPPLS:", mapplsEloc, mapplsAddress);
+      console.log(" SAVED MAPPLS:", mapplsEloc, mapplsAddress);
     } else {
-      console.log("❌ Mappls failed:", mapplsRes.reason);
+      console.log(" Mappls failed:", mapplsRes.reason);
     }
 
-    // OPENCAGE SUCCESS
     if (ocRes.status === "fulfilled") {
       latitude = ocRes.value.lat;
       longitude = ocRes.value.lng;
-      console.log("✔ SAVED LAT/LNG:", latitude, longitude);
+      console.log(" SAVED LAT/LNG:", latitude, longitude);
     } else {
-      console.log("❌ OpenCage failed:", ocRes.reason);
+      console.log(" OpenCage failed:", ocRes.reason);
     }
 
     const pg = await PG.create({

@@ -1,12 +1,8 @@
-// ✅ frontend/src/pages/pgs/AllPGs.jsx
-
 import React, { useEffect, useState, useMemo } from "react";
 import { Link, useNavigate, useLocation } from "react-router-dom";
 import Header from "../../components/Header";
 import Footer from "../../components/Footer";
 import Sidebar from "../../components/Sidebar";
-
-// ------------------- CONSTANTS -------------------
 const BUDGET_RANGES = [
   { label: "Below ₹5,000", max: 5000, value: "0-5000" },
   { label: "₹5,000 - ₹10,000", min: 5000, max: 10000, value: "5000-10000" },
@@ -20,7 +16,6 @@ const PROPERTY_TYPES = [
   { label: "Co-Ed PG (Mixed)", value: "mixed" },
 ];
 
-// ------------------- UTILITIES -------------------
 const getBudgetFromValue = (value) =>
   BUDGET_RANGES.find((b) => b.value === value) || null;
 
@@ -61,13 +56,10 @@ const AmenityIcon = ({ label }) => {
     );
   return null;
 };
-
-// ------------------- MAIN COMPONENT -------------------
 const AllPGs = () => {
   const navigate = useNavigate();
   const locationHook = useLocation();
 
-  // 🔵 YOUTUBE Layout: sidebar open/close
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
 
   const [pgs, setPgs] = useState([]);
@@ -77,8 +69,6 @@ const AllPGs = () => {
     () => new URLSearchParams(locationHook.search),
     [locationHook.search]
   );
-
-  // URL → Initial filters
   const [search, setSearch] = useState(query.get("search") || "");
   const [pgLocation, setPgLocation] = useState(query.get("location") || "");
   const [type, setType] = useState(query.get("type") || "");
@@ -89,7 +79,6 @@ const AllPGs = () => {
 
   const [showFilters, setShowFilters] = useState(false);
 
-  // ---------------- FETCH PGs ----------------
   const fetchPGs = async () => {
     setLoading(true);
     try {
@@ -105,8 +94,6 @@ const AllPGs = () => {
   useEffect(() => {
     fetchPGs();
   }, []);
-
-  // ---------------- FILTER + SORT ----------------
   const filteredPGs = useMemo(() => {
     let f = [...pgs];
 
@@ -147,7 +134,6 @@ const AllPGs = () => {
   const isFilterActive =
     search || pgLocation || type || selectedBudget || sortBy !== "recent";
 
-  // -------------------- LOADING SCREEN --------------------
   if (loading) {
     return (
       <div className="flex min-h-screen bg-gray-50">
@@ -159,23 +145,16 @@ const AllPGs = () => {
     );
   }
 
-  // -------------------- MAIN LAYOUT --------------------
   return (
     <div className="min-h-screen flex flex-col bg-gray-50">
 
-      {/* 🔵 HEADER FULL WIDTH */}
       <Header onToggleSidebar={() => setIsSidebarOpen((prev) => !prev)} />
-
-      {/* 🔵 MAIN LAYOUT: Sidebar + Content */}
       <div className="flex flex-row flex-1 w-full h-full overflow-hidden">
 
-        {/* 🔵 SIDEBAR BELOW HEADER */}
         <Sidebar isOpen={isSidebarOpen} />
 
-        {/* 🔵 CONTENT SECTION */}
         <main className="flex-1 p-4 sm:p-6 md:p-10 w-full overflow-y-auto transition-all duration-300">
 
-          {/* ---- PAGE TITLE ---- */}
           <div className="mb-6 pb-3 border-b border-gray-200">
             <h1 className="text-2xl sm:text-3xl font-bold text-gray-900">Explore PGs</h1>
             <p className="text-sm text-gray-500">
@@ -187,7 +166,6 @@ const AllPGs = () => {
             </p>
           </div>
 
-          {/* ---- FILTERS BUTTON (MOBILE) ---- */}
           <div className="lg:hidden mb-5">
             <button
               onClick={() => setShowFilters((prev) => !prev)}
@@ -205,10 +183,8 @@ const AllPGs = () => {
             </button>
           </div>
 
-          {/* ---- FILTER SIDEBAR ---- */}
           <div className="flex flex-col lg:flex-row gap-10">
 
-            {/* LEFT FILTER PANEL */}
             <aside
               className={`lg:w-72 w-full flex-shrink-0 bg-white border border-gray-200 shadow-sm rounded-2xl p-6 space-y-6 transition-all duration-300 
                 ${showFilters ? "block" : "hidden lg:block"}`}
@@ -225,7 +201,6 @@ const AllPGs = () => {
                 )}
               </div>
 
-              {/* Search */}
               <FilterSection title="Search by Name">
                 <input
                   className="w-full border border-gray-300 bg-white px-3 py-2 rounded-lg text-sm focus:ring-indigo-500 focus:border-indigo-500"
@@ -235,7 +210,6 @@ const AllPGs = () => {
                 />
               </FilterSection>
 
-              {/* Location */}
               <FilterSection title="Location">
                 <input
                   className="w-full border border-gray-300 bg-white px-3 py-2 rounded-lg text-sm focus:ring-indigo-500 focus:border-indigo-500"
@@ -245,7 +219,6 @@ const AllPGs = () => {
                 />
               </FilterSection>
 
-              {/* Type */}
               <FilterSection title="PG Type">
                 <div className="space-y-2">
                   {PROPERTY_TYPES.map((opt) => (
@@ -274,7 +247,6 @@ const AllPGs = () => {
                 </div>
               </FilterSection>
 
-              {/* Budget */}
               <FilterSection title="Monthly Budget">
                 <div className="space-y-2">
                   {BUDGET_RANGES.map((range, i) => (
@@ -304,10 +276,8 @@ const AllPGs = () => {
               </FilterSection>
             </aside>
 
-            {/* RIGHT CONTENT */}
             <section className="flex-1 min-w-0">
 
-              {/* Sort dropdown */}
               <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-3 mb-6">
                 <div>
                   <h2 className="text-xl font-semibold text-gray-900">
@@ -326,7 +296,6 @@ const AllPGs = () => {
                 </select>
               </div>
 
-              {/* CARDS */}
               {filteredPGs.length === 0 ? (
                 <div className="text-center py-16 bg-white border border-gray-200 rounded-xl shadow">
                   <p className="text-gray-600">No PGs found.</p>
@@ -355,7 +324,6 @@ const AllPGs = () => {
                         to={`/services/pg/${pg._id}`}
                         className="group bg-white border border-gray-200 rounded-xl shadow-sm overflow-hidden hover:shadow-lg hover:-translate-y-1 transition-all"
                       >
-                        {/* Image */}
                         <img
                           src={
                             pg.images?.[0]
@@ -365,8 +333,6 @@ const AllPGs = () => {
                           className="h-48 w-full object-cover group-hover:scale-[1.03] transition-transform"
                           alt={pg.title}
                         />
-
-                        {/* Content */}
                         <div className="p-5 space-y-3">
                           <h3 className="text-lg font-semibold text-gray-800 line-clamp-1">
                             {pg.title}
@@ -382,8 +348,6 @@ const AllPGs = () => {
                             </svg>
                             {pg.location}
                           </p>
-
-                          {/* Rating */}
                           {rating ? (
                             <div className="flex items-center text-xs text-amber-500">
                               <svg
@@ -403,13 +367,9 @@ const AllPGs = () => {
                               No ratings yet
                             </div>
                           )}
-
-                          {/* Price */}
                           <div className="text-indigo-600 font-semibold">
                             ₹{pg.monthlyRent.toLocaleString("en-IN")}/month
                           </div>
-
-                          {/* Amenities */}
                           {Array.isArray(pg.amenities) && pg.amenities.length > 0 && (
                             <div className="pt-3 border-t border-gray-100 flex flex-wrap gap-2 text-xs">
                               {pg.amenities.slice(0, 3).map((a, i) => (
@@ -433,14 +393,11 @@ const AllPGs = () => {
           </div>
         </main>
 
-        {/* <Footer /> */}
 
       </div>
     </div>
   );
 };
-
-// -------------------- FILTER CHIP --------------------
 const FilterChip = ({ label, onRemove }) => (
   <span className="inline-flex items-center px-3 py-1 text-xs font-medium text-blue-700 bg-blue-50 rounded-full border border-blue-200 shadow-sm">
     {label}

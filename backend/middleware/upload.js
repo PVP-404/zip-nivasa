@@ -1,7 +1,6 @@
-// backend/middlewares/upload.js
 import multer from "multer";
 
-const storage = multer.memoryStorage(); // Use memory, not disk
+const storage = multer.memoryStorage(); 
 
 const upload = multer({ storage });
 

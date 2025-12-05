@@ -1,4 +1,3 @@
-//pages/mess/components/SpecialToday.jsx
 const SpecialToday = ({ special }) => {
   if (!special) return null;
 
@@ -14,8 +13,8 @@ const SpecialToday = ({ special }) => {
         />
       )}
 
-      <p>🍽️ Lunch: {special.lunch}</p>
-      <p>🌙 Dinner: {special.dinner}</p>
+      <p>Lunch: {special.lunch}</p>
+      <p>Dinner: {special.dinner}</p>
     </div>
   );
 };

@@ -1,4 +1,3 @@
-// frontend/src/pages/tenant/Complaints.jsx
 import React, { useEffect, useState } from "react";
 import Header from "../../components/Header";
 import Footer from "../../components/Footer";
@@ -30,7 +29,6 @@ const Complaints = () => {
       const data = await res.json();
       setList(data.complaints || []);
     } catch {
-      // ignore
     } finally {
       setLoading(false);
     }
@@ -61,7 +59,6 @@ const Complaints = () => {
   useEffect(() => {
     fetchComplaints();
   }, []);
-
   return (
     <div className="flex min-h-screen bg-gray-50">
       <Sidebar />

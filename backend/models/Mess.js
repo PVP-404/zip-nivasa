@@ -1,4 +1,3 @@
-// backend/models/Mess.js
 import mongoose from "mongoose";
 
 const messSchema = new mongoose.Schema(
@@ -11,10 +10,7 @@ const messSchema = new mongoose.Schema(
     title: { type: String, required: true },
     description: { type: String },
 
-    // HIGH-LEVEL LOCATION STRING (can keep using this)
     location: { type: String, required: true },
-
-    // 🔹 Structured address fields (optional but recommended)
     streetAddress: { type: String },
     pincode: { type: String, minlength: 6, maxlength: 6 },
     district: { type: String },
@@ -45,11 +41,9 @@ const messSchema = new mongoose.Schema(
       },
     ],
 
-    //  For PG/Mess near me:
     latitude: { type: Number },
     longitude: { type: Number },
 
-    //  Mappls eLoc + formatted address
     mapplsEloc: { type: String },
     mapplsAddress: { type: String },
   },

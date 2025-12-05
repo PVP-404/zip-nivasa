@@ -1,4 +1,3 @@
-// frontend/src/pages/tenant/Profile.jsx
 import React, { useEffect, useState } from "react";
 import Header from "../../components/Header";
 import Footer from "../../components/Footer";
@@ -135,8 +134,6 @@ const Profile = () => {
                 {user.phone && <p>Phone: <span className="font-medium">{user.phone}</span></p>}
               </div>
             </div>
-
-            {/* Middle - Edit Form */}
             <form onSubmit={saveProfile} className="bg-white border rounded-xl p-6 md:col-span-2">
               <h2 className="text-xl font-bold mb-4">Edit Profile</h2>
               <div className="grid md:grid-cols-2 gap-4">
@@ -179,8 +176,6 @@ const Profile = () => {
               </button>
             </form>
           </div>
-
-          {/* KYC */}
           <section className="bg-white border rounded-xl p-6 mt-8">
             <h2 className="text-xl font-bold mb-4">KYC Documents</h2>
             <form onSubmit={uploadKYC} className="grid md:grid-cols-3 gap-4 items-end">
@@ -206,8 +201,6 @@ const Profile = () => {
                 Upload
               </button>
             </form>
-
-            {/* Existing KYC (if backend returns links) */}
             {user.kyc?.length > 0 && (
               <div className="mt-6">
                 <h3 className="font-semibold mb-2">Uploaded Documents</h3>

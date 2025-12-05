@@ -4,7 +4,6 @@ const pgOwnerSchema = new mongoose.Schema(
   {
     userId: { type: mongoose.Schema.Types.ObjectId, ref: "User" },
 
-    // Optional metadata
     pgName: String,
     pgLocation: String,
     pgCapacity: Number,

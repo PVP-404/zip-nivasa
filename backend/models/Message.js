@@ -1,4 +1,3 @@
-// backend/models/Message.js
 import mongoose from "mongoose";
 
 const MessageSchema = new mongoose.Schema(
@@ -26,7 +25,6 @@ const MessageSchema = new mongoose.Schema(
   { timestamps: true }
 );
 
-// ✅ Improve query performance
 MessageSchema.index({ sender: 1, receiver: 1, createdAt: 1 });
 
 const Message = mongoose.model("Message", MessageSchema);

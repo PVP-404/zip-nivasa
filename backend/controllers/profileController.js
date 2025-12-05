@@ -7,7 +7,6 @@ export const getProfile = async (req, res) => {
   try {
     const userId = req.user.id;
 
-    // Get base user
     const user = await User.findById(userId).select("-password");
     if (!user) return res.status(404).json({ success: false, message: "User not found" });
 
@@ -41,12 +40,9 @@ export const getProfile = async (req, res) => {
 export const updateProfile = async (req, res) => {
   try {
     const userId = req.user.id;
-
-    // Update base user (name, phone only)
     const { name, phone } = req.body;
     await User.findByIdAndUpdate(userId, { name, phone });
 
-    // Update role-based fields dynamically
     let roleModel;
     let filter = { userId };
     let update = req.body.roleData || {};

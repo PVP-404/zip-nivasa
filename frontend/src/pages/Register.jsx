@@ -1,8 +1,6 @@
 import React, { useState } from "react";
 import { motion } from "framer-motion";
-import { FaUserPlus, FaSignInAlt, FaCheckCircle, FaSpinner, FaSchool, FaBriefcase, FaBuilding, FaUtensils, FaMapMarkerAlt, FaKey } from "react-icons/fa"; // Added more descriptive icons
-
-// --- Helper Component: Custom Input Field ---
+import { FaUserPlus, FaSignInAlt, FaCheckCircle, FaSpinner, FaSchool, FaBriefcase, FaBuilding, FaUtensils, FaMapMarkerAlt, FaKey } from "react-icons/fa"; 
 const CustomInput = ({ name, placeholder, value, onChange, type = "text", required = true, className = "", children, maxLength, minLength }) => (
     <motion.div className="relative" initial={{ opacity: 0, y: 5 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.2 }} >
         <input 
@@ -20,14 +18,13 @@ const CustomInput = ({ name, placeholder, value, onChange, type = "text", requir
     </motion.div>
 );
 
-// --- Helper Component: Role Tab Button ---
 const RoleTab = ({ roleKey, currentRole, setRole, icon: Icon, label }) => (
     <motion.button
         key={roleKey}
         onClick={() => setRole(roleKey)}
         className={`flex-1 flex flex-col items-center justify-center p-3 sm:p-4 transition-all duration-300 ease-in-out border-b-4 rounded-t-lg ${
             currentRole === roleKey
-                ? "bg-white text-blue-600 border-blue-600 shadow-inner-lg shadow-blue-50/50" // Highlighting active tab
+                ? "bg-white text-blue-600 border-blue-600 shadow-inner-lg shadow-blue-50/50"
                 : "bg-gray-50 text-gray-700 border-transparent hover:bg-gray-100 hover:text-blue-500"
         }`}
         whileHover={{ scale: currentRole === roleKey ? 1.0 : 1.02 }}
@@ -39,11 +36,10 @@ const RoleTab = ({ roleKey, currentRole, setRole, icon: Icon, label }) => (
 );
 
 const Register = () => {
-    // --- State declarations ---
     const [role, setRole] = useState("tenant");
     const [isLoading, setIsLoading] = useState(false);
     const [isSuccess, setIsSuccess] = useState(false);
-    const [countryCode, setCountryCode] = useState("+91"); // Default to India's code
+    const [countryCode, setCountryCode] = useState("+91"); 
     const [errors, setErrors] = useState({ 
         password: "", 
         phone: "" 
@@ -80,7 +76,6 @@ const Register = () => {
     ];
 
     const validatePassword = (value) => {
-        // Updated regex for 6+ characters, 1 uppercase, 1 lowercase, 1 number, 1 special character
         const regex = /^(?=.*[A-Z])(?=.*[a-z])(?=.*\d)(?=.*[!@#$%^&*()_+\-={}[\]:";'<>,.?/]).{6,}$/; 
         if (!regex.test(value)) {
             setErrors(prev => ({ 
@@ -101,11 +96,9 @@ const Register = () => {
         }
 
         if (name === "phone") {
-            // Filter out non-digit characters and limit to 10 digits
             const phoneValue = value.replace(/\D/g, '').slice(0, 10);
             newValue = phoneValue;
             
-            // Basic phone length validation for 10 digits
             if (phoneValue.length !== 10 && phoneValue.length > 0) {
                  setErrors(prev => ({ ...prev, phone: "Phone number must be 10 digits." }));
             } else {
@@ -116,11 +109,9 @@ const Register = () => {
         setFormData({ ...formData, [name]: newValue });
     };
 
-    // ✅ API CALL
     const handleSubmit = async (e) => {
         e.preventDefault();
         
-        // Final validation check
         if (errors.password || errors.phone || (formData.phone.length > 0 && formData.phone.length !== 10)) {
             alert("Please fix all validation issues before submitting.");
             return;
@@ -128,10 +119,8 @@ const Register = () => {
 
         setIsLoading(true);
         
-        // Prepare phone number with country code for API
         const fullPhoneNumber = countryCode + formData.phone;
         
-        // Remove empty fields from formData before sending, to clean up unused role fields
         const payload = Object.keys(formData).reduce((acc, key) => {
             if (formData[key] !== "" && formData[key] !== null) {
                 acc[key] = formData[key];
@@ -147,7 +136,7 @@ const Register = () => {
                 body: JSON.stringify({ 
                     role, 
                     ...payload, 
-                    phone: fullPhoneNumber // Use the combined phone number
+                    phone: fullPhoneNumber 
                 }),
             });
             
@@ -162,7 +151,6 @@ const Register = () => {
         }
     };
 
-    // --- SUCCESS SCREEN (Enhanced) ---
     if (isSuccess) {
         return (
             <div className="flex justify-center items-center min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 p-6 text-gray-800">
@@ -178,11 +166,9 @@ const Register = () => {
         );
     }
 
-    // --- REGISTRATION FORM (Enhanced) ---
     return (
         <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 flex justify-center items-center p-4 sm:p-6">
             <motion.div initial={{ opacity: 0, y: 40 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.8 }} className="flex flex-col lg:flex-row bg-white shadow-3xl rounded-3xl max-w-6xl w-full overflow-hidden border border-gray-100" >
-                {/* LEFT IMAGE/MOTIVATION */}
                 <div className="lg:w-2/5 relative hidden lg:block">
                     <img src="https://img.freepik.com/premium-photo/modern-students-dormitory-room-with-cozy-interior-designed-wooden-desk-chair-computer-books_1097268-24.jpg" alt="Accommodation and food services visual" className="w-full h-full object-cover" />
                     <div className="absolute inset-0 bg-blue-500 bg-opacity-60 flex items-center justify-center p-8">
@@ -196,28 +182,23 @@ const Register = () => {
                         </div>
                     </div>
                 </div>
-                {/* RIGHT FORM */}
                 <div className="lg:w-3/5 p-6 sm:p-10 lg:p-12 overflow-y-auto max-h-[95vh]">
                     <div className="text-center mb-10">
                         <FaUserPlus className="text-5xl text-blue-600 mx-auto mb-2 drop-shadow-sm" />
                         <h2 className="text-3xl sm:text-4xl font-extrabold text-gray-900"> Create Your Account </h2>
                         <p className="text-gray-500 mt-1">Select your role to get started.</p>
                     </div>
-                    {/* ROLE TABS */}
                     <div className="flex bg-gray-50 rounded-xl shadow-inner border border-gray-100 mb-8 p-1">
                         <RoleTab roleKey="tenant" currentRole={role} setRole={setRole} icon={FaSchool} label="Tenant" />
                         <RoleTab roleKey="pgowner" currentRole={role} setRole={setRole} icon={FaBuilding} label="PG Owner" />
                         <RoleTab roleKey="messowner" currentRole={role} setRole={setRole} icon={FaUtensils} label="Mess Owner" />
                     </div>
-                    {/* FORM FIELDS */}
                     <form onSubmit={handleSubmit} className="space-y-4 sm:space-y-6">
-                        {/* COMMON FIELDS */}
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                             <CustomInput name="name" placeholder="Full Name" value={formData.name} onChange={handleChange} />
                             <CustomInput type="email" name="email" placeholder="Email Address" value={formData.email} onChange={handleChange} />
                         </div>
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                            {/* Password Field with Validation */}
                             <div>
                                 <CustomInput type="password" name="password" placeholder="Password" value={formData.password} onChange={handleChange} minLength={6} />
                                 {errors.password && (
@@ -225,7 +206,6 @@ const Register = () => {
                                 )}
                             </div>
                             
-                            {/* Phone Number Field with Country Code Dropdown */}
                             <div>
                                 <div className="flex rounded-xl shadow-sm">
                                     <select 
@@ -248,7 +228,7 @@ const Register = () => {
                                         className="w-full border border-gray-300 p-3 rounded-r-xl shadow-sm focus:border-blue-500 focus:ring-2 focus:ring-blue-100 transition-all duration-200 placeholder-gray-400"
                                         required
                                         maxLength={10}
-                                        pattern="\d{10}" // Ensure 10 digits only
+                                        pattern="\d{10}" 
                                         title="Phone number must be exactly 10 digits"
                                     />
                                 </div>
@@ -258,20 +238,16 @@ const Register = () => {
                             </div>
                         </div>
 
-                        {/* DYNAMIC SECTIONS */}
                         <motion.div key={role} initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.4 }}>
-                            {/* TENANT SECTION */}
                             {role === "tenant" && (
                                 <motion.div className="space-y-4 pt-2 border-t border-gray-200">
                                     <h3 className="text-lg font-semibold text-gray-700 pt-3">Tenant Details</h3>
                                     <CustomInput name="city" placeholder="Target City" value={formData.city} onChange={handleChange} required={true} />
-                                    {/* Profession Type Select */}
                                     <select name="professionType" value={formData.professionType} onChange={handleChange} className="w-full border border-gray-300 p-3 rounded-xl bg-white shadow-sm focus:border-blue-500 focus:ring-2 focus:ring-blue-100 transition-all duration-200" required={true} >
                                         <option value="" disabled className="text-gray-400">Select Profession Type</option>
                                         <option value="student">Student</option>
                                         <option value="job">Working Professional</option>
                                     </select>
-                                    {/* Conditional Fields based on Profession */}
                                     <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                                         {formData.professionType === "student" && (
                                             <>
@@ -290,7 +266,6 @@ const Register = () => {
                                     </div>
                                 </motion.div>
                             )}
-                            {/* PG OWNER */}
                             {role === "pgowner" && (
                                 <motion.div className="space-y-4 pt-2 border-t border-gray-200">
                                     <h3 className="text-lg font-semibold text-gray-700 pt-3">PG/Hostel Details</h3>
@@ -302,7 +277,6 @@ const Register = () => {
                                     </div>
                                 </motion.div>
                             )}
-                            {/* MESS OWNER */}
                             {role === "messowner" && (
                                 <motion.div className="space-y-4 pt-2 border-t border-gray-200">
                                     <h3 className="text-lg font-semibold text-gray-700 pt-3">Mess Service Details</h3>
@@ -321,10 +295,9 @@ const Register = () => {
                             )}
                         </motion.div>
 
-                        {/* SUBMIT BUTTON */}
                         <motion.button 
                             type="submit" 
-                            disabled={isLoading || !!errors.password || !!errors.phone || formData.phone.length !== 10} // Check for 10-digit phone number
+                            disabled={isLoading || !!errors.password || !!errors.phone || formData.phone.length !== 10} 
                             className={`w-full py-4 text-lg font-bold rounded-xl flex justify-center gap-3 items-center transition duration-300 shadow-lg mt-8 ${
                                 isLoading || errors.password || errors.phone || formData.phone.length !== 10
                                     ? "bg-blue-400 cursor-not-allowed" 

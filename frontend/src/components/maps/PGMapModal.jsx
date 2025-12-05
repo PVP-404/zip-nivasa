@@ -1,38 +1,32 @@
-// frontend/src/components/maps/PGMapModal.jsx
 import React, { useEffect, useRef, useState } from "react";
+import { Navigation, MapPin, Share2, ExternalLink } from "lucide-react";
 
 const PGMapModal = ({ open, onClose, eloc, address, pg }) => {
   const mapRef = useRef(null);
   const [userDistance, setUserDistance] = useState(null);
   const [isFindingLocation, setIsFindingLocation] = useState(false);
 
-  // 1️⃣ PURE CLIENT-SIDE DISTANCE (No CORS issues)
   const getUserDistanceToPG = () => {
     if (!navigator.geolocation) {
       alert("Geolocation not supported on this device/browser.");
       return;
     }
-
-    // You should use the actual coordinates derived from 'eloc' here
-    // For a real-world app, you'd call a geocoding API to convert eloc to (lat, lng)
-    // Using a hardcoded fallback for demonstration purposes only, as in your original code.
-    const pgLat = 28.6139; // Delhi fallback
+    const pgLat = 28.6139;
     const pgLng = 77.2090;
 
     setIsFindingLocation(true);
-    setUserDistance(null); // Clear previous distance
-    
+    setUserDistance(null);
+
     navigator.geolocation.getCurrentPosition(
       (position) => {
         const userLat = position.coords.latitude;
         const userLng = position.coords.longitude;
-        
-        // Haversine distance to eLoc coordinates (approx Delhi for demo)
+
         const distance = haversineDistance(userLat, userLng, pgLat, pgLng);
-        const distanceText = distance > 1 
-          ? `${distance.toFixed(1)} km` 
-          : `${Math.round(distance * 100) / 100} km` // Better to keep in KM for consistency
-          
+        const distanceText = distance > 1
+          ? `${distance.toFixed(1)} km`
+          : `${Math.round(distance * 100) / 100} km`
+
         setUserDistance(distanceText);
         setIsFindingLocation(false);
       },
@@ -41,26 +35,24 @@ const PGMapModal = ({ open, onClose, eloc, address, pg }) => {
         console.error("Geolocation error:", error);
         alert("Unable to get your location. Please check browser permissions.");
       },
-      { enableHighAccuracy: true, timeout: 10000, maximumAge: 0 } // UX: maximumAge: 0 ensures a fresh reading
+      { enableHighAccuracy: true, timeout: 10000, maximumAge: 0 }
     );
   };
-
-  // 2️⃣ HAVERSINE DISTANCE FORMULA (Kept as is - mathematically correct)
   const haversineDistance = (lat1, lon1, lat2, lon2) => {
     const R = 6371; // Earth's radius in km
     const dLat = (lat2 - lat1) * Math.PI / 180;
     const dLon = (lon2 - lon1) * Math.PI / 180;
-    const a = 
-      Math.sin(dLat/2) * Math.sin(dLat/2) +
-      Math.cos(lat1 * Math.PI / 180) * Math.cos(lat2 * Math.PI / 180) * Math.sin(dLon/2) * Math.sin(dLon/2);
-    const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
+    const a =
+      Math.sin(dLat / 2) * Math.sin(dLat / 2) +
+      Math.cos(lat1 * Math.PI / 180) * Math.cos(lat2 * Math.PI / 180) * Math.sin(dLon / 2) * Math.sin(dLon / 2);
+    const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
     return R * c;
   };
 
   useEffect(() => {
     if (
       !mapRef.current ||
-      !window.mappls || 
+      !window.mappls ||
       !window.mappls.pinMarker ||
       !eloc
     ) {
@@ -72,21 +64,19 @@ const PGMapModal = ({ open, onClose, eloc, address, pg }) => {
     }
 
     try {
-      // 3️⃣ MAP INITIALIZATION - Subtle change: slightly less aggressive zoom on India
       const map = new window.mappls.Map(mapRef.current, {
         center: [20.5937, 78.9629], // India
         zoom: 5,
-        zoomControl: true, 
-        location: true, 
-        traffic: false, // Turned off by default for cleaner look, user can enable via control
+        zoomControl: true,
+        location: true,
+        traffic: false,
         scrollZoom: true,
-        clickableIcons: true, 
-        fullscreenControl: true, 
-        mapTypeControl: true, 
-        scaleControl: true, 
+        clickableIcons: true,
+        fullscreenControl: true,
+        mapTypeControl: true,
+        scaleControl: true,
       });
 
-      // 4️⃣ BEAUTIFUL RICH POPUP - Made colors softer and cleaner
       const popupHtml = `
         <div style="min-width:300px;padding:16px;font-family:system-ui;background:white;border-radius:12px;box-shadow:0 6px 16px rgba(0,0,0,0.08);">
           <div style="display:flex;align-items:flex-start;gap:12px;margin-bottom:12px;">
@@ -116,8 +106,6 @@ const PGMapModal = ({ open, onClose, eloc, address, pg }) => {
           </div>
         </div>
       `;
-
-      // 5️⃣ PIN MARKER (PROVEN WORKING)
       const markerObj = window.mappls.pinMarker({
         map,
         pin: eloc,
@@ -127,29 +115,22 @@ const PGMapModal = ({ open, onClose, eloc, address, pg }) => {
           closeButton: true,
         },
       });
-
-      // 6️⃣ AUTO ZOOM TO PERFECT FIT
       if (markerObj?.fitbounds) {
-        // Reduced timeout for snappier UX
-        setTimeout(() => markerObj.fitbounds(), 300); 
+        setTimeout(() => markerObj.fitbounds(), 300);
       }
 
       mapRef.current.dataset.mapplsInitialized = "1";
-      console.log("✅ Mappls map loaded for eLoc:", eloc);
+      console.log("Mappls map loaded for eLoc:", eloc);
 
     } catch (err) {
       console.error("Mappls error:", err);
     }
   }, [eloc, address, pg]);
-
-  // 7️⃣ ACTION BUTTONS (Kept as is)
   const getDirections = () => {
-    // UX: Use 'dir' endpoint for direct directions experience
     window.open(`https://maps.mapmyindia.com/directions/driving/eloc/${eloc}`, '_blank');
   };
 
   const findNearby = () => {
-    // UX: Added common student/migrant POIs (food, transit, health, money)
     window.open(`https://maps.mapmyindia.com/search/${eloc}/nearby?types=restaurant|cafe|bus|metro|hospital|atm`, '_blank');
   };
 
@@ -168,25 +149,22 @@ const PGMapModal = ({ open, onClose, eloc, address, pg }) => {
 
   return (
     <div
-      // Refined transition for subtlety
-      className={`fixed inset-0 flex justify-center items-center z-[9999] transition-all duration-300 ${
-        open
+      className={`fixed inset-0 flex justify-center items-center z-[9999] transition-all duration-300 ${open
           ? "bg-black/40 backdrop-blur-sm opacity-100 pointer-events-auto"
           : "bg-transparent opacity-0 pointer-events-none"
-      }`}
-      onClick={onClose} // UX: Click outside to close
+        }`}
+      onClick={onClose}
     >
-      <div 
+      <div
         className="bg-white rounded-3xl p-8 w-full max-w-4xl max-h-[95vh] relative shadow-2xl overflow-y-auto transform transition-all duration-300 scale-100"
-        onClick={(e) => e.stopPropagation()} // Prevent click-outside-to-close on modal content
+        onClick={(e) => e.stopPropagation()}
       >
-        {/* ✨ HEADER - Simplified text styling */}
         <div className="flex justify-between items-start mb-6 pb-4 border-b border-gray-100">
           <div className="flex-1">
             <h2 className="text-3xl font-extrabold text-gray-900 mb-1">
               {pg?.title || "PG Accommodation Map"}
             </h2>
-            
+
             {address && (
               <p className="text-md text-gray-500 mb-4 leading-relaxed">{address}</p>
             )}
@@ -201,43 +179,45 @@ const PGMapModal = ({ open, onClose, eloc, address, pg }) => {
           </button>
         </div>
 
-        {/* 🗺️ MAP - Reduced border size, kept clean background */}
         <div className="w-full h-[500px] border border-gray-200 rounded-2xl shadow-xl mb-6 overflow-hidden bg-white">
           <div ref={mapRef} id="mappls-map-container" className="w-full h-full" />
         </div>
 
-        {/* 🎮 ACTION BUTTONS - Subtler, uniform primary/secondary style */}
         <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
-          <ActionPill 
-            icon="🚗" 
-            label="Get Directions" 
-            onClick={getDirections} 
+
+          <ActionPill
+            icon={<Navigation className="w-5 h-5" />}
+            label="Get Directions"
+            onClick={getDirections}
             color="bg-blue-50 hover:bg-blue-100 text-blue-700"
           />
-          <ActionPill 
-            icon="🏪" 
-            label="Nearby POIs" 
-            onClick={findNearby} 
+
+          <ActionPill
+            icon={<MapPin className="w-5 h-5" />}
+            label="Nearby POIs"
+            onClick={findNearby}
             color="bg-emerald-50 hover:bg-emerald-100 text-emerald-700"
           />
-          <ActionPill 
-            icon="📤" 
-            label="Share Location" 
-            onClick={shareLocation} 
+
+          <ActionPill
+            icon={<Share2 className="w-5 h-5" />}
+            label="Share Location"
+            onClick={shareLocation}
             color="bg-purple-50 hover:bg-purple-100 text-purple-700"
           />
+
           <a
             href={`https://maps.mapmyindia.com/eloc/${eloc}`}
             target="_blank"
             rel="noreferrer"
-            className="group flex flex-col items-center justify-center p-4 bg-gray-50 hover:bg-gray-100 rounded-xl transition-all text-gray-700 font-medium text-sm border border-gray-200"
+            className="group flex flex-col items-center justify-center p-4 bg-gray-50 hover:bg-gray-100 
+               rounded-xl transition-all text-gray-700 font-medium text-sm border border-gray-200"
           >
-            <div className="text-2xl mb-1 group-hover:scale-110 transition">🗺️</div>
-            Open in Mappls App
+            <ExternalLink className="w-5 h-5 mb-1 group-hover:scale-110 transition" />
+            Open in Mappls
           </a>
-        </div>
 
-        {/* 📍 FOOTER - Cleaned up footer section */}
+        </div>
         <div className="text-center pt-4 border-t border-gray-100">
           <div className="flex flex-col sm:flex-row items-center justify-center gap-3 text-sm">
             <p className="text-gray-500">
@@ -253,8 +233,6 @@ const PGMapModal = ({ open, onClose, eloc, address, pg }) => {
     </div>
   );
 };
-
-// Helper component for subtle action buttons
 const ActionPill = ({ icon, label, onClick, color }) => (
   <button
     onClick={onClick}

@@ -1,4 +1,3 @@
-// src/pages/Home.jsx
 import React, { useState } from "react";
 import { Link,useNavigate } from "react-router-dom";
 import { motion } from "framer-motion";
@@ -11,7 +10,6 @@ import {
   FaArrowRight,
 } from "react-icons/fa";
 
-// 🔹 Framer Motion Variants
 const containerVariants = {
   hidden: { opacity: 0 },
   visible: {
@@ -45,14 +43,10 @@ const Home = () => {
 const handleSearchSubmit = (e) => {
   e.preventDefault();
   const { location, type, budget } = searchFilters;
-
-  // If user selects "mess"
   if (type === "mess") {
     navigate(`/messes?location=${location}`);
     return;
   }
-
-  // For accommodations (PG / Hostel / Flat)
   navigate(
     `/accommodations?location=${location}&type=${type}&budget=${budget}`
   );
@@ -61,7 +55,6 @@ const handleSearchSubmit = (e) => {
 
   return (
     <div className="min-h-screen flex flex-col bg-gradient-to-b from-blue-50 to-gray-100 font-sans text-gray-800">
-      {/* 🔹 Header */}
       <header className="backdrop-blur-lg bg-white/70 shadow-md py-3 px-4 md:px-8 sticky top-0 z-50 transition">
         <div className="max-w-7xl mx-auto flex justify-between items-center">
           <Link
@@ -81,7 +74,6 @@ const handleSearchSubmit = (e) => {
                 {link === "accommodations" ? "Find Accommodations" : "Find Mess"}
               </Link>
             ))}
-            {/* 🔹 Navbar Login goes to Login page for student */}
             <Link
               to="/login?role=student"
               className="bg-blue-600 text-white font-medium py-2 px-4 md:px-6 rounded-full shadow-md hover:bg-blue-700 hover:shadow-lg transition-all"
@@ -91,8 +83,6 @@ const handleSearchSubmit = (e) => {
           </nav>
         </div>
       </header>
-
-      {/* 🔹 Hero */}
       <motion.section
         className="relative h-[80vh] md:h-screen flex items-center justify-center text-center bg-cover bg-center"
         style={{
@@ -121,8 +111,6 @@ const handleSearchSubmit = (e) => {
           >
             Find. Connect. Live Better.
           </motion.p>
-
-          {/* Search Box */}
           <motion.form
             onSubmit={handleSearchSubmit}
             className="mt-8 sm:mt-12 p-4 sm:p-6 bg-white/90 backdrop-blur-lg rounded-2xl shadow-2xl flex flex-col md:flex-row items-center gap-4"
@@ -186,7 +174,6 @@ const handleSearchSubmit = (e) => {
         </div>
       </motion.section>
 
-      {/* 🔹 Why Choose Us */}
       <section className="py-12 sm:py-20 bg-gradient-to-b from-white to-blue-50">
         <motion.div
           className="container mx-auto px-4"
@@ -240,7 +227,6 @@ const handleSearchSubmit = (e) => {
         </motion.div>
       </section>
 
-      {/* 🔹 CTA */}
       <section className="py-12 sm:py-20 bg-gradient-to-r from-blue-600 to-indigo-700 text-white text-center">
         <motion.div
           className="container mx-auto px-4 sm:px-6"
@@ -273,7 +259,6 @@ const handleSearchSubmit = (e) => {
         </motion.div>
       </section>
 
-      {/* 🔹 Footer */}
       <footer className="bg-gray-900 text-gray-300 py-8 sm:py-10 mt-8">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 sm:gap-8">
           <div>

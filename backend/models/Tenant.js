@@ -6,12 +6,10 @@ const tenantSchema = new mongoose.Schema(
 
     professionType: { type: String, enum: ["student", "job"], required: true },
 
-    // student
     collegeName: String,
     course: String,
     year: String,
 
-    // working professional
     companyName: String,
     workLocation: String,
     jobRole: String,

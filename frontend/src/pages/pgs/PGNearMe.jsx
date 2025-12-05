@@ -28,7 +28,6 @@ const PGNearMe = () => {
     DEFAULT_CENTER.address
   );
 
-  // UX states
   const [hoveredPgId, setHoveredPgId] = useState(null);
   const [showFilters, setShowFilters] = useState(true);
   const [sortBy, setSortBy] = useState("distance");
@@ -86,7 +85,6 @@ const PGNearMe = () => {
     setSearchCenter(newCenter);
   };
 
-  // Filter and sort PGs
   const filteredAndSortedPgs = pgs
     .filter(
       (pg) =>
@@ -134,17 +132,14 @@ const PGNearMe = () => {
         <Header />
 
         <main className="flex-1 relative overflow-hidden">
-          {/* Small info chip centered at top (like NoBroker) */}
           <div className="absolute top-3 left-1/2 -translate-x-1/2 z-30">
             <div className="px-3 py-1.5 rounded-full bg-white/95 shadow-lg border border-gray-200 text-xs text-gray-700">
               {filteredAndSortedPgs.length} results • {radiusKm} km
             </div>
           </div>
 
-          {/* LEFT: Filter bar – not full width, docked in corner */}
           <aside className="absolute top-4 left-4 z-50 pointer-events-auto">
             <div className="w-[340px] max-w-[90vw] min-w-[280px] rounded-2xl bg-white/95 backdrop-blur-xl border border-white/70 shadow-2xl overflow-hidden">
-              {/* Location and quick actions */}
               <div className="p-3 border-b border-gray-100">
                 <div className="flex items-center gap-2">
                   <div className="flex-1 min-w-0">
@@ -174,8 +169,6 @@ const PGNearMe = () => {
                     )}
                   </button>
                 </div>
-
-                {/* Radius + Filters toggle row */}
                 <div className="mt-3 flex items-center gap-2">
                   <div className="flex items-center gap-2 px-3 py-1.5 bg-white rounded-xl border border-gray-200 shadow-sm flex-1">
                     <span className="text-[11px] font-semibold text-gray-700">
@@ -210,7 +203,6 @@ const PGNearMe = () => {
                 </div>
               </div>
 
-              {/* Extra filters – small, left-corner only */}
               {showFilters && (
                 <div className="px-3 py-3 space-y-3">
                   <div>
@@ -256,8 +248,6 @@ const PGNearMe = () => {
               )}
             </div>
           </aside>
-
-          {/* MAP – full area behind everything */}
           <div className="absolute inset-0 z-10">
             <LeafletMap
               center={searchCenter}
@@ -269,14 +259,12 @@ const PGNearMe = () => {
             />
           </div>
 
-          {/* RIGHT: Listings panel – like NoBroker, not under filters */}
           <div
             className={`absolute right-4 top-20 lg:top-24 bottom-4 w-80 lg:w-96 z-40 pointer-events-auto transform transition-all duration-500 ease-out ${
               isPanelCollapsed ? "translate-x-[calc(100%+1rem)]" : ""
             }`}
           >
             <div className="h-full bg-white/95 backdrop-blur-xl rounded-3xl shadow-2xl border border-white/70 overflow-hidden flex flex-col">
-              {/* Header */}
               <div className="p-4 pb-2 border-b border-gray-100 bg-gradient-to-r from-white via-indigo-50/60 to-purple-50/60 sticky top-0 z-10">
                 <div className="flex items-center justify-between">
                   <div className="flex items-center gap-2 flex-1 min-w-0">
@@ -307,8 +295,6 @@ const PGNearMe = () => {
                   </button>
                 </div>
               </div>
-
-              {/* List content */}
               <div className="flex-1 overflow-y-auto space-y-2.5 p-4 pr-2 custom-scrollbar">
                 {loading && pgs.length === 0 ? (
                   <div className="flex flex-col items-center justify-center py-12 text-center">
@@ -345,7 +331,6 @@ const PGNearMe = () => {
                           : ""
                       }`}
                     >
-                      {/* Rank badge */}
                       <div className="absolute -top-1.5 -left-1.5 w-7 h-7 bg-gradient-to-br from-indigo-600 to-purple-600 text-white text-xs font-bold rounded-xl flex items-center justify-center shadow-lg ring-2 ring-white/60">
                         #{index + 1}
                       </div>

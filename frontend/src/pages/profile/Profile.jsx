@@ -1,4 +1,3 @@
-// frontend/src/pages/profile/Profile.jsx
 import React, { useEffect, useState } from "react";
 import Header from "../../components/Header";
 import Sidebar from "../../components/Sidebar";
@@ -12,7 +11,6 @@ const Profile = () => {
   const [editMode, setEditMode] = useState(false);
   const [saving, setSaving] = useState(false);
 
-  // YouTube-Layout Sidebar state
   const [isSidebarOpen, setIsSidebarOpen] = useState(true);
 
   const loadData = async () => {
@@ -83,40 +81,26 @@ const Profile = () => {
   return (
     <div className="min-h-screen flex flex-col bg-gray-50">
 
-      {/* 🔵 HEADER */}
       <Header onToggleSidebar={() => setIsSidebarOpen((prev) => !prev)} />
-
-      {/* 🔵 LAYOUT: Sidebar + Content */}
       <div className="flex flex-1 min-h-0">
-
-        {/* 🔵 SIDEBAR BELOW HEADER */}
         <Sidebar isOpen={isSidebarOpen} />
-
-        {/* 🔵 CONTENT AREA */}
         <main className="flex-1 p-4 sm:p-6 md:p-10 w-full overflow-y-auto">
-
-          {/* Page Header */}
           <div className="mb-8">
             <h1 className="text-3xl font-bold text-gray-900 mb-2">My Profile</h1>
             <p className="text-gray-600">
               Manage your account information and preferences
             </p>
           </div>
-
-          {/* Profile Card */}
           <div className="bg-white shadow-xl rounded-2xl overflow-hidden border border-gray-100">
             
-            {/* Profile Gradient Header */}
             <div className="bg-gradient-to-r from-blue-600 to-indigo-600 px-8 py-12 flex items-center gap-6">
               
-              {/* Avatar */}
               <div className="relative">
                 <div className="w-28 h-28 rounded-full bg-white shadow-lg flex items-center justify-center text-4xl font-bold text-blue-600 border-4 border-white">
                   {base.name?.charAt(0)?.toUpperCase() || "U"}
                 </div>
               </div>
 
-              {/* User details */}
               <div className="text-white flex-1">
                 <h2 className="text-2xl font-bold mb-2">
                   {base.name || "User"}
@@ -134,10 +118,8 @@ const Profile = () => {
               </div>
             </div>
 
-            {/* FORM CONTENT */}
             <form onSubmit={onSubmit} className="p-8">
 
-              {/* Basic Info */}
               <div className="mb-8">
                 <div className="flex items-center gap-2 mb-6">
                   <svg className="w-5 h-5 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -148,7 +130,6 @@ const Profile = () => {
 
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
 
-                  {/* Name */}
                   <div>
                     <label className="block text-sm font-semibold text-gray-700 mb-2">
                       Full Name
@@ -167,7 +148,6 @@ const Profile = () => {
                     />
                   </div>
 
-                  {/* Email */}
                   <div>
                     <label className="block text-sm font-semibold text-gray-700 mb-2">
                       Email Address
@@ -179,7 +159,6 @@ const Profile = () => {
                     />
                   </div>
 
-                  {/* Phone */}
                   <div className="md:col-span-2">
                     <label className="block text-sm font-semibold text-gray-700 mb-2">
                       Phone Number
@@ -199,8 +178,6 @@ const Profile = () => {
                   </div>
                 </div>
               </div>
-
-              {/* Role-Specific Sections */}
               {base.role === "tenant" && (
                 <div className="border-t-2 border-gray-100 pt-8">
 
@@ -214,7 +191,7 @@ const Profile = () => {
                   </div>
 
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                    {/* Profession */}
+                    
                     <div>
                       <label className="block text-sm font-semibold text-gray-700 mb-2">
                         Profession
@@ -225,8 +202,6 @@ const Profile = () => {
                         className="w-full bg-gray-50 border border-gray-300 px-4 py-3 rounded-xl"
                       />
                     </div>
-
-                    {/* City */}
                     <div>
                       <label className="block text-sm font-semibold text-gray-700 mb-2">
                         City
@@ -248,7 +223,6 @@ const Profile = () => {
                 </div>
               )}
 
-              {/* PG OWNER */}
               {base.role === "pgowner" && (
                 <div className="border-t pt-8">
                   <div className="flex items-center gap-2 mb-6">
@@ -277,8 +251,6 @@ const Profile = () => {
                   />
                 </div>
               )}
-
-              {/* MESS OWNER */}
               {base.role === "messowner" && (
                 <div className="border-t pt-8">
                   <div className="flex items-center gap-2 mb-6">
@@ -307,8 +279,6 @@ const Profile = () => {
                   />
                 </div>
               )}
-
-              {/* ACTION BUTTONS */}
               <div className="flex gap-4 mt-10 pt-6 border-t">
                 {!editMode ? (
                   <button
@@ -346,7 +316,6 @@ const Profile = () => {
           </div>
         </main>
 
-        {/* FOOTER */}
         
       </div>
       <Footer />

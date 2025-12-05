@@ -3,7 +3,7 @@ import { useParams } from "react-router-dom";
 import ChatPage from "./ChatPage";
 
 export default function ChatPageWrapper() {
-  const { id } = useParams(); // receiver userId
+  const { id } = useParams(); 
   return <ChatPage receiverId={id} />;
 }
 

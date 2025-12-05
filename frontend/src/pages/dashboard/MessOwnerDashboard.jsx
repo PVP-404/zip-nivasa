@@ -1,5 +1,4 @@
 import React, { useState, useEffect } from "react";
-// Assuming these paths are correct
 import Sidebar from "../../components/Sidebar";
 import Header from "../../components/Header";
 import Footer from "../../components/Footer";
@@ -16,9 +15,6 @@ import { getAllMessOwners } from "../../services/messOwnerService";
 
 import { FaUsers, FaEnvelopeOpenText, FaStar, FaUtensils, FaEdit, FaTrash, FaCheckCircle, FaTimesCircle, FaLink } from "react-icons/fa";
 
-/* --------------------- REUSABLE COMPONENTS ------------------------ */
-
-// 🔹 Stat Card (Subtler, more refined shadow)
 const StatCard = ({ title, value, icon, color, subtitle }) => (
   <div className="bg-white p-6 rounded-xl shadow-lg border border-gray-100 hover:shadow-xl transition-all duration-300 transform hover:-translate-y-0.5">
     <div className="flex justify-between items-start">
@@ -36,7 +32,6 @@ const StatCard = ({ title, value, icon, color, subtitle }) => (
   </div>
 );
 
-// 🔹 Tab Button (Clean active state)
 const TabButton = ({ active, onClick, children, badge }) => (
   <button
     onClick={onClick}
@@ -54,9 +49,6 @@ const TabButton = ({ active, onClick, children, badge }) => (
   </button>
 );
 
-/* ---------------------------------------------------
-        MAIN COMPONENT
------------------------------------------------------ */
 const MessOwnerDashboard = () => {
   const [loading, setLoading] = useState(true);
   const [owner, setOwner] = useState(null);
@@ -78,7 +70,6 @@ const MessOwnerDashboard = () => {
 
   const [imagePreview, setImagePreview] = useState(null);
 
-  /* ------------------ FETCH DATA (Logic Unchanged) ------------------ */
   useEffect(() => {
     const loadData = async () => {
       if (!ownerId) {
@@ -87,19 +78,13 @@ const MessOwnerDashboard = () => {
       }
 
       try {
-        // Fetch all messes owned by this owner + all mess owners
         const [messes, owners] = await Promise.all([
           getMessesByOwner(ownerId),
           getAllMessOwners(),
         ]);
-
-        // Set logged-in owner details
         const ownerData = owners.find((o) => o.userId === ownerId);
         setOwner(ownerData);
 
-        /* --------------------------------------------------
-           1️⃣ Subscribers (Mess Listings)
-        -------------------------------------------------- */
         const subscribers = messes.map((m) => ({
           id: m._id,
           name: m.title || m.messName || "Unnamed Mess",
@@ -109,9 +94,6 @@ const MessOwnerDashboard = () => {
           joined: m.createdAt,
         }));
 
-        /* --------------------------------------------------
-           2️⃣ Inquiries (KEEP DUMMY FOR NOW)
-        -------------------------------------------------- */
         const inquiries = [
           {
             id: "i1",
@@ -131,24 +113,18 @@ const MessOwnerDashboard = () => {
           },
         ];
 
-        /* --------------------------------------------------
-           3️⃣ REVIEWS — REAL DATA FROM MONGODB
-        -------------------------------------------------- */
         const reviews = messes.flatMap((mess) =>
           (mess.ratings || []).map((r) => ({
             id: r._id,
             messId: mess._id,
             messName: mess.title || mess.messName || "Unnamed Mess",
-            customer: r.studentId?.name || "Student", // populated name
+            customer: r.studentId?.name || "Student", 
             rating: r.stars || 0,
             comment: r.comment || "",
             date: r.date || mess.createdAt,
           }))
         );
 
-        /* --------------------------------------------------
-           4️⃣ SET ALL DASHBOARD DATA
-        -------------------------------------------------- */
         setData({ subscribers, inquiries, reviews });
 
       } catch (err) {
@@ -162,7 +138,6 @@ const MessOwnerDashboard = () => {
   }, [ownerId]);
 
 
-  /* ------------------ IMAGE UPLOAD ------------------ */
   const handleImageUpload = (e) => {
     const file = e.target.files[0];
     if (file) {
@@ -174,7 +149,6 @@ const MessOwnerDashboard = () => {
     }
   };
 
-  /* ------------------ Publish Special (Logic Unchanged) ------------------ */
   const handleSpecialSubmit = async (e) => {
     e.preventDefault();
     if (!todaysSpecial.lunch && !todaysSpecial.dinner) {
@@ -202,7 +176,6 @@ const MessOwnerDashboard = () => {
     }
   };
 
-  /* ------------------ DELETE MESS (Logic Unchanged) ------------------ */
   const handleDeleteMess = async (id) => {
     if (!window.confirm("Are you sure you want to permanently delete this mess listing? This cannot be undone.")) return;
 
@@ -222,7 +195,6 @@ const MessOwnerDashboard = () => {
     }
   };
 
-  /* ------------------ UPDATE MESS (Logic Unchanged) ------------------ */
   const handleEditMess = (mess) => {
     const newName = prompt("Enter new Mess Name:", mess.name);
     if (!newName) return;
@@ -243,7 +215,6 @@ const MessOwnerDashboard = () => {
     }).catch(() => alert("Server error during update."));
   };
 
-  // Update Inquiry Status (for the UI only)
   const handleContacted = (inqId) => {
     setData((prev) => ({
       ...prev,
@@ -253,7 +224,6 @@ const MessOwnerDashboard = () => {
     }));
   };
 
-  /* ------------------ CALCULATIONS ------------------ */
   const avgRating =
     data.reviews.length > 0
       ? (
@@ -264,7 +234,6 @@ const MessOwnerDashboard = () => {
 
   const newInquiries = data.inquiries.filter((i) => i.status === "New").length;
 
-  /* ------------------ RENDER CONTENT ------------------ */
   const renderContent = () => {
     switch (activeTab) {
       case "subscribers":
@@ -290,8 +259,6 @@ const MessOwnerDashboard = () => {
                       <span className="text-xs text-gray-400 ml-3">| Listed at: {sub.location}</span>
                     </p>
                   </div>
-
-                  {/* Update + Delete Buttons */}
                   <div className="flex items-center space-x-3 ml-4">
                     <span className="px-3 py-1 bg-green-100 text-green-700 rounded-full text-xs font-medium">
                       {sub.status}
@@ -422,7 +389,6 @@ const MessOwnerDashboard = () => {
             </h3>
 
             <div className="space-y-6">
-              {/* Lunch Special */}
               <div>
                 <label className="block text-sm font-bold text-gray-700 mb-2">
                   🍽️ Lunch Special (e.g., Dal, Roti, Rice, Veg Curry)
@@ -437,11 +403,9 @@ const MessOwnerDashboard = () => {
                   className="w-full border border-gray-300 p-3 rounded-lg focus:ring-blue-500 focus:border-blue-500 transition"
                 />
               </div>
-
-              {/* Dinner Special */}
               <div>
                 <label className="block text-sm font-bold text-gray-700 mb-2">
-                  🌙 Dinner Special (e.g., Paneer, Naan, Salad, Sweet)
+                   Dinner Special (e.g., Paneer, Naan, Salad, Sweet)
                 </label>
                 <input
                   type="text"
@@ -454,10 +418,9 @@ const MessOwnerDashboard = () => {
                 />
               </div>
 
-              {/* Image Upload */}
               <div className="border-t pt-6">
                 <label className="block text-sm font-bold text-gray-700 mb-3">
-                  📸 Upload Special Dish Image (Optional)
+                   Upload Special Dish Image (Optional)
                 </label>
 
                 <input
@@ -506,7 +469,7 @@ const MessOwnerDashboard = () => {
               type="submit"
               className="w-full mt-8 bg-gradient-to-r from-blue-600 to-indigo-700 text-white font-extrabold py-4 rounded-xl shadow-lg hover:shadow-xl transition-all duration-300 transform hover:-translate-y-0.5"
             >
-              Publish Special Menu 🚀
+              Publish Special Menu 
             </button>
             <div className="h-10"></div>
           </form>
@@ -521,8 +484,6 @@ const MessOwnerDashboard = () => {
         );
     }
   };
-
-  /* ------------------ LOADING UI ------------------ */
   if (loading)
     return (
       <div className="flex justify-center items-center h-screen bg-gray-50">
@@ -530,12 +491,10 @@ const MessOwnerDashboard = () => {
       </div>
     );
 
-  /* ------------------ MAIN UI ------------------ */
   return (
   <AppLayout>
     <div className="pt-20 px-6 pb-6 w-full">
 
-      {/* Dashboard Header */}
       <div className="flex justify-between items-center mb-8 border-b pb-4">
         <div>
           <h1 className="text-4xl font-extrabold text-transparent bg-gradient-to-r from-blue-600 to-indigo-600 bg-clip-text">
@@ -553,7 +512,6 @@ const MessOwnerDashboard = () => {
         </button>
       </div>
 
-      {/* Stats */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 mb-10 w-full">
         <StatCard
           title="My Messes"
@@ -578,7 +536,6 @@ const MessOwnerDashboard = () => {
         />
       </div>
 
-      {/* Tabs */}
       <div className="mt-10 bg-white rounded-xl shadow-2xl p-6 border border-gray-100 w-full">
         <div className="flex space-x-1 border-b mb-6 -mt-6 -mx-6 px-6 pt-6">
           <TabButton active={activeTab === "subscribers"} onClick={() => setActiveTab("subscribers")}>
@@ -598,7 +555,6 @@ const MessOwnerDashboard = () => {
         <div className="py-4 w-full">{renderContent()}</div>
       </div>
 
-      {/* Footer */}
       <Footer />
     </div>
   </AppLayout>

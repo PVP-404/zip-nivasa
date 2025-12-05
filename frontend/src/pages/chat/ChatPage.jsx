@@ -1,4 +1,3 @@
-// frontend/src/pages/chat/ChatPage.jsx
 import React, {
   useEffect,
   useState,
@@ -21,7 +20,6 @@ const Icon = ({ d, className = "w-5 h-5" }) => (
   </svg>
 );
 
-// WhatsApp-style tick
 const TickIcon = ({ delivered, read }) => (
   <span
     className={`ml-1 text-[11px] font-semibold ${
@@ -62,8 +60,6 @@ export default function ChatPage({ receiverId }) {
     if (!userId || !receiverId) return;
 
     registerSocket(userId);
-
-    // mark messages from receiver as read
     const markRead = async () => {
       try {
         await axios.post(
@@ -72,7 +68,6 @@ export default function ChatPage({ receiverId }) {
           { headers: { Authorization: `Bearer ${token}` } }
         );
 
-        // instant UI update
         setMessages((prev) =>
           prev.map((m) =>
             String(m.sender) === String(receiverId) &&
@@ -82,14 +77,12 @@ export default function ChatPage({ receiverId }) {
           )
         );
 
-        // 🔵 notify sender real-time
         sendReadReceipt(userId, receiverId);
       } catch (e) {
         console.error("mark-read error:", e);
       }
     };
 
-    // load user & messages
     Promise.all([
       axios.get(`http://localhost:5000/api/auth/user/${receiverId}`),
       axios.get(`http://localhost:5000/api/chat/history/${receiverId}`, {
@@ -107,7 +100,6 @@ export default function ChatPage({ receiverId }) {
       })
       .catch((e) => console.log("Chat load error:", e));
 
-    // SOCKET EVENTS
     socket.on("receive_message", async (msg) => {
       const match =
         (String(msg.sender) === String(receiverId) &&
@@ -131,7 +123,6 @@ export default function ChatPage({ receiverId }) {
         return [...prev, msg];
       });
 
-      // incoming message → mark read immediately
       if (
         String(msg.sender) === String(receiverId) &&
         String(msg.receiver) === String(userId)
@@ -140,7 +131,6 @@ export default function ChatPage({ receiverId }) {
       }
     });
 
-    // 🔵 Real-time read receipts
     socket.on("message_read", ({ readerId, readAt }) => {
       if (String(readerId) !== String(receiverId)) return;
 
@@ -176,7 +166,6 @@ export default function ChatPage({ receiverId }) {
     scrollRef.current?.scrollIntoView({ behavior: "smooth" });
   }, [messages, isTyping]);
 
-  // send message
   const send = async (text) => {
     if (!text?.trim() || !userId || !receiverId) return;
     setSending(true);
@@ -238,7 +227,6 @@ export default function ChatPage({ receiverId }) {
       <div className="flex-1 flex flex-col overflow-hidden">
         <Header />
 
-        {/* Chat Header */}
         <div className="bg-white border-b px-4 py-3 shadow-sm flex-shrink-0">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-3">
@@ -293,12 +281,11 @@ export default function ChatPage({ receiverId }) {
           </div>
         </div>
 
-        {/* Messages */}
         <main className="flex-1 overflow-y-auto bg-gradient-to-b from-gray-50 to-gray-100">
           <div className="max-w-4xl mx-auto px-4 py-4 space-y-3">
             {messages.map((m) => {
               const mine = String(m.sender) === String(userId);
-              const delivered = true; // socket always delivers
+              const delivered = true; 
               const read = !!m.readAt;
 
               return (
@@ -353,11 +340,9 @@ export default function ChatPage({ receiverId }) {
           </div>
         </main>
 
-        {/* Composer */}
         <div className="bg-white border-t shadow-lg flex-shrink-0">
           <div className="max-w-4xl mx-auto px-4 py-3">
 
-            {/* file preview */}
             {file && (
               <div className="mb-2 flex items-center gap-2 bg-indigo-50 border border-indigo-200 rounded-lg px-3 py-2">
                 <Icon

@@ -8,21 +8,10 @@ import {
 } from "../controllers/chatController.js";
 
 const router = express.Router();
-
-// REST fallback send
 router.post("/send", protect, sendMessage);
-
-// History with specific user
 router.get("/history/:receiverId", protect, getHistory);
-
-// All my conversations (distinct partners)
 router.get("/conversations", protect, getConversations);
-
-// backend/routes/chatRoutes.js
-router.get("/inbox", protect, getConversations); // alias
-
-
-// Mark messages from partner as read
+router.get("/inbox", protect, getConversations); 
 router.post("/mark-read", protect, markAsRead);
 
 export default router;
