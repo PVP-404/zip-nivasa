@@ -1,13 +1,20 @@
 import Mess from "../models/Mess.js";
 import { geocodeAddress } from "../utils/geocode.js";
 import { geocodeEloc } from "../utils/mapplsGeocode.js";
+import { uploadToCloudinary } from "../utils/uploadToCloudinary.js";
+
 //  Add Mess
 // Add Mess
 export const addMess = async (req, res) => {
   try {
-    const imagePaths = req.files
-      ? req.files.map((f) => `/uploads/pgs/${f.filename}`)
-      : [];
+    let imagePaths = [];
+
+    if (req.files && req.files.length > 0) {
+      imagePaths = await Promise.all(
+        req.files.map((file) => uploadToCloudinary(file.buffer, "messes"))
+      );
+    }
+
 
     const messData = {
       ...req.body,

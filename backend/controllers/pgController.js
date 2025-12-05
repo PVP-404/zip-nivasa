@@ -6,6 +6,9 @@ import { geocodeEloc } from "../utils/mapplsGeocode.js";
 
 import { calculateDistanceKm } from "../services/pgService.js";
 
+import { uploadToCloudinary } from "../utils/uploadToCloudinary.js";
+
+
 export const createPG = async (req, res) => {
   try {
     const userId = req.user.id;
@@ -31,7 +34,16 @@ export const createPG = async (req, res) => {
     } = req.body;
 
     const location = `${district}, ${state}`;
-    const images = req.files?.map((f) => `/uploads/pgs/${f.filename}`) || [];
+
+    // Upload to Cloudinary
+    let images = [];
+
+    if (req.files && req.files.length > 0) {
+      images = await Promise.all(
+        req.files.map((file) => uploadToCloudinary(file.buffer, "pgs"))
+      );
+    }
+
 
     // Clean street address
     const cleanedStreet = streetAddress

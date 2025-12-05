@@ -199,11 +199,9 @@ const PGDetails = () => {
               <div className="grid grid-cols-1 lg:grid-cols-4 lg:gap-4">
                 <div className="lg:col-span-3 bg-gray-100 rounded-xl overflow-hidden shadow-lg">
                   <img
-                    src={
-                      pg.images?.length > 0
-                        ? `http://localhost:5000${images[selectedImage]}`
-                        : images[selectedImage]
-                    }
+                    src={images[selectedImage]}
+
+
                     className="w-full h-[450px] object-cover"
                     alt="PG main"
                   />
@@ -221,11 +219,8 @@ const PGDetails = () => {
                           }`}
                       >
                         <img
-                          src={
-                            pg.images?.length
-                              ? `http://localhost:5000${img}`
-                              : img
-                          }
+                          src={img}
+
                           className="w-full h-full object-cover"
                           alt={`PG thumbnail ${i + 1}`}
                         />
