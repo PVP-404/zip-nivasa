@@ -303,11 +303,8 @@ const PGOwnerDashboard = () => {
                     >
                       <div className="relative h-48">
                         <img
-                          src={
-                            pg.images?.length
-                              ? `http://localhost:5000${pg.images[0]}`
-                              : "https://via.placeholder.com/300"
-                          }
+                          src={pg.images?.length ? pg.images[0] : "https://via.placeholder.com/300"}
+
                           className="h-full w-full object-cover"
                           alt={pg.title}
                         />

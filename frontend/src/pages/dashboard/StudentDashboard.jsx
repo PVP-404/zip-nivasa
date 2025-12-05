@@ -59,11 +59,10 @@ const ImageSlideshow = ({ images = [], alt, className }) => {
           {images.map((_, idx) => (
             <div
               key={idx}
-              className={`w-1.5 h-1.5 rounded-full shadow-sm transition-all ${
-                idx === currentIndex
+              className={`w-1.5 h-1.5 rounded-full shadow-sm transition-all ${idx === currentIndex
                   ? "bg-white scale-125"
                   : "bg-white/50 scale-100"
-              }`}
+                }`}
             />
           ))}
         </div>
@@ -102,8 +101,9 @@ const StudentDashboard = () => {
         rating: 4.6,
         images:
           pg.images?.length > 0
-            ? pg.images.map((img) => `http://localhost:5000${img}`)
+            ? pg.images
             : ["https://via.placeholder.com/400?text=Zip+Nivasa"],
+
         amenities: pg.amenities,
         contact: "+919999999999",
       }));
@@ -258,20 +258,18 @@ const StudentDashboard = () => {
                     key={s.key}
                     type="button"
                     onClick={() => handleServiceChange(s.key)}
-                    className={`relative p-5 rounded-2xl text-left transition-all duration-300 border flex flex-col justify-between h-full ${
-                      activeService === s.key
+                    className={`relative p-5 rounded-2xl text-left transition-all duration-300 border flex flex-col justify-between h-full ${activeService === s.key
                         ? "bg-white border-indigo-500 shadow-md ring-1 ring-indigo-500/50 -translate-y-1"
                         : "bg-white border-gray-200 shadow-sm hover:border-indigo-300 hover:shadow"
-                    }`}
+                      }`}
                   >
                     <div className="flex items-start justify-between gap-3">
                       <div>
                         <h2
-                          className={`font-semibold text-base sm:text-lg ${
-                            activeService === s.key
+                          className={`font-semibold text-base sm:text-lg ${activeService === s.key
                               ? "text-indigo-700"
                               : "text-slate-900"
-                          }`}
+                            }`}
                         >
                           {s.title}
                         </h2>
@@ -280,11 +278,10 @@ const StudentDashboard = () => {
                         </p>
                       </div>
                       <div
-                        className={`p-2.5 rounded-xl ${
-                          activeService === s.key
+                        className={`p-2.5 rounded-xl ${activeService === s.key
                             ? "bg-indigo-100 text-indigo-600"
                             : "bg-slate-100 text-slate-500"
-                        }`}
+                          }`}
                       >
                         <Icon path={s.icon} className="w-6 h-6" />
                       </div>
@@ -426,9 +423,9 @@ const StudentDashboard = () => {
                   const calculatedAvg =
                     mess.ratings && mess.ratings.length > 0
                       ? mess.ratings.reduce(
-                          (sum, r) => sum + (r.stars || 0),
-                          0
-                        ) / mess.ratings.length
+                        (sum, r) => sum + (r.stars || 0),
+                        0
+                      ) / mess.ratings.length
                       : null;
                   const avgRating = mess.averageRating ?? calculatedAvg;
 
@@ -439,11 +436,10 @@ const StudentDashboard = () => {
                     >
                       <div className="absolute top-0 right-0 p-4">
                         <span
-                          className={`text-[10px] font-bold uppercase tracking-wider px-2 py-1 rounded-md ${
-                            mess.type === "Veg"
+                          className={`text-[10px] font-bold uppercase tracking-wider px-2 py-1 rounded-md ${mess.type === "Veg"
                               ? "bg-green-100 text-green-700"
                               : "bg-red-50 text-red-700"
-                          }`}
+                            }`}
                         >
                           {mess.type}
                         </span>
