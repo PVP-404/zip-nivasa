@@ -44,7 +44,7 @@ const ImageSlideshow = ({ images = [], alt, className }) => {
 
   return (
     <div
-      className={`relative overflow-hidden bg-gray-200 ${className} group`}
+      className={`relative overflow-hidden bg-emerald-50/50 ${className} group`}
     >
       <img
         src={currentImage}
@@ -56,10 +56,11 @@ const ImageSlideshow = ({ images = [], alt, className }) => {
           {images.map((_, idx) => (
             <div
               key={idx}
-              className={`w-1.5 h-1.5 rounded-full shadow-sm transition-all ${idx === currentIndex
+              className={`w-1.5 h-1.5 rounded-full shadow-sm transition-all ${
+                idx === currentIndex
                   ? "bg-white scale-125"
                   : "bg-white/50 scale-100"
-                }`}
+              }`}
             />
           ))}
         </div>
@@ -99,7 +100,6 @@ const StudentDashboard = () => {
           pg.images?.length > 0
             ? pg.images
             : ["https://via.placeholder.com/400?text=Zip+Nivasa"],
-
         amenities: pg.amenities,
         contact: "+919999999999",
       }));
@@ -188,7 +188,7 @@ const StudentDashboard = () => {
 
   const StarIcon = () => (
     <svg
-      className="w-4 h-4 text-yellow-400"
+      className="w-4 h-4 text-emerald-400"
       fill="currentColor"
       viewBox="0 0 20 20"
     >
@@ -197,27 +197,26 @@ const StudentDashboard = () => {
   );
 
   const CardSkeleton = () => (
-    <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-4 animate-pulse">
-      <div className="h-44 bg-gray-200 rounded-lg mb-4" />
-      <div className="h-4 bg-gray-200 rounded w-3/4 mb-2" />
-      <div className="h-3 bg-gray-200 rounded w-1/2 mb-4" />
-      <div className="h-8 bg-gray-200 rounded" />
+    <div className="bg-white rounded-xl shadow-sm border border-emerald-100 p-4 animate-pulse">
+      <div className="h-44 bg-emerald-50/50 rounded-lg mb-4" />
+      <div className="h-4 bg-emerald-100 rounded w-3/4 mb-2" />
+      <div className="h-3 bg-emerald-100 rounded w-1/2 mb-4" />
+      <div className="h-8 bg-emerald-100 rounded" />
     </div>
   );
 
   return (
-    <div className="bg-slate-50 min-h-screen flex flex-col w-full h-full overflow-hidden font-sans">
+    <div className="bg-gradient-to-br from-emerald-50 via-green-25 to-mint-50 min-h-screen flex flex-col w-full h-full overflow-hidden font-sans">
       <Header onToggleSidebar={() => setIsSidebarOpen((prev) => !prev)} />
 
       <div className="flex flex-row flex-1 w-full h-full overflow-hidden">
         <Sidebar isOpen={isSidebarOpen} />
 
         <main className="flex-1 w-full overflow-y-auto custom-scrollbar">
-          
-          <div className="px-4 sm:px-6 md:px-8 pt-4 pb-3 sticky top-0 z-20 bg-gradient-to-r from-slate-50 via-slate-50 to-slate-50/95 backdrop-blur">
+          <div className="px-4 sm:px-6 md:px-8 pt-4 pb-3 sticky top-0 z-20 bg-gradient-to-r from-emerald-50/95 via-emerald-50/95 to-mint-50/95 backdrop-blur border-b border-emerald-100">
             <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
               <div>
-                <p className="text-xs uppercase tracking-[0.15em] text-indigo-600 font-semibold">
+                <p className="text-xs uppercase tracking-[0.15em] text-emerald-600 font-semibold">
                   Welcome back
                 </p>
                 <h1 className="text-2xl sm:text-3xl font-bold text-slate-900 mt-1">
@@ -230,7 +229,7 @@ const StudentDashboard = () => {
               <div className="flex items-center gap-3">
                 <Link
                   to="/pgs/near-me"
-                  className="flex items-center gap-2 bg-blue-600 hover:bg-blue-700 text-white px-5 py-3 rounded-xl shadow-md hover:shadow-lg transition-all duration-200 text-sm font-semibold"
+                  className="flex items-center gap-2 bg-emerald-600 hover:bg-emerald-700 text-white px-5 py-3 rounded-xl shadow-md hover:shadow-lg transition-all duration-200 text-sm font-semibold border border-emerald-500/20"
                 >
                   <LocateFixed className="w-5 h-5" />
                   <span>Near Me</span>
@@ -246,18 +245,20 @@ const StudentDashboard = () => {
                     key={s.key}
                     type="button"
                     onClick={() => handleServiceChange(s.key)}
-                    className={`relative p-5 rounded-2xl text-left transition-all duration-300 border flex flex-col justify-between h-full ${activeService === s.key
-                        ? "bg-white border-indigo-500 shadow-md ring-1 ring-indigo-500/50 -translate-y-1"
-                        : "bg-white border-gray-200 shadow-sm hover:border-indigo-300 hover:shadow"
-                      }`}
+                    className={`relative p-5 rounded-2xl text-left transition-all duration-300 border flex flex-col justify-between h-full ${
+                      activeService === s.key
+                        ? "bg-white border-emerald-500 shadow-md ring-1 ring-emerald-500/50 -translate-y-1"
+                        : "bg-white border-emerald-100 shadow-sm hover:border-emerald-300 hover:shadow-lg"
+                    }`}
                   >
                     <div className="flex items-start justify-between gap-3">
                       <div>
                         <h2
-                          className={`font-semibold text-base sm:text-lg ${activeService === s.key
-                              ? "text-indigo-700"
+                          className={`font-semibold text-base sm:text-lg ${
+                            activeService === s.key
+                              ? "text-emerald-700"
                               : "text-slate-900"
-                            }`}
+                          }`}
                         >
                           {s.title}
                         </h2>
@@ -266,10 +267,11 @@ const StudentDashboard = () => {
                         </p>
                       </div>
                       <div
-                        className={`p-2.5 rounded-xl ${activeService === s.key
-                            ? "bg-indigo-100 text-indigo-600"
-                            : "bg-slate-100 text-slate-500"
-                          }`}
+                        className={`p-2.5 rounded-xl ${
+                          activeService === s.key
+                            ? "bg-emerald-100 text-emerald-600"
+                            : "bg-emerald-50 text-emerald-500"
+                        }`}
                       >
                         <Icon path={s.icon} className="w-6 h-6" />
                       </div>
@@ -279,7 +281,7 @@ const StudentDashboard = () => {
               </div>
             </section>
 
-            <div className="flex flex-col sm:flex-row justify-between items-center mb-6 gap-4 sticky top-[4.5rem] sm:top-[4.75rem] bg-slate-50/95 backdrop-blur z-10 py-2">
+            <div className="flex flex-col sm:flex-row justify-between items-center mb-6 gap-4 sticky top-[4.5rem] sm:top-[4.75rem] bg-emerald-50/95 backdrop-blur z-10 py-2 border-b border-emerald-100">
               <div className="self-start sm:self-center">
                 <h3 className="text-xl font-semibold text-slate-900">
                   {activeService === "housing" && "Explore Stays"}
@@ -295,12 +297,12 @@ const StudentDashboard = () => {
               <div className="relative w-full sm:w-80 group">
                 <Icon
                   path="M8 4a4 4 0 100 8 4 4 0 000-8zM2 8a6 6 0 1110.89 3.476l4.817 4.817a1 1 0 01-1.414 1.414l-4.816-4.816A6 6 0 012 8z"
-                  className="absolute left-3 top-3 w-5 h-5 text-gray-400 group-focus-within:text-indigo-500 transition-colors"
+                  className="absolute left-3 top-3 w-5 h-5 text-slate-400 group-focus-within:text-emerald-500 transition-colors"
                 />
                 <input
                   ref={searchInputRef}
                   placeholder={`Search ${activeService}...`}
-                  className="pl-10 pr-4 py-2.5 bg-white border border-gray-200 rounded-xl w-full focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent shadow-sm transition-all text-sm"
+                  className="pl-10 pr-4 py-2.5 bg-white border border-emerald-200 rounded-xl w-full focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-transparent shadow-sm transition-all text-sm"
                   onChange={(e) => setQuery(e.target.value)}
                 />
               </div>
@@ -316,10 +318,10 @@ const StudentDashboard = () => {
 
               {!loading && filtered[activeService].length === 0 && (
                 <div className="col-span-full flex flex-col items-center justify-center py-16 text-center">
-                  <div className="bg-gray-100 p-4 rounded-full mb-3">
+                  <div className="bg-emerald-100 p-4 rounded-full mb-3">
                     <Icon
                       path="M8 4a4 4 0 100 8 4 4 0 000-8zM2 8a6 6 0 1110.89 3.476l4.817 4.817a1 1 0 01-1.414 1.414l-4.816-4.816A6 6 0 012 8z"
-                      className="w-8 h-8 text-gray-400"
+                      className="w-8 h-8 text-emerald-400"
                     />
                   </div>
                   <h3 className="text-lg font-medium text-slate-900">
@@ -336,7 +338,7 @@ const StudentDashboard = () => {
                 filtered.housing.map((pg) => (
                   <div
                     key={pg.id}
-                    className="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden hover:shadow-lg hover:-translate-y-1 transition-all duration-300 flex flex-col group"
+                    className="bg-white rounded-xl shadow-sm border border-emerald-100 overflow-hidden hover:shadow-lg hover:-translate-y-1 transition-all duration-300 flex flex-col group"
                   >
                     <div className="relative h-52">
                       <ImageSlideshow
@@ -345,15 +347,15 @@ const StudentDashboard = () => {
                         className="h-full w-full"
                       />
                       <div className="absolute top-3 right-3 bg-white/95 backdrop-blur-sm px-3 py-1.5 rounded-lg shadow-sm">
-                        <p className="text-sm font-bold text-indigo-700">
+                        <p className="text-sm font-bold text-emerald-700">
                           ₹{pg.price}
-                          <span className="text-xs text-gray-500 font-normal">
+                          <span className="text-xs text-slate-500 font-normal">
                             /mo
                           </span>
                         </p>
                       </div>
                       {pg.rating && (
-                        <div className="absolute top-3 left-3 bg-black/60 backdrop-blur-sm px-2 py-1 rounded-md shadow-sm flex items-center gap-1 text-white">
+                        <div className="absolute top-3 left-3 bg-emerald-600/90 backdrop-blur-sm px-2 py-1 rounded-md shadow-sm flex items-center gap-1 text-white">
                           <StarIcon />
                           <span className="text-xs font-bold">
                             {pg.rating}
@@ -365,7 +367,7 @@ const StudentDashboard = () => {
                     <div className="p-5 flex flex-col flex-1">
                       <div className="mb-3">
                         <div className="flex justify-between items-start">
-                          <h4 className="font-bold text-lg text-slate-900 line-clamp-1 group-hover:text-indigo-600 transition-colors">
+                          <h4 className="font-bold text-lg text-slate-900 line-clamp-1 group-hover:text-emerald-600 transition-colors">
                             {pg.name}
                           </h4>
                         </div>
@@ -377,21 +379,21 @@ const StudentDashboard = () => {
                       <p className="text-sm text-slate-600 flex items-start gap-1.5 mb-4 line-clamp-1">
                         <Icon
                           path="M5.05 4.05a7 7 0 119.9 9.9L10 18.9l-4.95-4.95a7 7 0 010-9.9zM10 11a2 2 0 100-4 2 2 0 000 4z"
-                          className="w-4 h-4 text-slate-400 mt-0.5 flex-shrink-0"
+                          className="w-4 h-4 text-emerald-400 mt-0.5 flex-shrink-0"
                         />
                         {pg.location}
                       </p>
 
-                      <div className="mt-auto pt-4 border-t border-slate-100 flex gap-3">
+                      <div className="mt-auto pt-4 border-t border-emerald-100 flex gap-3">
                         <a
                           href={`tel:${pg.contact}`}
-                          className="flex-1 bg-slate-50 text-slate-700 py-2.5 rounded-lg text-center text-sm font-semibold hover:bg-slate-100 transition-colors"
+                          className="flex-1 bg-emerald-50 text-emerald-700 py-2.5 rounded-lg text-center text-sm font-semibold hover:bg-emerald-100 transition-colors border border-emerald-100"
                         >
                           Call
                         </a>
                         <Link
                           to={`/services/pg/${pg.id}`}
-                          className="flex-1 bg-indigo-600 text-white py-2.5 rounded-lg text-center text-sm font-semibold hover:bg-indigo-700 transition-colors shadow-sm"
+                          className="flex-1 bg-emerald-600 text-white py-2.5 rounded-lg text-center text-sm font-semibold hover:bg-emerald-700 transition-colors shadow-sm border border-emerald-500/20"
                         >
                           Details
                         </Link>
@@ -406,23 +408,24 @@ const StudentDashboard = () => {
                   const calculatedAvg =
                     mess.ratings && mess.ratings.length > 0
                       ? mess.ratings.reduce(
-                        (sum, r) => sum + (r.stars || 0),
-                        0
-                      ) / mess.ratings.length
+                          (sum, r) => sum + (r.stars || 0),
+                          0
+                        ) / mess.ratings.length
                       : null;
                   const avgRating = mess.averageRating ?? calculatedAvg;
 
                   return (
                     <div
                       key={mess._id}
-                      className="bg-white rounded-xl shadow-sm border border-gray-100 p-6 hover:shadow-lg hover:border-indigo-100 transition-all duration-300 flex flex-col relative"
+                      className="bg-white rounded-xl shadow-sm border border-emerald-100 p-6 hover:shadow-lg hover:border-emerald-200 transition-all duration-300 flex flex-col relative"
                     >
                       <div className="absolute top-0 right-0 p-4">
                         <span
-                          className={`text-[10px] font-bold uppercase tracking-wider px-2 py-1 rounded-md ${mess.type === "Veg"
-                              ? "bg-green-100 text-green-700"
+                          className={`text-[10px] font-bold uppercase tracking-wider px-2 py-1 rounded-md ${
+                            mess.type === "Veg"
+                              ? "bg-emerald-100 text-emerald-700"
                               : "bg-red-50 text-red-700"
-                            }`}
+                          }`}
                         >
                           {mess.type}
                         </span>
@@ -435,17 +438,17 @@ const StudentDashboard = () => {
                         <p className="text-sm text-slate-500 flex items-center gap-1 mt-1">
                           <Icon
                             path="M5.05 4.05a7 7 0 119.9 9.9L10 18.9l-4.95-4.95a7 7 0 010-9.9zM10 11a2 2 0 100-4 2 2 0 000 4z"
-                            className="w-3.5 h-3.5"
+                            className="w-3.5 h-3.5 text-emerald-400"
                           />
                           {mess.location}
                         </p>
                       </div>
 
                       <div className="flex items-center gap-2 mb-4">
-                        <div className="flex bg-yellow-50 px-2 py-1 rounded-md">
+                        <div className="flex bg-emerald-50 px-2 py-1 rounded-md">
                           <StarIcon />
                           {avgRating ? (
-                            <span className="text-xs font-bold text-yellow-700 ml-1">
+                            <span className="text-xs font-bold text-emerald-700 ml-1">
                               {avgRating.toFixed(1)}
                             </span>
                           ) : (
@@ -465,7 +468,7 @@ const StudentDashboard = () => {
 
                       <button
                         onClick={() => navigate(`/mess/${mess._id}`)}
-                        className="mt-auto w-full bg-white border-2 border-indigo-50 text-indigo-600 py-2.5 rounded-lg font-semibold hover:bg-indigo-600 hover:text-white hover:border-indigo-600 transition-all duration-200"
+                        className="mt-auto w-full bg-white border-2 border-emerald-100 text-emerald-600 py-2.5 rounded-lg font-semibold hover:bg-emerald-600 hover:text-white hover:border-emerald-600 transition-all duration-200"
                       >
                         View Menu & Details
                       </button>
@@ -477,13 +480,13 @@ const StudentDashboard = () => {
                 filtered.laundry.map((laundry) => (
                   <div
                     key={laundry.id}
-                    className="bg-white rounded-xl shadow-sm border border-gray-100 p-6 hover:shadow-lg transition-all duration-300 flex flex-col"
+                    className="bg-white rounded-xl shadow-sm border border-emerald-100 p-6 hover:shadow-lg transition-all duration-300 flex flex-col"
                   >
                     <div className="flex justify-between items-start mb-2">
                       <h4 className="font-bold text-lg text-slate-900">
                         {laundry.name}
                       </h4>
-                      <div className="flex items-center gap-1 bg-slate-50 px-2 py-1 rounded text-sm font-semibold">
+                      <div className="flex items-center gap-1 bg-emerald-50 px-2 py-1 rounded text-sm font-semibold text-emerald-700">
                         <StarIcon /> {laundry.rating}
                       </div>
                     </div>
@@ -491,7 +494,7 @@ const StudentDashboard = () => {
                     <p className="text-sm text-slate-500 mb-4 flex items-center gap-1">
                       <Icon
                         path="M5.05 4.05a7 7 0 119.9 9.9L10 18.9l-4.95-4.95a7 7 0 010-9.9zM10 11a2 2 0 100-4 2 2 0 000 4z"
-                        className="w-3.5 h-3.5"
+                        className="w-3.5 h-3.5 text-emerald-400"
                       />
                       {laundry.location}
                     </p>
@@ -500,18 +503,18 @@ const StudentDashboard = () => {
                       {laundry.services.map((service, i) => (
                         <span
                           key={i}
-                          className="text-xs bg-indigo-50 text-indigo-700 border border-indigo-100 px-2.5 py-1 rounded-full font-medium"
+                          className="text-xs bg-emerald-50 text-emerald-700 border border-emerald-100 px-2.5 py-1 rounded-full font-medium"
                         >
                           {service}
                         </span>
                       ))}
                     </div>
 
-                    <div className="mt-auto flex items-center justify-between border-t pt-4">
+                    <div className="mt-auto flex items-center justify-between border-t border-emerald-100 pt-4">
                       <p className="text-lg font-bold text-slate-900">
                         {laundry.price}
                       </p>
-                      <button className="text-indigo-600 text-sm font-bold hover:underline">
+                      <button className="text-emerald-600 text-sm font-bold hover:underline">
                         Contact
                       </button>
                     </div>

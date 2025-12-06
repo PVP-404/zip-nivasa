@@ -58,6 +58,7 @@ function App() {
 
       <Routes>
 
+        {/* PUBLIC ROUTES */}
         <Route path="/" element={<Home />} />
         <Route path="/login" element={<Login />} />
         <Route path="/register" element={<Register />} />
@@ -65,8 +66,22 @@ function App() {
 
         <Route path="/pgs/all" element={<AllPGs />} />
         <Route path="/services/pg/:id" element={<PGDetails />} />
-        <Route path="/notifications" element={<Notifications />} />
+        <Route path="/pgs/near-me" element={<PGNearMe />} />
 
+        <Route path="/accommodations" element={<SearchPGResults />} />
+        <Route path="/messes" element={<AllMesses />} />
+
+        {/* PROTECTED: NOTIFICATIONS */}
+        <Route
+          path="/notifications"
+          element={
+            <ProtectedRoute>
+              <Notifications />
+            </ProtectedRoute>
+          }
+        />
+
+        {/* PROTECTED CHAT ROUTES */}
         <Route
           path="/chat/:id"
           element={
@@ -94,6 +109,7 @@ function App() {
           }
         />
 
+        {/* TENANT ROUTES */}
         <Route
           path="/dashboard/student"
           element={
@@ -111,6 +127,7 @@ function App() {
             </RoleProtectedRoute>
           }
         />
+
         <Route
           path="/dashboard/student/payments"
           element={
@@ -119,6 +136,7 @@ function App() {
             </RoleProtectedRoute>
           }
         />
+
         <Route
           path="/dashboard/student/complaints"
           element={
@@ -137,39 +155,12 @@ function App() {
           }
         />
 
+        {/* PG OWNER ROUTES */}
         <Route
           path="/dashboard/pgowner"
           element={
             <RoleProtectedRoute allowedRoles={["pgowner"]}>
               <PGOwnerDashboard />
-            </RoleProtectedRoute>
-          }
-        />
-        <Route
-          path="/dashboard/messowner"
-          element={
-            <RoleProtectedRoute allowedRoles={["messowner"]}>
-              <MessOwnerDashboard />
-            </RoleProtectedRoute>
-          }
-        />
-
-        <Route
-          path="/mess/:id"
-          element={
-            <ProtectedRoute>
-              <MessDetails />
-            </ProtectedRoute>
-          }
-        />
-
-        <Route path="/pgs/near-me" element={<PGNearMe />} />
-
-        <Route
-          path="/dashboard/laundry"
-          element={
-            <RoleProtectedRoute allowedRoles={["laundry"]}>
-              <LaundryDashboard />
             </RoleProtectedRoute>
           }
         />
@@ -183,6 +174,16 @@ function App() {
           }
         />
 
+        {/* MESS OWNER ROUTES */}
+        <Route
+          path="/dashboard/messowner"
+          element={
+            <RoleProtectedRoute allowedRoles={["messowner"]}>
+              <MessOwnerDashboard />
+            </RoleProtectedRoute>
+          }
+        />
+
         <Route
           path="/dashboard/add-mess"
           element={
@@ -192,10 +193,29 @@ function App() {
           }
         />
 
-        <Route path="/accommodations" element={<SearchPGResults />} />
-        <Route path="/messes" element={<AllMesses />} />
+        {/* MESS DETAILS */}
+        <Route
+          path="/mess/:id"
+          element={
+            <ProtectedRoute>
+              <MessDetails />
+            </ProtectedRoute>
+          }
+        />
 
+        {/* LAUNDRY ROUTES */}
+        <Route
+          path="/dashboard/laundry"
+          element={
+            <RoleProtectedRoute allowedRoles={["laundry"]}>
+              <LaundryDashboard />
+            </RoleProtectedRoute>
+          }
+        />
+
+        {/* 404 */}
         <Route path="*" element={<h1>404 Page Not Found</h1>} />
+
       </Routes>
     </Router>
   );

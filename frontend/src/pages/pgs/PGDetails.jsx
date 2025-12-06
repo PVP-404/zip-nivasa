@@ -360,7 +360,7 @@ const PGDetails = () => {
                 <div className="sticky top-4 space-y-6">
                   <div className="bg-gradient-to-br from-indigo-50 to-purple-50 border-2 border-indigo-200 px-8 py-6 rounded-xl text-center shadow-lg">
                     <p className="text-base text-gray-600 mb-1">Starting From</p>
-                    <p className="text-5xl font-extrabold text-indigo-700">
+                    <p className="text-5xl font-extrabold text-green-400">
                       ₹{pg.monthlyRent.toLocaleString()}
                     </p>
                     <p className="text-sm text-gray-500 mt-1 font-medium">

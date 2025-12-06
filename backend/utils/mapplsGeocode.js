@@ -77,7 +77,7 @@ export async function geocodeEloc(input) {
       };
     }
   } catch (err) {
-    console.log("❌ Mappls Bearer failed:", err.message);
+    console.log(" Mappls Bearer failed:", err.message);
   }
 
   try {
@@ -109,7 +109,7 @@ export async function geocodeEloc(input) {
       formattedAddress: result.formattedAddress,
     };
   } catch (err) {
-    console.log("❌ Mappls Browser-mode failed:", err.message);
+    console.log(" Mappls Browser-mode failed:", err.message);
     throw new Error("Mappls geocode failed in both modes");
   }
 }
