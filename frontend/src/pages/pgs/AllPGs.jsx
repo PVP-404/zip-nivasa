@@ -4,7 +4,7 @@ import { motion, AnimatePresence } from "framer-motion";
 import { Filter, Search, MapPin, ChevronDown, X, Star, Clock } from "lucide-react";
 import Header from "../../components/Header";
 import Footer from "../../components/Footer";
-import Sidebar from "../../components/Sidebar";
+
 
 const MIN_PRICE = 3000;
 const MAX_PRICE = 50000;
@@ -71,8 +71,8 @@ const FilterChip = ({ label, onRemove, color = "emerald" }) => (
     animate={{ opacity: 1, scale: 1 }}
     exit={{ opacity: 0, scale: 0.9 }}
     className={`inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold rounded-xl shadow-sm border backdrop-blur-sm ${color === "emerald"
-        ? "bg-emerald-100/90 border-emerald-200 text-emerald-800"
-        : "bg-slate-100/90 border-slate-200 text-slate-800"
+      ? "bg-emerald-100/90 border-emerald-200 text-emerald-800"
+      : "bg-slate-100/90 border-slate-200 text-slate-800"
       }`}
   >
     <span className="truncate max-w-[80px]">{label}</span>
@@ -82,65 +82,49 @@ const FilterChip = ({ label, onRemove, color = "emerald" }) => (
   </motion.div>
 );
 
-const DualPriceSlider = ({ minPrice, maxPrice, setMinPrice, setMaxPrice }) => {
-  const minPercent = ((minPrice - MIN_PRICE) / (MAX_PRICE - MIN_PRICE)) * 100;
-  const maxPercent = ((maxPrice - MIN_PRICE) / (MAX_PRICE - MIN_PRICE)) * 100;
+const SinglePriceSlider = ({ maxPrice, setMaxPrice }) => {
+  const [tempPrice, setTempPrice] = useState(maxPrice);
 
-  const handleMin = (e) => {
-    const v = Number(e.target.value);
-    if (v < maxPrice) setMinPrice(v);
+  const handleSlide = (e) => {
+    setTempPrice(Number(e.target.value));
   };
 
-  const handleMax = (e) => {
-    const v = Number(e.target.value);
-    if (v > minPrice) setMaxPrice(v);
-  };
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      setMaxPrice(tempPrice);
+    }, 400);
+
+    return () => clearTimeout(timer);
+  }, [tempPrice]);
 
   return (
-    <div className="w-full relative py-4">
-      <div className="h-2 w-full rounded-full bg-emerald-100 relative">
-        <div
-          className="absolute h-2 bg-emerald-400 rounded-full"
-          style={{
-            left: `${minPercent}%`,
-            width: `${maxPercent - minPercent}%`,
-          }}
-        ></div>
-      </div>
-
+    <div className="w-full py-4">
+      {/* Slider */}
       <input
         type="range"
         min={MIN_PRICE}
         max={MAX_PRICE}
-        value={minPrice}
-        onChange={handleMin}
-        className="absolute top-4 w-full pointer-events-auto accent-emerald-600"
-        style={{ zIndex: 20 }}
-      />
-      <input
-        type="range"
-        min={MIN_PRICE}
-        max={MAX_PRICE}
-        value={maxPrice}
-        onChange={handleMax}
-        className="absolute top-4 w-full pointer-events-auto accent-emerald-600"
-        style={{ zIndex: 10 }}
+        value={tempPrice}
+        onChange={handleSlide}
+        className="w-full accent-emerald-600"
       />
 
-      <div className="flex justify-between mt-6 text-xs font-semibold text-slate-600">
-        <span>₹{formatPrice(minPrice)}</span>
-        <span>₹{formatPrice(maxPrice)}</span>
+      <div className="flex justify-between mt-3 text-xs font-semibold text-slate-700">
+        <span>₹{formatPrice(MIN_PRICE)}</span>
+        <span className="text-emerald-600 font-bold">
+          ₹{formatPrice(tempPrice)}
+        </span>
       </div>
     </div>
   );
 };
+
 
 const AllPGs = () => {
   const navigate = useNavigate();
   const location = useLocation();
   const [searchParams, setSearchParams] = useSearchParams();
 
-  const [isSidebarOpen, setIsSidebarOpen] = useState(false);
   const [pgs, setPgs] = useState([]);
   const [loading, setLoading] = useState(true);
   const [showFilters, setShowFilters] = useState(false);
@@ -197,17 +181,36 @@ const AllPGs = () => {
 
   const filteredPGs = useMemo(() => {
     let f = [...pgs];
-    if (search.trim()) f = f.filter((p) => p.title.toLowerCase().includes(search.toLowerCase()));
-    if (pgLocation.trim()) f = f.filter((p) => p.location.toLowerCase().includes(pgLocation.toLowerCase()));
-    if (type) f = f.filter((p) => p.propertyType === type);
+
+    if (search.trim())
+      f = f.filter((p) =>
+        p.title.toLowerCase().includes(search.toLowerCase())
+      );
+
+    if (pgLocation.trim()) {
+      const q = pgLocation.toLowerCase();
+
+      f = f.filter((p) =>
+        (p.streetAddress?.toLowerCase().includes(q)) ||
+        (p.district?.toLowerCase().includes(q)) ||
+        (p.state?.toLowerCase().includes(q))
+      );
+    }
+
+    if (type)
+      f = f.filter((p) => p.propertyType === type);
+
     f = f.filter((p) => p.monthlyRent >= minPrice && p.monthlyRent <= maxPrice);
+
     f.sort((a, b) => {
       if (sortBy === "low-high") return a.monthlyRent - b.monthlyRent;
       if (sortBy === "high-low") return b.monthlyRent - a.monthlyRent;
       return new Date(b.createdAt) - new Date(a.createdAt);
     });
+
     return f;
   }, [pgs, search, pgLocation, type, minPrice, maxPrice, sortBy]);
+
 
   const clearFilters = () => {
     setSearch("");
@@ -255,7 +258,7 @@ const AllPGs = () => {
   if (loading && pgs.length === 0) {
     return (
       <div className="min-h-screen flex flex-col bg-emerald-50/50">
-        <Header onToggleSidebar={() => setIsSidebarOpen((prev) => !prev)} />
+        <Header />
         <div className="flex-1 flex items-center justify-center p-8">
           <div className="w-14 h-14 border-4 border-emerald-600 border-t-transparent rounded-full animate-spin" />
         </div>
@@ -265,9 +268,8 @@ const AllPGs = () => {
 
   return (
     <div className="min-h-screen flex flex-col bg-gradient-to-br from-emerald-50 via-green-25 to-mint-50">
-      <Header onToggleSidebar={() => setIsSidebarOpen((prev) => !prev)} />
+      <Header />
       <div className="flex flex-1 overflow-hidden">
-        <Sidebar isOpen={isSidebarOpen} />
         <div className="flex flex-1 overflow-hidden">
           <motion.aside
             initial={{ x: -20, opacity: 0 }}
@@ -383,12 +385,11 @@ const AllPGs = () => {
                     <span className="text-emerald-700">Price Range</span>
                     <span>Max</span>
                   </div>
-                  <DualPriceSlider
-                    minPrice={minPrice}
+                  <SinglePriceSlider
                     maxPrice={maxPrice}
-                    setMinPrice={setMinPrice}
                     setMaxPrice={setMaxPrice}
                   />
+
                   <div className="flex justify-between mt-1 text-[11px] text-slate-500">
                     <span>₹{formatPrice(MIN_PRICE)}</span>
                     <span>₹{formatPrice(MAX_PRICE)}+</span>
@@ -516,7 +517,7 @@ const AllPGs = () => {
                             <svg className="w-4 h-4 mr-2 text-emerald-400 flex-shrink-0" fill="currentColor">
                               <path d="M10 18l6-6a7 7 0 10-12 0l6 6z" />
                             </svg>
-                            {pg.location}
+                            {pg.streetAddress}
                           </p>
 
                           {rating ? (

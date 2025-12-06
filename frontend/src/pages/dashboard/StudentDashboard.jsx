@@ -93,7 +93,7 @@ const StudentDashboard = () => {
         id: pg._id,
         name: pg.title,
         type: pg.propertyType,
-        location: pg.location,
+        location: pg.streetAddress,
         price: pg.monthlyRent,
         rating: 4.6,
         images:

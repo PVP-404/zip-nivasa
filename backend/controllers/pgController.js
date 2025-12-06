@@ -68,8 +68,8 @@ export const createPG = async (req, res) => {
     let mapplsAddress = null;
 
     const [ocRes, mapplsRes] = await Promise.allSettled([
-      geocodeAddress(geocodeQuery),  
-      geocodeEloc(geocodeQuery),     
+      geocodeAddress(geocodeQuery),
+      geocodeEloc(geocodeQuery),
     ]);
 
     if (mapplsRes.status === "fulfilled") {

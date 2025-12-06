@@ -1,6 +1,7 @@
 import React, { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { motion, AnimatePresence } from "framer-motion";
+import LocationAutosuggest from "../components/LocationAutosuggest";
 import {
   FaSearch,
   FaBuilding,
@@ -55,22 +56,22 @@ const Home = () => {
       navigate(`/messes?location=${location}`);
       return;
     }
-    navigate(`/accommodations?location=${location}&type=${type}&budget=${budget}`);
+    navigate(`/pgs/all?location=${location}&type=${type}&budget=${budget}`);
   };
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-emerald-50 via-green-25 to-mint-50">
       <Header />
-      
+
       <section className="relative h-screen flex items-center justify-center overflow-hidden">
-        <div 
+        <div
           className="absolute inset-0 bg-cover bg-center bg-no-repeat opacity-8"
           style={{
             backgroundImage: "url('https://images.unsplash.com/photo-1560518883-ce09059eeffa?ixlib=rb-4.0.3&auto=format&fit=crop&w=2070&q=80')",
           }}
         />
         <div className="absolute inset-0 bg-gradient-to-b from-emerald-900/10 via-green-900/5 to-transparent" />
-        
+
         <div className="relative z-10 text-center px-4 max-w-6xl mx-auto">
           <motion.div
             initial={{ opacity: 0, y: 30 }}
@@ -91,7 +92,7 @@ const Home = () => {
           >
             Find. Connect. <span className="bg-gradient-to-r from-emerald-400 to-mint-400 bg-clip-text text-transparent">Live Better.</span>
           </motion.h1>
-          
+
           <motion.p
             className="text-xl md:text-2xl lg:text-3xl text-slate-700 font-light mb-10 max-w-4xl mx-auto leading-relaxed"
             initial={{ opacity: 0, y: 30 }}
@@ -101,85 +102,77 @@ const Home = () => {
             Photos, prices, real distances, honest reviews, direct owner chat. Everything before you step out.
           </motion.p>
 
-          <motion.form
-            onSubmit={handleSearchSubmit}
-            className="bg-white/95 backdrop-blur-xl rounded-2xl shadow-xl p-6 md:p-8 max-w-4xl mx-auto border border-emerald-50/50"
-            initial={{ opacity: 0, y: 60, scale: 0.95 }}
-            animate={{ opacity: 1, y: 0, scale: 1 }}
-            transition={{ duration: 0.8, delay: 0.6 }}
-          >
-            <div className="grid grid-cols-1 lg:grid-cols-5 gap-3 lg:gap-4 items-end">
-              <div>
-                <label className="block text-sm font-semibold text-slate-700 mb-1.5 flex items-center gap-1.5">
-                  <FaMapMarkerAlt className="text-emerald-500 w-4 h-4" />
-                  Location
-                </label>
-                <input
-                  type="text"
-                  name="location"
-                  placeholder="Hinjewadi, Baner, Kothrud..."
-                  value={searchFilters.location}
-                  onChange={handleSearchChange}
-                  className="w-full p-3 border border-slate-200 rounded-xl focus:ring-2 focus:ring-emerald-200/50 focus:border-emerald-300 text-base font-medium transition-all duration-200"
-                />
-              </div>
-              
-              <div>
-                <label className="block text-sm font-semibold text-slate-700 mb-1.5 flex items-center gap-1.5">
-                  <FaBuilding className="text-emerald-500 w-4 h-4" />
-                  Type
-                </label>
-                <select
-                  name="type"
-                  value={searchFilters.type}
-                  onChange={handleSearchChange}
-                  className="w-full p-3 border border-slate-200 rounded-xl focus:ring-2 focus:ring-emerald-200/50 focus:border-emerald-300 text-base font-medium transition-all duration-200"
-                >
-                  <option value="">All Types</option>
-                  <option value="pg">PGs & Hostels</option>
-                  <option value="mess">Mess Services</option>
-                </select>
-              </div>
+<motion.form
+  onSubmit={handleSearchSubmit}
+  className="bg-white/95 backdrop-blur-xl rounded-2xl shadow-xl p-6 md:p-8 max-w-6xl mx-auto border border-emerald-50/50"
+  initial={{ opacity: 0, y: 60, scale: 0.95 }}
+  animate={{ opacity: 1, y: 0, scale: 1 }}
+  transition={{ duration: 0.8, delay: 0.6 }}
+>
+  <div className="grid grid-cols-1 lg:grid-cols-5 gap-3 lg:gap-3 items-end">
 
-              <div>
-                <label className="block text-sm font-semibold text-slate-700 mb-1.5 flex items-center gap-1.5">
-                  <FaRupeeSign className="text-emerald-500 w-4 h-4" />
-                  Budget
-                </label>
-                <select
-                  name="budget"
-                  value={searchFilters.budget}
-                  onChange={handleSearchChange}
-                  className="w-full p-3 border border-slate-200 rounded-xl focus:ring-2 focus:ring-emerald-200/50 focus:border-emerald-300 text-base font-medium transition-all duration-200"
-                >
-                  <option value="">Any Budget</option>
-                  <option value="0-10000">Under ₹10K</option>
-                  <option value="10000-15000">₹10K - ₹15K</option>
-                  <option value="15000+">₹15K+</option>
-                </select>
-              </div>
+    <div className="lg:col-span-2">
+      <label className="block text-sm font-semibold text-slate-700 mb-1.5 flex items-center gap-1.5">
+        <FaMapMarkerAlt className="text-emerald-500 w-4 h-4" />
+        Location
+      </label>
+      <LocationAutosuggest
+        value={searchFilters.location}
+        onChange={(val) =>
+          setSearchFilters({ ...searchFilters, location: val })
+        }
+      />
+    </div>
 
-              <motion.button
-                type="submit"
-                className="w-full lg:w-auto col-span-1 lg:col-span-1 bg-emerald-500 hover:bg-emerald-600 text-white font-semibold py-4 px-6 rounded-xl shadow-lg hover:shadow-xl text-lg transition-all duration-200 flex items-center justify-center gap-2 h-15 border border-emerald-500/20"
-                whileHover={{ scale: 1.02 }}
-                whileTap={{ scale: 0.98 }}
-              >
-                <FaSearch className="w-5 h-5" />
-                Find
-              </motion.button>
+    <div className="lg:col-span-1">
+      <label className="block text-sm font-semibold text-slate-700 mb-1.5 flex items-center gap-1.5">
+        <FaBuilding className="text-emerald-500 w-4 h-4" />
+        Type
+      </label>
+      <select
+        name="type"
+        value={searchFilters.type}
+        onChange={handleSearchChange}
+        className="w-full p-3 border border-slate-200 rounded-xl focus:ring-2 focus:ring-emerald-200/50 focus:border-emerald-300 text-base font-medium transition-all duration-200"
+      >
+        <option value="">All Types</option>
+        <option value="pg">PGs & Hostels</option>
+        <option value="mess">Mess Services</option>
+      </select>
+    </div>
 
-              <div className="flex items-center gap-2 lg:justify-end">
-                <Link
-                  to="/pgs/near-me"
-                  className="flex items-center gap-2 bg-emerald-500 hover:bg-emerald-600 text-white px-6 py-4 rounded-xl shadow-lg hover:shadow-xl transition-all duration-200 text-lg font-semibold flex-1 lg:flex-none h-15 justify-center border border-emerald-500/20"
-                >
-                  <LocateFixed className="w-5 h-5" />
-                  Near Me
-                </Link>
-              </div>
-            </div>
-          </motion.form>
+    <motion.button
+      type="submit"
+      className="w-full bg-emerald-500 hover:bg-emerald-600 text-white font-semibold py-4 px-6 rounded-xl shadow-lg hover:shadow-xl text-lg 
+                 transition-all duration-200 flex items-center justify-center gap-2 border border-emerald-500/20"
+      whileHover={{ scale: 1.02 }}
+      whileTap={{ scale: 0.98 }}
+    >
+      <FaSearch className="w-5 h-5" />
+      Find
+    </motion.button>
+
+    <Link
+      to="/pgs/near-me"
+      className="w-full bg-emerald-500 hover:bg-emerald-600 text-white px-6 py-4 rounded-xl shadow-lg hover:shadow-xl transition-all duration-200 
+                 text-lg font-semibold whitespace-nowrap flex items-center justify-center gap-2 border border-emerald-500/20"
+    >
+      <LocateFixed className="w-5 h-5" />
+      Near Me
+    </Link>
+
+  </div>
+</motion.form>
+
+
+
+
+
+
+
+
+
+
         </div>
       </section>
 
@@ -274,7 +267,7 @@ const Home = () => {
           >
             Perfect For <span className="bg-gradient-to-r from-emerald-500 to-mint-500 bg-clip-text text-transparent">Students & Migrants</span>
           </motion.h2>
-          
+
           <div className="grid md:grid-cols-3 gap-8 mt-16">
             <motion.div
               initial={{ opacity: 0, y: 30 }}
@@ -288,7 +281,7 @@ const Home = () => {
                 Explore PGs before you arrive. Compare side-by-side. Zero roaming stress.
               </p>
             </motion.div>
-            
+
             <motion.div
               initial={{ opacity: 0, y: 30 }}
               whileInView={{ opacity: 1, y: 0 }}
@@ -301,7 +294,7 @@ const Home = () => {
                 Verify safety, see real photos, read honest reviews. Complete peace of mind.
               </p>
             </motion.div>
-            
+
             <motion.div
               initial={{ opacity: 0, y: 30 }}
               whileInView={{ opacity: 1, y: 0 }}

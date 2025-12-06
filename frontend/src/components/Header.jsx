@@ -140,7 +140,7 @@ const Header = ({ onToggleSidebar }) => {
           </div>
         </div>
         
-        <div className="hidden xs:block">
+        <div className=" xs:block">
           <h1 className="text-2xl sm:text-3xl font-bold text-slate-900 tracking-tight cursor-pointer hover:scale-105 transition-transform duration-200 group-hover:text-emerald-700">
             Zip Nivasa
           </h1>

@@ -9,7 +9,7 @@ export async function geocodeAddress(structured) {
     .replace(/\s{2,}/g, " ")  // extra spaces
     .trim();
 
-  console.log("👉 Starting OpenCage with:", full);
+  console.log(" Starting OpenCage with:", full);
 
   // Split address into comma-separated segments
   let parts = full.split(",").map(s => s.trim()).filter(Boolean);
@@ -36,7 +36,8 @@ export async function geocodeAddress(structured) {
       const result = response.data.results?.[0];
 
       if (result) {
-        console.log("OpenCage SUCCESS →", query);
+        console.log("OpenCage SUCCESS ", query);
+        console.log(result.geometry.lat, result.geometry.lng);
         return {
           lat: result.geometry.lat,
           lng: result.geometry.lng,
