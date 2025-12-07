@@ -9,14 +9,17 @@ export const registerFcmToken = async (req, res) => {
       return res.status(400).json({ success: false, message: "FCM token required" });
     }
 
-    const user = await User.findById(userId);
-    if (!user) return res.status(404).json({ success: false, message: "User not found" });
+    const updatedUser = await User.findByIdAndUpdate(
+      userId,
+      {
+        $addToSet: { fcmTokens: token } // prevents duplicates automatically
+      },
+      { new: true }
+    );
 
-    const tokens = new Set(user.fcmTokens || []);
-    tokens.add(token);
-    user.fcmTokens = Array.from(tokens).slice(-5);
-
-    await user.save();
+    if (!updatedUser) {
+      return res.status(404).json({ success: false, message: "User not found" });
+    }
 
     res.json({ success: true });
   } catch (err) {

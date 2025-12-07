@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from "react";
 import Sidebar from "../../components/Sidebar";
 import Header from "../../components/Header";
+import { Link } from "react-router-dom";
 import Footer from "../../components/Footer";
 import AppLayout from "../../layouts/AppLayout";
 
@@ -507,9 +508,9 @@ const MessOwnerDashboard = () => {
             </p>
           </div>
 
-          <button className="px-5 py-2.5 bg-emerald-600 text-white rounded-xl shadow-md hover:bg-emerald-700 transition font-semibold">
+          <Link to="/dashboard/add-mess" className="px-5 py-2.5 bg-emerald-600 text-white rounded-xl shadow-md hover:bg-emerald-700 transition font-semibold">
             ➕ Add New Mess
-          </button>
+          </Link>
         </div>
 
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 mb-10 w-full">

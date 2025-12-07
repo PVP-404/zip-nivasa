@@ -2,7 +2,7 @@ import React, { useState, useEffect, useMemo } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import Header from "../../components/Header";
 import Footer from "../../components/Footer";
-import Sidebar from "../../components/Sidebar";
+import Sidebar from "../../components/Sidebar"; 
 import { FaRupeeSign } from "react-icons/fa";
 import LocationAutosuggest from "../../components/LocationAutosuggest";
 
@@ -30,7 +30,7 @@ const SpinnerIcon = () => (
 
 const steps = [
   { id: 1, name: "Property Details", icon: <HomeIcon /> },
-  { id: 2, name: "Pricing & Amenities", icon: <CurrencyIcon /> },
+  { id: 2, name: "Pricing & Amenities", icon: <FaRupeeSign /> },
   { id: 3, name: "Description & Media", icon: <PhotoIcon /> },
 ];
 

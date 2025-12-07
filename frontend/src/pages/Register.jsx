@@ -1,7 +1,7 @@
 import React, { useState, useCallback } from "react";
 import { motion } from "framer-motion";
 import { Link } from "react-router-dom";
-import { FaUserPlus, FaSignInAlt, FaCheckCircle, FaSpinner, FaSchool, FaBriefcase, FaBuilding, FaUtensils, FaMapMarkerAlt, FaKey } from "react-icons/fa"; 
+import { FaUserPlus, FaSignInAlt, FaCheckCircle, FaSpinner, FaSchool, FaBuilding, FaUtensils, FaMapMarkerAlt, FaKey, FaExclamationCircle } from "react-icons/fa"; 
 
 const CustomInput = ({ name, placeholder, value, onChange, type = "text", required = true, className = "", children, maxLength, minLength }) => (
     <motion.div className="relative" initial={{ opacity: 0, y: 5 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.2 }}>
@@ -11,7 +11,7 @@ const CustomInput = ({ name, placeholder, value, onChange, type = "text", requir
             type={type} 
             value={value || ''} 
             onChange={onChange} 
-            className={`w-full border border-emerald-200 p-4 rounded-xl shadow-sm bg-white/90 backdrop-blur-sm focus:border-emerald-400 focus:ring-2 focus:ring-emerald-100/50 focus:shadow-md transition-all duration-300 placeholder-slate-400 text-slate-900 ${className}`} 
+            className={`w-full border border-slate-300 p-3 rounded-lg shadow-sm bg-white focus:border-emerald-500 focus:ring-1 focus:ring-emerald-500 transition-all duration-300 placeholder-slate-400 text-slate-900 ${className}`} 
             required={required} 
             maxLength={maxLength}
             minLength={minLength}
@@ -24,10 +24,10 @@ const RoleTab = ({ roleKey, currentRole, setRole, icon: Icon, label }) => (
     <motion.button
         key={roleKey}
         onClick={() => setRole(roleKey)}
-        className={`flex-1 flex flex-col items-center justify-center p-5 transition-all duration-300 border rounded-xl shadow-sm backdrop-blur-sm ${
+        className={`flex-1 flex flex-col items-center justify-center p-4 transition-all duration-300 border rounded-lg shadow-sm ${
             currentRole === roleKey
-                ? "bg-emerald-500/90 text-white border-emerald-400 shadow-emerald-200/50 ring-2 ring-emerald-200/50"
-                : "bg-white/80 text-slate-700 border-emerald-100/50 hover:bg-emerald-50 hover:border-emerald-200 hover:text-emerald-700 hover:shadow-md"
+                ? "bg-emerald-50 text-emerald-700 border-emerald-500 shadow-inner"
+                : "bg-white text-slate-600 border-slate-200 hover:bg-slate-50 hover:border-slate-300 hover:text-slate-800"
         }`}
         whileHover={{ scale: currentRole === roleKey ? 1.0 : 1.02, y: -1 }}
         whileTap={{ scale: 0.98 }}
@@ -213,14 +213,14 @@ const Register = () => {
                             <div>
                                 <CustomInput type="password" name="password" placeholder="Create Password *" value={formData.password} onChange={handleChange} minLength={6} />
                                 {errors.password && (
-                                    <p className="text-emerald-600 text-sm mt-2 font-medium flex items-center gap-1 bg-emerald-50/50 px-3 py-1.5 rounded-lg border border-emerald-200">
-                                        <FaKey className="w-4 h-4" /> {errors.password}
+                                    <p className="text-red-600 text-xs mt-2 font-medium flex items-start gap-1.5 bg-red-50/80 px-3 py-1.5 rounded-lg border border-red-200">
+                                        <FaExclamationCircle className="w-3 h-3 mt-0.5 flex-shrink-0" /> <span>{errors.password}</span>
                                     </p>
                                 )}
                             </div>
                             
                             <div>
-                                <div className="flex bg-white/90 backdrop-blur-sm rounded-xl shadow-sm border border-emerald-200 overflow-hidden">
+                                <div className="flex bg-white rounded-lg shadow-sm border border-slate-300 overflow-hidden focus-within:ring-1 focus-within:ring-emerald-500 focus-within:border-emerald-500">
                                     <select 
                                         name="countryCode" 
                                         value={countryCode} 
@@ -231,20 +231,20 @@ const Register = () => {
                                             <option key={c.code} value={c.code}>{c.label}</option>
                                         ))}
                                     </select>
-                                    <div className="w-px bg-emerald-200"></div>
+                                    <div className="w-px bg-slate-300 my-2"></div>
                                     <input 
                                         type="tel" 
                                         name="phone" 
                                         placeholder="10 digit phone" 
                                         value={formData.phone} 
                                         onChange={handleChange} 
-                                        className="flex-1 border-0 p-4 bg-transparent text-slate-900 placeholder-slate-400 font-semibold focus:ring-0"
+                                        className="flex-1 border-0 p-3 bg-transparent text-slate-900 placeholder-slate-400 font-semibold focus:ring-0"
                                         maxLength={10}
                                     />
                                 </div>
                                 {errors.phone && (
-                                    <p className="text-emerald-600 text-sm mt-2 font-medium flex items-center gap-1 bg-emerald-50/50 px-3 py-1.5 rounded-lg border border-emerald-200">
-                                        <FaMapMarkerAlt className="w-4 h-4" /> {errors.phone}
+                                    <p className="text-red-600 text-xs mt-2 font-medium flex items-center gap-1.5 bg-red-50/80 px-3 py-1.5 rounded-lg border border-red-200">
+                                        <FaExclamationCircle className="w-3 h-3" /> {errors.phone}
                                     </p>
                                 )}
                             </div>
@@ -257,7 +257,7 @@ const Register = () => {
                                         <FaSchool className="text-emerald-500" /> Tenant Details
                                     </h3>
                                     <CustomInput name="city" placeholder="Target City *" value={formData.city} onChange={handleChange} />
-                                    <select name="professionType" value={formData.professionType} onChange={handleChange} className="w-full border border-emerald-200 p-4 rounded-xl bg-white/90 backdrop-blur-sm shadow-sm focus:border-emerald-400 focus:ring-2 focus:ring-emerald-100/50 transition-all duration-300 text-slate-900" required={true}>
+                                    <select name="professionType" value={formData.professionType} onChange={handleChange} className="w-full border border-slate-300 p-3 rounded-lg bg-white shadow-sm focus:border-emerald-500 focus:ring-1 focus:ring-emerald-500 transition-all duration-300 text-slate-900" required={true}>
                                         <option value="" disabled>Select Profession Type</option>
                                         <option value="student">Student</option>
                                         <option value="job">Working Professional</option>
@@ -285,22 +285,21 @@ const Register = () => {
                         <motion.button 
                             type="submit" 
                             disabled={isLoading || !!errors.password || !!errors.phone || formData.phone.length !== 10} 
-                            className={`group relative w-full py-4 text-lg font-bold rounded-xl flex justify-center gap-3 items-center transition-all duration-300 shadow-lg mt-8 border overflow-hidden ${
+                            className={`group relative w-full py-3 text-base font-bold rounded-xl flex justify-center gap-3 items-center transition-all duration-300 shadow-lg mt-8 border overflow-hidden ${
                                 isLoading || errors.password || errors.phone || formData.phone.length !== 10
-                                    ? "bg-emerald-100 text-emerald-400 border-emerald-200 cursor-not-allowed" 
-                                    : "bg-gradient-to-r from-emerald-600 to-emerald-700 hover:from-emerald-700 hover:to-emerald-800 text-white border-emerald-500/30 shadow-emerald-300/50 hover:shadow-emerald-400/60"
+                                    ? "bg-slate-200 text-slate-400 border-slate-300 cursor-not-allowed" 
+                                    : "bg-emerald-600 hover:bg-emerald-700 text-white border-emerald-700 shadow-emerald-200/50 hover:shadow-lg hover:shadow-emerald-300/50"
                             }`}
                             whileHover={!(isLoading || errors.password || errors.phone || formData.phone.length !== 10) ? { 
                                 scale: 1.02, 
-                                boxShadow: "0 15px 30px rgba(16, 185, 129, 0.3)" 
                             } : {}}
                             whileTap={!(isLoading || errors.password || errors.phone || formData.phone.length !== 10) ? { scale: 0.98 } : {}}
                         >
-                            <span className="relative z-10">
-                                {isLoading ? <FaSpinner className="animate-spin text-xl" /> : <FaUserPlus className="text-xl" />}
+                            <span className="relative z-10 flex items-center gap-2">
+                                {isLoading ? <FaSpinner className="animate-spin" /> : <FaUserPlus />}
                                 {isLoading ? "Processing..." : "Create Account"}
                             </span>
-                            <div className={`absolute inset-0 bg-white/10 -translate-x-full group-hover:translate-x-full transition-transform duration-700 ${isLoading || errors.password || errors.phone || formData.phone.length !== 10 ? 'hidden' : ''}`} />
+                            <div className={`absolute inset-0 bg-white/20 -translate-x-full group-hover:translate-x-0 transition-transform duration-500 ease-out ${isLoading || errors.password || errors.phone || formData.phone.length !== 10 ? 'hidden' : ''}`} />
                         </motion.button>
                         
                         <p className="text-center text-sm text-slate-500 pt-4">
