@@ -1,5 +1,6 @@
 import React, { useState } from "react";
 import { useNavigate, useLocation, Link } from "react-router-dom";
+import { requestFCMToken, registerTokenWithBackend } from "../services/fcm";
 import { motion } from "framer-motion";
 
 const roleImages = {
@@ -42,6 +43,7 @@ const Login = () => {
         alert(data?.message || "Login failed");
         return;
       }
+
       localStorage.setItem("token", data.token);
       localStorage.setItem("userId", data.user.id);
       localStorage.setItem("role", data.user.role);
@@ -53,6 +55,14 @@ const Login = () => {
       }
 
       console.log("LOGIN RESPONSE:", data);
+
+      const browserToken = await requestFCMToken();
+
+      if (browserToken) {
+        localStorage.setItem("fcmToken", browserToken);
+       
+        await registerTokenWithBackend(browserToken);
+      }
 
       switch (data.user.role) {
         case "tenant":
@@ -74,6 +84,7 @@ const Login = () => {
         default:
           navigate("/");
       }
+
     } catch (error) {
       console.error("Login error:", error);
       alert("Login failed. Please try again.");

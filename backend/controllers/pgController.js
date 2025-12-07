@@ -1,4 +1,3 @@
-// backend/controllers/pgController.js
 import PG from "../models/PGModel.js";
 import User from "../models/User.js";
 import { geocodeAddress } from "../utils/geocode.js";
@@ -15,7 +14,7 @@ export const createPG = async (req, res) => {
     const user = await User.findById(userId);
 
     if (!user || user.role !== "pgowner") {
-      return res.status(403).json({ message: "Unauthorized" });
+      return res.status(403).json({ message: "Forbidden" });
     }
 
     const {
@@ -44,20 +43,20 @@ export const createPG = async (req, res) => {
     }
 
 
-    const cleanedStreet = streetAddress
-      ? streetAddress
-        .replace(/S\.?No\.?\s*\d+/gi, "")
-        .replace(/Nr\s+/gi, "Near ")
-        .replace(/\s{2,}/g, " ")
-        .replace(/,\s*,/g, ", ")
-        .trim()
-      : "";
+    const cleanedStreet = streetAddress;
+      // ? streetAddress
+      //   .replace(/S\.?No\.?\s*\d+/gi, "")
+      //   .replace(/Nr\s+/gi, "Near ")
+      //   .replace(/\s{2,}/g, " ")
+      //   .replace(/,\s*,/g, ", ")
+      //   .trim()
+      // : "";
 
     const geocodeQuery = {
       address: cleanedStreet || streetAddress,
-      city: district,
-      state: state,
-      pincode: pincode,
+      // city: district,
+      // state: state,
+      // pincode: pincode,
     };
 
     console.log("FINAL CLEANED GEOCODE QUERY:", geocodeQuery);

@@ -5,10 +5,10 @@ function cleanAddressForMappls(raw) {
   if (!raw) return "";
 
   return raw
-    .replace(/S\.?No\.?\s*\d+/gi, "")
-    .replace(/Nr\s+/gi, "Near ")
-    .replace(/\s{2,}/g, " ")
-    .replace(/,\s*,/g, ", ")
+    // .replace(/S\.?No\.?\s*\d+/gi, "")
+    // .replace(/Nr\s+/gi, "Near ")
+    // .replace(/\s{2,}/g, " ")
+    // .replace(/,\s*,/g, ", ")
     .trim();
 }
 
