@@ -53,21 +53,19 @@ function NotificationToast({ notif, onClose }) {
 
   return createPortal(
     <div
-      className="fixed top-5 right-5 z-[9999] w-full max-w-sm transition-all duration-200"
+      className="fixed top-5 right-5 z-[9999] w-full max-w-sm animate-fadeIn"
       onMouseEnter={() => setIsHovered(true)}
       onMouseLeave={() => setIsHovered(false)}
     >
       <div
         onClick={handleToastClick}
-        className="group relative bg-white/90 backdrop-blur-md shadow-xl hover:shadow-2xl border border-gray-100 rounded-2xl p-6 
-                  transition-all duration-300 hover:-translate-y-1 focus-within:-translate-y-1 overflow-hidden cursor-pointer
-                  hover:bg-indigo-50/50 active:scale-[0.98]"
+        className="group relative bg-white/90 backdrop-blur-md shadow-lg hover:shadow-xl border border-gray-100 rounded-2xl p-5 
+                  transition-all duration-300 overflow-hidden cursor-pointer
+                  hover:bg-gray-50/50 active:scale-[0.98]"
       >
-        <div className="absolute inset-0 bg-gradient-to-br from-indigo-50/50 to-purple-50/30 rounded-2xl -z-10" />
-
-        <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-gray-200 via-indigo-200/50 to-transparent rounded-t-2xl">
+        <div className="absolute top-0 left-0 w-full h-1 bg-gray-100 rounded-t-2xl">
           <div
-            className="h-full bg-gradient-to-r from-indigo-500 via-purple-600 to-pink-500 rounded-t-2xl shadow-sm transition-all duration-100"
+            className="h-full bg-indigo-400 rounded-t-2xl shadow-sm transition-all duration-100"
             style={{ width: `${progress}%` }}
           />
         </div>
@@ -87,8 +85,8 @@ function NotificationToast({ notif, onClose }) {
 
         <div className="relative z-10 pt-1">
           <div className="flex items-start gap-3 mb-3">
-            <div className="flex-shrink-0 w-10 h-10 p-2.5 bg-gradient-to-br from-indigo-100 to-purple-100 rounded-2xl 
-                           border border-indigo-200/50 shadow-sm ring-1 ring-white/50 backdrop-blur-sm flex items-center justify-center mt-0.5">
+            <div className="flex-shrink-0 w-10 h-10 p-2.5 bg-emerald-100 rounded-2xl 
+                           border border-emerald-200/50 shadow-sm flex items-center justify-center mt-0.5">
               {getIcon()}
             </div>
 
@@ -109,10 +107,9 @@ function NotificationToast({ notif, onClose }) {
                 e.stopPropagation();
                 onClose();
               }}
-              className="group/link w-full inline-flex items-center justify-center gap-2 text-sm font-semibold 
-                         bg-gradient-to-r from-indigo-500 to-purple-600 hover:from-indigo-600 hover:to-purple-700 
-                         text-white py-3 px-4 rounded-xl shadow-lg hover:shadow-xl hover:-translate-y-1 focus:outline-none 
-                         focus:ring-4 focus:ring-indigo-500/20 transition-all duration-300 active:scale-[0.97]"
+              className="group/link w-full inline-flex items-center justify-center gap-2 text-sm font-semibold bg-indigo-500
+                         hover:bg-indigo-600 text-white py-2.5 px-4 rounded-xl shadow-md hover:shadow-lg focus:outline-none 
+                         focus:ring-4 focus:ring-indigo-500/20 transition-all duration-200 active:scale-[0.98]"
             >
               <span>Reply</span>
               <MessageCircle className="w-4 h-4 group-hover/link:translate-x-0.5 transition-transform" />
@@ -122,18 +119,15 @@ function NotificationToast({ notif, onClose }) {
       </div>
 
       <style jsx>{`
-        @keyframes slide-in {
+        @keyframes fadeIn {
           from {
-            transform: translateX(100%) translateY(-10px);
+            transform: translateY(10px);
             opacity: 0;
           }
           to {
-            transform: translateX(0) translateY(0);
+            transform: translateY(0);
             opacity: 1;
           }
-        }
-        .transition-all {
-          animation: slide-in 0.4s cubic-bezier(0.25, 0.46, 0.45, 0.94);
         }
         .line-clamp-2 {
           display: -webkit-box;

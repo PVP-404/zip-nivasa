@@ -4,9 +4,9 @@ export async function geocodeAddress(structured) {
   const apiKey = process.env.OPENCAGE_KEY;
   if (!apiKey) throw new Error("OPENCAGE_KEY missing");
 
-  let full = `${structured.address}, ${structured.city}, ${structured.state} ${structured.pincode}`
-    .replace(/,\s*,/g, ",")   // remove empty commas
-    .replace(/\s{2,}/g, " ")  // extra spaces
+  let full = `${structured.address}`
+    // .replace(/,\s*,/g, ",")   // remove empty commas
+    // .replace(/\s{2,}/g, " ")  // extra spaces
     .trim();
 
   console.log(" Starting OpenCage with:", full);
@@ -17,7 +17,7 @@ export async function geocodeAddress(structured) {
   // Try again and again removing first part each time
   while (parts.length > 0) {
     const query = parts.join(", ");
-    console.log("🔎 Trying OpenCage Query →", query);
+    console.log("Trying OpenCage Query →", query);
 
     try {
       const response = await axios.get(

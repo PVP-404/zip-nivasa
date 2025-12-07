@@ -1,6 +1,8 @@
 import React, { useState, useEffect, useCallback, useMemo } from "react";
 import { useNavigate, Link } from "react-router-dom";
 import { fetchNotifications, markAllNotificationsRead } from "../services/notificationService";
+import { requestFCMToken ,deregisterTokenWithBackend } from "../services/fcm";
+import axios from "axios";
 import { Bell, ChevronRight, ChevronDown } from "lucide-react";
 
 const NotificationItem = React.memo(({ notification, index }) => (
@@ -96,12 +98,24 @@ const Header = ({ onToggleSidebar }) => {
     }
   }, [showNotif, unreadCount]);
 
-  const handleLogout = useCallback(() => {
+const handleLogout = useCallback(async () => {
+  try {
+    //  Try to deregister FCM token from backend
+    await deregisterTokenWithBackend();
+  } catch (err) {
+    console.error("Error during FCM deregistration:", err);
+  } finally {
+    //  Clear all local data
     localStorage.removeItem("token");
     localStorage.removeItem("role");
     localStorage.removeItem("username");
+    localStorage.removeItem("userId");
+    localStorage.removeItem("fcmToken");
+
+    //  Redirect to login
     navigate("/login", { replace: true });
-  }, [navigate]);
+  }
+}, [navigate]);
 
   const handleProfile = useCallback(() => {
     setShowDropdown(false);

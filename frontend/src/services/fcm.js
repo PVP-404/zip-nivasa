@@ -11,6 +11,11 @@ export async function requestFCMToken() {
       vapidKey: import.meta.env.VITE_FIREBASE_VAPID_KEY,
     });
 
+    if (token) {
+      // Save in localStorage so we can deregister on logout
+      localStorage.setItem("fcmToken", token);
+    }
+
     return token;
   } catch {
     return null;
@@ -48,5 +53,25 @@ export async function registerTokenWithBackend(token) {
       { token },
       { headers: { Authorization: `Bearer ${jwt}` } }
     );
-  } catch {}
+  } catch {
+    // ignore
+  }
+}
+
+// New helper: call  on logout
+export async function deregisterTokenWithBackend() {
+  try {
+    const jwt = localStorage.getItem("token");
+    const fcmToken = localStorage.getItem("fcmToken");
+
+    if (!jwt || !fcmToken) return;
+
+    await axios.post(
+      "http://localhost:5000/api/notifications/deregister-token",
+      { token: fcmToken },
+      { headers: { Authorization: `Bearer ${jwt}` } }
+    );
+  } catch (err) {
+    console.error("Failed to deregister FCM token:", err);
+  }
 }
