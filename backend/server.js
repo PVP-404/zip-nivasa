@@ -1,4 +1,3 @@
-// backend/server.js
 import express from "express";
 import cors from "cors";
 import dotenv from "dotenv";
@@ -54,8 +53,8 @@ app.use(
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
-// Static folder
-app.use("/uploads", express.static(path.join(__dirname, "uploads")));
+// // Static folder
+// app.use("/uploads", express.static(path.join(__dirname, "uploads")));
 
 // DB
 connectDB();
@@ -70,7 +69,7 @@ app.use("/api/notifications", notificationRoutes);
 app.use("/api/user-notifications", userNotificationRoutes);
 // Test route
 app.get("/", (req, res) => {
-  res.send("Zip Nivasa Backend Running ✅");
+  res.send("Zip Nivasa Backend Running ");
 });
 
 // API mess Routes

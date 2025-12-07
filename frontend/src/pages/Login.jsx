@@ -81,14 +81,14 @@ const Login = () => {
   };
 
   return (
-    <div className="min-h-screen flex flex-col md:flex-row items-center justify-center bg-gradient-to-r from-sky-50 via-indigo-50 to-purple-50">
+    <div className="min-h-screen flex flex-col md:flex-row items-center justify-center bg-gradient-to-r from-emerald-50/90 via-emerald-50 to-mint-50/90">
       <div className="hidden md:block md:w-1/2 h-screen relative">
         <img
           src={roleImages[roleParam.toLowerCase()] || roleImages.student}
           className="w-full h-full object-cover rounded-l-3xl"
           alt="Role"
         />
-        <div className="absolute inset-0 bg-sky-700 bg-opacity-30 flex items-center justify-center">
+        <div className="absolute inset-0 bg-emerald-600 bg-opacity-30 flex items-center justify-center">
           <img src={loginBanner} className="w-40 h-40 md:w-56 md:h-56" alt="Banner" />
         </div>
       </div>
@@ -99,18 +99,18 @@ const Login = () => {
         animate={{ opacity: 1, scale: 1 }}
         transition={{ duration: 0.6 }}
       >
-        <div className="bg-white p-10 rounded-3xl shadow-xl border w-full max-w-md">
-          <h2 className="text-4xl font-bold text-gray-800 text-center mb-2">Login</h2>
-          <p className="text-gray-500 text-center mb-8">
+        <div className="bg-white/95 backdrop-blur-xl p-10 rounded-3xl shadow-2xl border border-emerald-100 w-full max-w-md">
+          <h2 className="text-4xl font-bold text-emerald-800 text-center mb-2">Login</h2>
+          <p className="text-emerald-500 text-center mb-8">
             Enter your details to continue
           </p>
 
           <form onSubmit={handleLogin} className="space-y-6">
             <div>
-              <label className="block text-sm text-gray-600 mb-1">Email</label>
+              <label className="block text-sm text-emerald-600 mb-1 font-semibold">Email</label>
               <input
                 type="email"
-                className="w-full p-3 border rounded-lg"
+                className="w-full p-3 border border-emerald-300 rounded-lg focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 outline-none bg-white/95 backdrop-blur-sm shadow-sm hover:shadow-md transition-all"
                 placeholder="you@example.com"
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
@@ -119,10 +119,10 @@ const Login = () => {
             </div>
 
             <div>
-              <label className="block text-sm text-gray-600 mb-1">Password</label>
+              <label className="block text-sm text-emerald-600 mb-1 font-semibold">Password</label>
               <input
                 type="password"
-                className="w-full p-3 border rounded-lg"
+                className="w-full p-3 border border-emerald-300 rounded-lg focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 outline-none bg-white/95 backdrop-blur-sm shadow-sm hover:shadow-md transition-all"
                 placeholder="********"
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
@@ -132,15 +132,15 @@ const Login = () => {
 
             <button
               type="submit"
-              className="w-full py-3 bg-gradient-to-r from-sky-500 to-indigo-600 text-white rounded-lg shadow-md hover:scale-105 transition-all"
+              className="w-full py-3 bg-gradient-to-r from-emerald-500 to-emerald-600 text-white rounded-lg shadow-md hover:from-emerald-600 hover:to-emerald-700 hover:shadow-lg hover:scale-105 transition-all duration-200"
             >
               Login
             </button>
           </form>
 
-          <p className="text-center text-gray-500 mt-8">
+          <p className="text-center text-emerald-500 mt-8">
             New to Zip-Nivasa?{" "}
-            <Link className="text-sky-600 font-medium" to={`/register?role=${roleParam}`}>
+            <Link className="text-emerald-600 font-semibold hover:text-emerald-700 transition-colors" to={`/register?role=${roleParam}`}>
               Create an account
             </Link>
           </p>

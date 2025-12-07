@@ -10,7 +10,7 @@ const ICON_PATHS = {
   laundry:
     "M5 3h14a1 1 0 011 1v14a1 1 0 01-1 1H5a1 1 0 01-1-1V4a1 1 0 011-1zm1 3h12V5H6v1zm2.5 4a2.5 2.5 0 105 0 2.5 2.5 0 00-5 0z",
   wishlist:
-    "M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5A4.5 4.5 0 016.5 4 5 5 0 0112 6a5 5 0 015.5-2A4.5 4.5 0 0122 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z",
+    "M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5A4.5 4.5 0 016.5 4A5 5 0 0112 6a5 5 0 015.5-2A4.5 4.5 0 0122 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z",
   profile:
     "M12 12a4 4 0 100-8 4 4 0 000 8zm-7 8a7 7 0 0114 0H5z",
   messages:
@@ -88,26 +88,10 @@ const Sidebar = ({ isOpen }) => {
 
   const DesktopSidebar = () => (
     <aside
-      className={`hidden lg:flex flex-col bg-white border-r border-gray-200 shadow-sm transition-all duration-300 ${
+      className={`hidden lg:flex flex-col bg-white/95 backdrop-blur-sm border-r border-emerald-100 shadow-sm transition-all duration-300 ${
         isOpen ? "w-60" : "w-20"
       }`}
     >
-      <div className="flex items-center gap-2 px-3 py-4 border-b border-gray-100 justify-center">
-        <div className="w-9 h-9 bg-gradient-to-br from-yellow-400 to-orange-500 rounded-xl flex items-center justify-center shadow-md">
-          <span className="text-white font-bold text-lg">Z</span>
-        </div>
-        {isOpen && (
-          <div className="flex flex-col">
-            <span className="text-sm font-semibold text-gray-900">
-              Zip Nivasa
-            </span>
-            <span className="text-[10px] text-gray-500">
-              Find. Connect. Live.
-            </span>
-          </div>
-        )}
-      </div>
-
       <nav className="flex-1 py-3 space-y-2 overflow-y-auto">
         {menus[role]?.map((item) => {
           const active = isActive(item.path);
@@ -121,20 +105,20 @@ const Sidebar = ({ isOpen }) => {
                   : "px-2 py-3"
               } ${
                 active
-                  ? "bg-indigo-50 text-indigo-700 font-semibold"
-                  : "text-gray-700 hover:bg-gray-50"
+                  ? "bg-emerald-50 text-emerald-700 font-semibold border-r-2 border-emerald-500"
+                  : "text-slate-700 hover:bg-emerald-25 hover:text-emerald-600"
               }`}
             >
               <Icon
                 name={item.icon}
-                className={`w-6 h-6 mb-1 ${
-                  active ? "text-indigo-600" : "text-gray-500"
+                className={`w-6 h-6 mb-1 transition-colors ${
+                  active ? "text-emerald-600" : "text-slate-500 group-hover:text-emerald-500"
                 } ${isOpen ? "mr-3 mb-0" : "mx-auto"}`}
               />
               {isOpen ? (
-                <span className="truncate text-sm">{item.label}</span>
+                <span className="truncate text-sm font-medium">{item.label}</span>
               ) : (
-                <span className="text-[10px] text-gray-600 leading-tight">
+                <span className="text-[10px] text-slate-600 leading-tight font-medium">
                   {item.label.length > 8
                     ? item.label.slice(0, 8) + "…"
                     : item.label}
@@ -150,17 +134,17 @@ const Sidebar = ({ isOpen }) => {
   const MobileSidebar = () =>
     isOpen ? (
       <div className="fixed inset-0 z-40 flex lg:hidden">
-        <div className="flex-1 bg-black/30" />
-        <aside className="w-60 bg-white h-full shadow-2xl border-l border-gray-200">
-          <div className="flex items-center gap-2 px-3 py-4 border-b border-gray-100">
-            <div className="w-9 h-9 bg-gradient-to-br from-yellow-400 to-orange-500 rounded-xl flex items-center justify-center shadow-md">
+        <div className="flex-1 bg-black/20 backdrop-blur-sm" />
+        <aside className="w-60 bg-white/95 h-full shadow-2xl backdrop-blur-sm border-l border-emerald-100">
+          <div className="flex items-center gap-2 px-3 py-4 border-b border-emerald-100 bg-gradient-to-r from-emerald-50 to-mint-50">
+            <div className="w-9 h-9 bg-gradient-to-br from-emerald-500 to-mint-500 rounded-xl flex items-center justify-center shadow-md">
               <span className="text-white font-bold text-lg">Z</span>
             </div>
             <div className="flex flex-col">
-              <span className="text-sm font-semibold text-gray-900">
+              <span className="text-sm font-semibold text-slate-900">
                 Zip Nivasa
               </span>
-              <span className="text-[10px] text-gray-500">
+              <span className="text-[10px] text-emerald-600 font-medium">
                 Find. Connect. Live.
               </span>
             </div>
@@ -173,17 +157,17 @@ const Sidebar = ({ isOpen }) => {
                 <button
                   key={item.path}
                   onClick={() => handleNavigation(item.path)}
-                  className={`w-full flex items-center px-3 py-2 rounded-lg text-sm transition-all ${
+                  className={`w-full flex items-center px-3 py-2 rounded-lg text-sm transition-all font-medium ${
                     active
-                      ? "bg-indigo-50 text-indigo-700 font-semibold"
-                      : "text-gray-700 hover:bg-gray-50"
+                      ? "bg-emerald-50 text-emerald-700 border-r-2 border-emerald-500"
+                      : "text-slate-700 hover:bg-emerald-25 hover:text-emerald-600"
                   }`}
                 >
                   <span className="mr-3">
                     <Icon
                       name={item.icon}
-                      className={`w-5 h-5 ${
-                        active ? "text-indigo-600" : "text-gray-500"
+                      className={`w-5 h-5 transition-colors ${
+                        active ? "text-emerald-600" : "text-slate-500"
                       }`}
                     />
                   </span>

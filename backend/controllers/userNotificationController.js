@@ -16,31 +16,45 @@ export const addNotification = async ({ userId, senderId, title, body, chatUserI
 
 export const getNotifications = async (req, res) => {
   try {
-    const userId = req.user.id;
-    
-    const notifications = await Notification.find({ userId })
+    const notifications = await Notification.find({ userId: req.user.id })
       .sort({ createdAt: -1 })
       .limit(50);
 
     res.json({ success: true, notifications });
   } catch (err) {
-    console.error("getNotifications error:", err);
     res.status(500).json({ success: false, message: err.message });
   }
 };
 
-export const markAsRead = async (req, res) => {
+export const markAllAsRead = async (req, res) => {
   try {
-    const userId = req.user.id;
-
     await Notification.updateMany(
-      { userId },
+      { userId: req.user.id },
       { $set: { isRead: true } }
     );
-
     res.json({ success: true });
   } catch (err) {
-    console.error("markAsRead error:", err);
+    res.status(500).json({ success: false, message: err.message });
+  }
+};
+
+export const deleteNotification = async (req, res) => {
+  try {
+    await Notification.findOneAndDelete({
+      _id: req.params.id,
+      userId: req.user.id
+    });
+    res.json({ success: true });
+  } catch (err) {
+    res.status(500).json({ success: false, message: err.message });
+  }
+};
+
+export const clearAllNotifications = async (req, res) => {
+  try {
+    await Notification.deleteMany({ userId: req.user.id });
+    res.json({ success: true });
+  } catch (err) {
     res.status(500).json({ success: false, message: err.message });
   }
 };

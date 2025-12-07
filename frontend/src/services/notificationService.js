@@ -1,10 +1,12 @@
 import axios from "axios";
 
+const API = "http://localhost:5000/api/user-notifications";
+
 export async function fetchNotifications() {
   const token = localStorage.getItem("token");
   if (!token) return [];
 
-  const res = await axios.get("http://localhost:5000/api/user-notifications", {
+  const res = await axios.get(API, {
     headers: { Authorization: `Bearer ${token}` }
   });
 
@@ -15,9 +17,25 @@ export async function markAllNotificationsRead() {
   const token = localStorage.getItem("token");
   if (!token) return;
 
-  await axios.post(
-    "http://localhost:5000/api/user-notifications/mark-read",
-    {},
-    { headers: { Authorization: `Bearer ${token}` } }
-  );
+  return axios.post(`${API}/mark-read`, {}, {
+    headers: { Authorization: `Bearer ${token}` }
+  });
+}
+
+export async function deleteNotification(id) {
+  const token = localStorage.getItem("token");
+  if (!token) return;
+
+  return axios.delete(`${API}/read-delete/${id}`, {
+    headers: { Authorization: `Bearer ${token}` }
+  });
+}
+
+export async function clearAllNotifications() {
+  const token = localStorage.getItem("token");
+  if (!token) return;
+
+  return axios.delete(`${API}/clear-all`, {
+    headers: { Authorization: `Bearer ${token}` }
+  });
 }

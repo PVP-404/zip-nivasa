@@ -1,15 +1,17 @@
-import React, { useState } from "react";
+import React, { useState, useCallback } from "react";
 import { motion } from "framer-motion";
-import { FaUserPlus, FaSignInAlt, FaCheckCircle, FaSpinner, FaSchool, FaBriefcase, FaBuilding, FaUtensils, FaMapMarkerAlt, FaKey } from "react-icons/fa"; 
+import { Link } from "react-router-dom";
+import { FaUserPlus, FaSignInAlt, FaCheckCircle, FaSpinner, FaSchool, FaBuilding, FaUtensils, FaMapMarkerAlt, FaKey, FaExclamationCircle } from "react-icons/fa"; 
+
 const CustomInput = ({ name, placeholder, value, onChange, type = "text", required = true, className = "", children, maxLength, minLength }) => (
-    <motion.div className="relative" initial={{ opacity: 0, y: 5 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.2 }} >
+    <motion.div className="relative" initial={{ opacity: 0, y: 5 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.2 }}>
         <input 
             name={name} 
             placeholder={placeholder} 
             type={type} 
-            value={value} 
+            value={value || ''} 
             onChange={onChange} 
-            className={`w-full border border-gray-300 p-3 rounded-xl shadow-sm focus:border-blue-500 focus:ring-2 focus:ring-blue-100 transition-all duration-200 placeholder-gray-400 ${className}`} 
+            className={`w-full border border-slate-300 p-3 rounded-lg shadow-sm bg-white focus:border-emerald-500 focus:ring-1 focus:ring-emerald-500 transition-all duration-300 placeholder-slate-400 text-slate-900 ${className}`} 
             required={required} 
             maxLength={maxLength}
             minLength={minLength}
@@ -22,16 +24,16 @@ const RoleTab = ({ roleKey, currentRole, setRole, icon: Icon, label }) => (
     <motion.button
         key={roleKey}
         onClick={() => setRole(roleKey)}
-        className={`flex-1 flex flex-col items-center justify-center p-3 sm:p-4 transition-all duration-300 ease-in-out border-b-4 rounded-t-lg ${
+        className={`flex-1 flex flex-col items-center justify-center p-4 transition-all duration-300 border rounded-lg shadow-sm ${
             currentRole === roleKey
-                ? "bg-white text-blue-600 border-blue-600 shadow-inner-lg shadow-blue-50/50"
-                : "bg-gray-50 text-gray-700 border-transparent hover:bg-gray-100 hover:text-blue-500"
+                ? "bg-emerald-50 text-emerald-700 border-emerald-500 shadow-inner"
+                : "bg-white text-slate-600 border-slate-200 hover:bg-slate-50 hover:border-slate-300 hover:text-slate-800"
         }`}
-        whileHover={{ scale: currentRole === roleKey ? 1.0 : 1.02 }}
+        whileHover={{ scale: currentRole === roleKey ? 1.0 : 1.02, y: -1 }}
         whileTap={{ scale: 0.98 }}
     >
-        <Icon className="text-2xl mb-1" />
-        <span className="text-xs sm:text-sm font-bold uppercase tracking-wider">{label}</span>
+        <Icon className={`text-xl mb-2 ${currentRole === roleKey ? 'drop-shadow-lg' : ''}`} />
+        <span className="text-sm font-semibold uppercase tracking-wide">{label}</span>
     </motion.button>
 );
 
@@ -75,7 +77,8 @@ const Register = () => {
         { code: "+61", label: "🇦🇺 +61 (Aus)" },
     ];
 
-    const validatePassword = (value) => {
+    const validatePassword = useCallback((value) => {
+        if (!value) return;
         const regex = /^(?=.*[A-Z])(?=.*[a-z])(?=.*\d)(?=.*[!@#$%^&*()_+\-={}[\]:";'<>,.?/]).{6,}$/; 
         if (!regex.test(value)) {
             setErrors(prev => ({ 
@@ -85,9 +88,9 @@ const Register = () => {
         } else {
             setErrors(prev => ({ ...prev, password: "" }));
         }
-    };
+    }, []);
 
-    const handleChange = (e) => {
+    const handleChange = useCallback((e) => {
         const { name, value } = e.target;
         let newValue = value;
 
@@ -100,17 +103,17 @@ const Register = () => {
             newValue = phoneValue;
             
             if (phoneValue.length !== 10 && phoneValue.length > 0) {
-                 setErrors(prev => ({ ...prev, phone: "Phone number must be 10 digits." }));
+                setErrors(prev => ({ ...prev, phone: "Phone number must be 10 digits." }));
             } else {
-                 setErrors(prev => ({ ...prev, phone: "" }));
+                setErrors(prev => ({ ...prev, phone: "" }));
             }
         }
 
-        setFormData({ ...formData, [name]: newValue });
-    };
+        setFormData(prev => ({ ...prev, [name]: newValue }));
+    }, [validatePassword]);
 
-    const handleSubmit = async (e) => {
-        e.preventDefault();
+    const handleSubmit = useCallback(async (e) => {
+        e?.preventDefault();
         
         if (errors.password || errors.phone || (formData.phone.length > 0 && formData.phone.length !== 10)) {
             alert("Please fix all validation issues before submitting.");
@@ -119,17 +122,15 @@ const Register = () => {
 
         setIsLoading(true);
         
-        const fullPhoneNumber = countryCode + formData.phone;
-        
-        const payload = Object.keys(formData).reduce((acc, key) => {
-            if (formData[key] !== "" && formData[key] !== null) {
-                acc[key] = formData[key];
-            }
-            return acc;
-        }, {});
-
-
         try {
+            const fullPhoneNumber = countryCode + formData.phone;
+            const payload = Object.keys(formData).reduce((acc, key) => {
+                if (formData[key] !== "" && formData[key] !== null && formData[key] !== undefined) {
+                    acc[key] = formData[key];
+                }
+                return acc;
+            }, {});
+
             const res = await fetch("http://localhost:5000/api/auth/register", {
                 method: "POST",
                 headers: { "Content-Type": "application/json" },
@@ -145,20 +146,31 @@ const Register = () => {
             
             setIsSuccess(true);
         } catch (error) {
+            console.error("Registration error:", error);
             alert("Registration failed: " + error.message);
         } finally {
             setIsLoading(false);
         }
-    };
+    }, [formData, countryCode, role, errors.password, errors.phone]);
 
     if (isSuccess) {
         return (
-            <div className="flex justify-center items-center min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 p-6 text-gray-800">
-                <motion.div initial={{ opacity: 0, scale: 0.8 }} animate={{ opacity: 1, scale: 1 }} transition={{ type: "spring", stiffness: 100 }} className="text-center bg-white p-12 rounded-3xl shadow-2xl max-w-md border border-green-200" >
-                    <FaCheckCircle className="text-8xl text-green-500 mx-auto mb-6 drop-shadow-lg" />
-                    <h2 className="text-4xl font-extrabold text-gray-800 mb-3">Welcome Aboard!</h2>
-                    <p className="text-gray-600 text-lg">Your **{role}** account has been created successfully. Redirecting to login...</p>
-                    <motion.button className="mt-10 bg-blue-600 text-white px-8 py-4 text-lg font-semibold rounded-full shadow-lg hover:bg-blue-700 transition duration-300" onClick={() => (window.location.href = "/login")} whileHover={{ scale: 1.05, boxShadow: "0 10px 20px rgba(0, 0, 0, 0.2)" }} whileTap={{ scale: 0.95 }} >
+            <div className="flex justify-center items-center min-h-screen bg-gradient-to-br from-emerald-50 via-emerald-25 to-mint-50 p-6">
+                <motion.div 
+                    initial={{ opacity: 0, scale: 0.8 }} 
+                    animate={{ opacity: 1, scale: 1 }} 
+                    transition={{ type: "spring", stiffness: 100 }} 
+                    className="text-center bg-white/95 backdrop-blur-xl p-10 rounded-2xl shadow-xl max-w-md border border-emerald-50 w-full mx-4"
+                >
+                    <FaCheckCircle className="text-7xl text-emerald-500 mx-auto mb-6 drop-shadow-lg" />
+                    <h2 className="text-3xl font-bold text-slate-900 mb-3">Welcome Aboard!</h2>
+                    <p className="text-slate-600 text-lg font-medium leading-relaxed">Your <strong>{role}</strong> account has been created successfully. Redirecting to login...</p>
+                    <motion.button 
+                        className="mt-8 bg-emerald-600 text-white px-8 py-3 text-lg font-semibold rounded-xl shadow-lg hover:shadow-xl hover:bg-emerald-700 transition-all duration-300 border border-emerald-500/20" 
+                        onClick={() => window.location.href = "/login"} 
+                        whileHover={{ scale: 1.02 }} 
+                        whileTap={{ scale: 0.98 }}
+                    >
                         <FaSignInAlt className="inline mr-2" /> Go to Login
                     </motion.button>
                 </motion.div>
@@ -167,84 +179,86 @@ const Register = () => {
     }
 
     return (
-        <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 flex justify-center items-center p-4 sm:p-6">
-            <motion.div initial={{ opacity: 0, y: 40 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.8 }} className="flex flex-col lg:flex-row bg-white shadow-3xl rounded-3xl max-w-6xl w-full overflow-hidden border border-gray-100" >
-                <div className="lg:w-2/5 relative hidden lg:block">
-                    <img src="https://img.freepik.com/premium-photo/modern-students-dormitory-room-with-cozy-interior-designed-wooden-desk-chair-computer-books_1097268-24.jpg" alt="Accommodation and food services visual" className="w-full h-full object-cover" />
-                    <div className="absolute inset-0 bg-blue-500 bg-opacity-60 flex items-center justify-center p-8">
-                        <div className="text-center">
-                            <h3 className="text-4xl font-extrabold text-white leading-snug mb-4 drop-shadow-md">
-                                Connecting Tenants & Providers
-                            </h3>
-                            <p className="text-blue-100 text-lg font-light italic">
-                                Find.Connect.Live Better.
-                            </p>
-                        </div>
+        <div className="min-h-screen bg-gradient-to-br from-emerald-50 via-green-25 to-mint-50 flex justify-center items-center p-4 sm:p-6">
+            <motion.div 
+                initial={{ opacity: 0, y: 40 }} 
+                animate={{ opacity: 1, y: 0 }} 
+                transition={{ duration: 0.8 }} 
+                className="w-full max-w-4xl mx-auto bg-white/95 backdrop-blur-xl shadow-xl rounded-2xl border border-emerald-100/50 overflow-hidden"
+            >
+                <div className="p-8 sm:p-10 text-center border-b border-emerald-100">
+                    <div className="w-16 h-16 bg-gradient-to-br from-emerald-500 to-emerald-600 rounded-2xl flex items-center justify-center mx-auto mb-6 shadow-lg">
+                        <FaUserPlus className="text-2xl text-white drop-shadow-lg" />
                     </div>
+                    <h2 className="text-3xl sm:text-4xl font-bold text-slate-900 mb-2">Create Account</h2>
+                    <p className="text-slate-500 text-lg font-medium">Select your role to get started with Zip Nivasa</p>
                 </div>
-                <div className="lg:w-3/5 p-6 sm:p-10 lg:p-12 overflow-y-auto max-h-[95vh]">
-                    <div className="text-center mb-10">
-                        <FaUserPlus className="text-5xl text-blue-600 mx-auto mb-2 drop-shadow-sm" />
-                        <h2 className="text-3xl sm:text-4xl font-extrabold text-gray-900"> Create Your Account </h2>
-                        <p className="text-gray-500 mt-1">Select your role to get started.</p>
-                    </div>
-                    <div className="flex bg-gray-50 rounded-xl shadow-inner border border-gray-100 mb-8 p-1">
-                        <RoleTab roleKey="tenant" currentRole={role} setRole={setRole} icon={FaSchool} label="Tenant" />
-                        <RoleTab roleKey="pgowner" currentRole={role} setRole={setRole} icon={FaBuilding} label="PG Owner" />
-                        <RoleTab roleKey="messowner" currentRole={role} setRole={setRole} icon={FaUtensils} label="Mess Owner" />
-                    </div>
-                    <form onSubmit={handleSubmit} className="space-y-4 sm:space-y-6">
-                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                            <CustomInput name="name" placeholder="Full Name" value={formData.name} onChange={handleChange} />
-                            <CustomInput type="email" name="email" placeholder="Email Address" value={formData.email} onChange={handleChange} />
+
+                <div className="p-8 sm:p-10 border-b border-emerald-100">
+                    <div className="bg-emerald-50/50 rounded-xl border border-emerald-100/50 p-2 mb-8">
+                        <div className="flex bg-gradient-to-r from-emerald-50 to-mint-50 rounded-xl p-1">
+                            <RoleTab roleKey="tenant" currentRole={role} setRole={setRole} icon={FaSchool} label="Tenant" />
+                            <RoleTab roleKey="pgowner" currentRole={role} setRole={setRole} icon={FaBuilding} label="PG Owner" />
+                            <RoleTab roleKey="messowner" currentRole={role} setRole={setRole} icon={FaUtensils} label="Mess Owner" />
                         </div>
-                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    </div>
+
+                    <form onSubmit={handleSubmit} className="space-y-6">
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                            <CustomInput name="name" placeholder="Full Name *" value={formData.name} onChange={handleChange} />
+                            <CustomInput type="email" name="email" placeholder="Email Address *" value={formData.email} onChange={handleChange} />
+                        </div>
+                        
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                             <div>
-                                <CustomInput type="password" name="password" placeholder="Password" value={formData.password} onChange={handleChange} minLength={6} />
+                                <CustomInput type="password" name="password" placeholder="Create Password *" value={formData.password} onChange={handleChange} minLength={6} />
                                 {errors.password && (
-                                    <p className="text-red-500 text-xs mt-1 font-medium">{errors.password}</p>
+                                    <p className="text-red-600 text-xs mt-2 font-medium flex items-start gap-1.5 bg-red-50/80 px-3 py-1.5 rounded-lg border border-red-200">
+                                        <FaExclamationCircle className="w-3 h-3 mt-0.5 flex-shrink-0" /> <span>{errors.password}</span>
+                                    </p>
                                 )}
                             </div>
                             
                             <div>
-                                <div className="flex rounded-xl shadow-sm">
+                                <div className="flex bg-white rounded-lg shadow-sm border border-slate-300 overflow-hidden focus-within:ring-1 focus-within:ring-emerald-500 focus-within:border-emerald-500">
                                     <select 
                                         name="countryCode" 
                                         value={countryCode} 
                                         onChange={(e) => setCountryCode(e.target.value)} 
-                                        className="border border-gray-300 p-3 rounded-l-xl bg-gray-50 focus:border-blue-500 focus:ring-2 focus:ring-blue-100 transition-all duration-200 max-w-[120px]"
-                                        required
+                                        className="border-0 p-4 bg-transparent text-slate-700 font-semibold rounded-none focus:ring-0 max-w-[130px]"
                                     >
                                         {countryCodes.map(c => (
                                             <option key={c.code} value={c.code}>{c.label}</option>
                                         ))}
                                     </select>
+                                    <div className="w-px bg-slate-300 my-2"></div>
                                     <input 
                                         type="tel" 
                                         name="phone" 
-                                        placeholder="Phone Number (10 digits)" 
+                                        placeholder="10 digit phone" 
                                         value={formData.phone} 
                                         onChange={handleChange} 
-                                        className="w-full border border-gray-300 p-3 rounded-r-xl shadow-sm focus:border-blue-500 focus:ring-2 focus:ring-blue-100 transition-all duration-200 placeholder-gray-400"
-                                        required
+                                        className="flex-1 border-0 p-3 bg-transparent text-slate-900 placeholder-slate-400 font-semibold focus:ring-0"
                                         maxLength={10}
-                                        pattern="\d{10}" 
-                                        title="Phone number must be exactly 10 digits"
                                     />
                                 </div>
                                 {errors.phone && (
-                                    <p className="text-red-500 text-xs mt-1 font-medium">{errors.phone}</p>
+                                    <p className="text-red-600 text-xs mt-2 font-medium flex items-center gap-1.5 bg-red-50/80 px-3 py-1.5 rounded-lg border border-red-200">
+                                        <FaExclamationCircle className="w-3 h-3" /> {errors.phone}
+                                    </p>
                                 )}
                             </div>
                         </div>
 
                         <motion.div key={role} initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.4 }}>
                             {role === "tenant" && (
-                                <motion.div className="space-y-4 pt-2 border-t border-gray-200">
-                                    <h3 className="text-lg font-semibold text-gray-700 pt-3">Tenant Details</h3>
-                                    <CustomInput name="city" placeholder="Target City" value={formData.city} onChange={handleChange} required={true} />
-                                    <select name="professionType" value={formData.professionType} onChange={handleChange} className="w-full border border-gray-300 p-3 rounded-xl bg-white shadow-sm focus:border-blue-500 focus:ring-2 focus:ring-blue-100 transition-all duration-200" required={true} >
-                                        <option value="" disabled className="text-gray-400">Select Profession Type</option>
+                                <motion.div className="space-y-6 pt-6 border-t border-emerald-100/50">
+                                    <h3 className="text-2xl font-bold text-slate-900 flex items-center gap-3">
+                                        <FaSchool className="text-emerald-500" /> Tenant Details
+                                    </h3>
+                                    <CustomInput name="city" placeholder="Target City *" value={formData.city} onChange={handleChange} />
+                                    <select name="professionType" value={formData.professionType} onChange={handleChange} className="w-full border border-slate-300 p-3 rounded-lg bg-white shadow-sm focus:border-emerald-500 focus:ring-1 focus:ring-emerald-500 transition-all duration-300 text-slate-900" required={true}>
+                                        <option value="" disabled>Select Profession Type</option>
                                         <option value="student">Student</option>
                                         <option value="job">Working Professional</option>
                                     </select>
@@ -266,54 +280,33 @@ const Register = () => {
                                     </div>
                                 </motion.div>
                             )}
-                            {role === "pgowner" && (
-                                <motion.div className="space-y-4 pt-2 border-t border-gray-200">
-                                    <h3 className="text-lg font-semibold text-gray-700 pt-3">PG/Hostel Details</h3>
-                                    <CustomInput name="pgName" placeholder="PG/Hostel Name" value={formData.pgName} onChange={handleChange} required={true} />
-                                    <CustomInput name="pgLocation" placeholder="Location/Full Address" value={formData.pgLocation} onChange={handleChange} required={true} />
-                                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                                        <CustomInput name="pgCapacity" placeholder="Max Capacity (No. of beds)" value={formData.pgCapacity} onChange={handleChange} type="number" required={true} />
-                                        <CustomInput name="pgFacilities" placeholder="Key Facilities (e.g., Wi-Fi, Laundry, Gym)" value={formData.pgFacilities} onChange={handleChange} required={false} />
-                                    </div>
-                                </motion.div>
-                            )}
-                            {role === "messowner" && (
-                                <motion.div className="space-y-4 pt-2 border-t border-gray-200">
-                                    <h3 className="text-lg font-semibold text-gray-700 pt-3">Mess Service Details</h3>
-                                    <CustomInput name="messName" placeholder="Mess Name" value={formData.messName} onChange={handleChange} required={true} />
-                                    <CustomInput name="messLocation" placeholder="Location/Service Area" value={formData.messLocation} onChange={handleChange} required={true} />
-                                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                                        <CustomInput name="messCapacity" placeholder="Subscription Capacity (Est.)" value={formData.messCapacity} onChange={handleChange} type="number" required={true} />
-                                        <select name="messType" value={formData.messType} onChange={handleChange} className="w-full border border-gray-300 p-3 rounded-xl bg-white shadow-sm focus:border-blue-500 focus:ring-2 focus:ring-blue-100 transition-all duration-200" required={true} >
-                                            <option value="" disabled className="text-gray-400">Select Food Type</option>
-                                            <option value="veg">Veg Only</option>
-                                            <option value="nonveg">Non-Veg Only</option>
-                                            <option value="both">Both Veg & Non-Veg</option>
-                                        </select>
-                                    </div>
-                                </motion.div>
-                            )}
                         </motion.div>
 
                         <motion.button 
                             type="submit" 
                             disabled={isLoading || !!errors.password || !!errors.phone || formData.phone.length !== 10} 
-                            className={`w-full py-4 text-lg font-bold rounded-xl flex justify-center gap-3 items-center transition duration-300 shadow-lg mt-8 ${
+                            className={`group relative w-full py-3 text-base font-bold rounded-xl flex justify-center gap-3 items-center transition-all duration-300 shadow-lg mt-8 border overflow-hidden ${
                                 isLoading || errors.password || errors.phone || formData.phone.length !== 10
-                                    ? "bg-blue-400 cursor-not-allowed" 
-                                    : "bg-blue-600 hover:bg-blue-700 text-white"
+                                    ? "bg-slate-200 text-slate-400 border-slate-300 cursor-not-allowed" 
+                                    : "bg-emerald-600 hover:bg-emerald-700 text-white border-emerald-700 shadow-emerald-200/50 hover:shadow-lg hover:shadow-emerald-300/50"
                             }`}
-                            whileHover={!(isLoading || errors.password || errors.phone || formData.phone.length !== 10) ? { scale: 1.01, boxShadow: "0 8px 15px rgba(37, 99, 235, 0.4)" } : {}}
-                            whileTap={!(isLoading || errors.password || errors.phone || formData.phone.length !== 10) ? { scale: 0.99 } : {}}
+                            whileHover={!(isLoading || errors.password || errors.phone || formData.phone.length !== 10) ? { 
+                                scale: 1.02, 
+                            } : {}}
+                            whileTap={!(isLoading || errors.password || errors.phone || formData.phone.length !== 10) ? { scale: 0.98 } : {}}
                         >
-                            {isLoading ? <FaSpinner className="animate-spin text-xl" /> : <FaUserPlus className="text-xl" />}
-                            {isLoading ? "Processing Registration..." : "Create Account"}
+                            <span className="relative z-10 flex items-center gap-2">
+                                {isLoading ? <FaSpinner className="animate-spin" /> : <FaUserPlus />}
+                                {isLoading ? "Processing..." : "Create Account"}
+                            </span>
+                            <div className={`absolute inset-0 bg-white/20 -translate-x-full group-hover:translate-x-0 transition-transform duration-500 ease-out ${isLoading || errors.password || errors.phone || formData.phone.length !== 10 ? 'hidden' : ''}`} />
                         </motion.button>
-                        <p className="text-center text-sm text-gray-500 pt-2">
+                        
+                        <p className="text-center text-sm text-slate-500 pt-4">
                             Already have an account? 
-                            <a href="/login" className="text-blue-600 hover:text-blue-800 font-semibold ml-1 transition duration-200">
+                            <Link to="/login" className="text-emerald-600 hover:text-emerald-700 font-semibold ml-1 transition-all duration-200 hover:underline font-medium">
                                 Log In here
-                            </a>
+                            </Link>
                         </p>
                     </form>
                 </div>

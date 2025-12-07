@@ -1,4 +1,3 @@
-// backend/utils/pushNotifications.js
 import admin from "../config/firebaseAdmin.js";
 import User from "../models/User.js";
 

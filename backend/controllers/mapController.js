@@ -1,6 +1,9 @@
 import PG from "../models/PGModel.js";
 import Mess from "../models/Mess.js";
 import { distanceKm } from "../utils/distance.js";
+import { getMapplsToken } from "../utils/mapplsToken.js";
+import axios from "axios";
+
 
 export const mapHealth = (req, res) => {
   res.json({
@@ -68,6 +71,42 @@ export const getNearbyPGsAndMesses = async (req, res) => {
     res.status(500).json({
       success: false,
       message: "Error fetching nearby services",
+    });
+  }
+};
+
+//for auto suggetion of location
+export const autosuggestLocation = async (req, res) => {
+  try {
+    const query = req.query.query?.trim();
+
+    if (!query) {
+      return res.status(400).json({ message: "Query is required" });
+    }
+
+    const token = await getMapplsToken();
+    console.log(token);
+
+    const url = `https://atlas.mappls.com/api/places/search/json?query=${encodeURIComponent(query)}`;
+
+    const response = await axios.get(url, {
+      headers: {
+        Authorization: `Bearer ${token}`,
+      },
+    });
+
+    return res.json({
+      success: true,
+      suggestions: response.data.suggestedLocations || [],
+    });
+
+  } catch (err) {
+    console.error("Autosuggest Error:", err.response?.data || err.message);
+
+    return res.status(500).json({
+      success: false,
+      message: "Autosuggest API failed",
+      error: err.response?.data,
     });
   }
 };

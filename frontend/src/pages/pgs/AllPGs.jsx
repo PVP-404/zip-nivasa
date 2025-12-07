@@ -1,83 +1,153 @@
-import React, { useEffect, useState, useMemo } from "react";
-import { Link, useNavigate, useLocation } from "react-router-dom";
+import React, { useEffect, useState, useMemo, useCallback } from "react";
+import { Link, useNavigate, useLocation, useSearchParams } from "react-router-dom";
+import { motion, AnimatePresence } from "framer-motion";
+import { Filter, Search, MapPin, ChevronDown, X, Star, Clock } from "lucide-react";
 import Header from "../../components/Header";
 import Footer from "../../components/Footer";
-import Sidebar from "../../components/Sidebar";
-const BUDGET_RANGES = [
-  { label: "Below ₹5,000", max: 5000, value: "0-5000" },
-  { label: "₹5,000 - ₹10,000", min: 5000, max: 10000, value: "5000-10000" },
-  { label: "₹10,000 - ₹15,000", min: 10000, max: 15000, value: "10000-15000" },
-  { label: "Above ₹15,000", min: 15000, max: Infinity, value: "15000-inf" },
-];
 
-const PROPERTY_TYPES = [
-  { label: "Boys PG", value: "boys" },
-  { label: "Girls PG", value: "girls" },
-  { label: "Co-Ed PG (Mixed)", value: "mixed" },
-];
 
-const getBudgetFromValue = (value) =>
-  BUDGET_RANGES.find((b) => b.value === value) || null;
+const MIN_PRICE = 3000;
+const MAX_PRICE = 50000;
 
-const FilterSection = ({ title, children }) => (
-  <div className="space-y-3">
-    <h3 className="text-xs font-semibold text-gray-500 uppercase tracking-wide">
-      {title}
-    </h3>
-    {children}
-  </div>
-);
+const formatPrice = (value) => new Intl.NumberFormat("en-IN").format(value);
+
+const getImageURL = (img) => {
+  if (!img) return "https://via.placeholder.com/400";
+  if (img.startsWith("http") || img.includes("cloudinary")) return img;
+  return `http://localhost:5000${img}`;
+};
 
 const AmenityIcon = ({ label }) => {
   const n = label.toLowerCase();
-  if (n.includes("wifi"))
-    return (
-      <svg className="w-4 h-4 mr-1 text-blue-500" fill="none" stroke="currentColor" strokeWidth="2">
-        <path d="M5 12.55a11 11 0 0 1 14 0" />
-        <path d="M8.5 16a6 6 0 0 1 7 0" />
-        <path d="M12 20h.01" />
-      </svg>
-    );
-  if (n.includes("ac") || n.includes("cool"))
-    return (
-      <svg className="w-4 h-4 mr-1 text-cyan-500" fill="none" stroke="currentColor" strokeWidth="2">
-        <path d="M12 2v20" />
-        <path d="M4 6l8 4 8-4" />
-        <path d="M4 18l8-4 8 4" />
-      </svg>
-    );
-  if (n.includes("mess") || n.includes("food"))
-    return (
-      <svg className="w-4 h-4 mr-1 text-emerald-500" fill="none" stroke="currentColor" strokeWidth="2">
-        <path d="M4 3h2l1 7v11" />
-        <path d="M10 3h2v18" />
-        <path d="M16 7a2 2 0 0 1 4 0v11" />
-      </svg>
-    );
+  if (n.includes("wifi")) return <span className="w-3 h-3 mr-1 text-emerald-500">📶</span>;
+  if (n.includes("ac")) return <span className="w-3 h-3 mr-1 text-cyan-500">❄️</span>;
+  if (n.includes("mess") || n.includes("food")) return <span className="w-3 h-3 mr-1 text-emerald-500">🍽️</span>;
   return null;
 };
+
+const PGImageSlider = ({ images }) => {
+  const imgs = images?.map((img) => getImageURL(img)) || [];
+  const [index, setIndex] = useState(0);
+
+  useEffect(() => {
+    if (imgs.length <= 1) return;
+    const interval = setInterval(() => {
+      setIndex((prev) => (prev + 1) % imgs.length);
+    }, 2200);
+    return () => clearInterval(interval);
+  }, [imgs.length]);
+
+  return (
+    <div className="relative h-48 w-full overflow-hidden rounded-t-xl group">
+      {imgs.map((src, i) => (
+        <img
+          key={i}
+          src={src}
+          alt="PG"
+          className={`absolute inset-0 w-full h-full object-cover transition-opacity duration-700 ${i === index ? "opacity-100 scale-[1.02]" : "opacity-0 scale-100"}`}
+          loading="lazy"
+        />
+      ))}
+      {imgs.length > 1 && (
+        <div className="absolute bottom-2 left-2 right-2 flex gap-1.5">
+          {imgs.map((_, idx) => (
+            <button
+              key={idx}
+              onClick={() => setIndex(idx)}
+              className={`w-2 h-2 rounded-full transition-all flex-shrink-0 ${idx === index ? "bg-white shadow-md scale-125" : "bg-white/60 hover:bg-white"
+                }`}
+            />
+          ))}
+        </div>
+      )}
+    </div>
+  );
+};
+
+const FilterChip = ({ label, onRemove, color = "emerald" }) => (
+  <motion.div
+    layout
+    initial={{ opacity: 0, scale: 0.9 }}
+    animate={{ opacity: 1, scale: 1 }}
+    exit={{ opacity: 0, scale: 0.9 }}
+    className={`inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold rounded-xl shadow-sm border backdrop-blur-sm ${color === "emerald"
+      ? "bg-emerald-100/90 border-emerald-200 text-emerald-800"
+      : "bg-slate-100/90 border-slate-200 text-slate-800"
+      }`}
+  >
+    <span className="truncate max-w-[80px]">{label}</span>
+    <button onClick={onRemove} className="p-0.5 hover:bg-white/50 rounded-full transition-all">
+      <X className="w-3 h-3" />
+    </button>
+  </motion.div>
+);
+
+const SinglePriceSlider = ({ maxPrice, setMaxPrice }) => {
+  const [tempPrice, setTempPrice] = useState(maxPrice);
+
+  const handleSlide = (e) => {
+    setTempPrice(Number(e.target.value));
+  };
+
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      setMaxPrice(tempPrice);
+    }, 400);
+
+    return () => clearTimeout(timer);
+  }, [tempPrice]);
+
+  return (
+    <div className="w-full py-4">
+      {/* Slider */}
+      <input
+        type="range"
+        min={MIN_PRICE}
+        max={MAX_PRICE}
+        value={tempPrice}
+        onChange={handleSlide}
+        className="w-full accent-emerald-600"
+      />
+
+      <div className="flex justify-between mt-3 text-xs font-semibold text-slate-700">
+        <span>₹{formatPrice(MIN_PRICE)}</span>
+        <span className="text-emerald-600 font-bold">
+          ₹{formatPrice(tempPrice)}
+        </span>
+      </div>
+    </div>
+  );
+};
+
+
 const AllPGs = () => {
   const navigate = useNavigate();
-  const locationHook = useLocation();
-
-  const [isSidebarOpen, setIsSidebarOpen] = useState(false);
+  const location = useLocation();
+  const [searchParams, setSearchParams] = useSearchParams();
 
   const [pgs, setPgs] = useState([]);
   const [loading, setLoading] = useState(true);
-
-  const query = useMemo(
-    () => new URLSearchParams(locationHook.search),
-    [locationHook.search]
-  );
-  const [search, setSearch] = useState(query.get("search") || "");
-  const [pgLocation, setPgLocation] = useState(query.get("location") || "");
-  const [type, setType] = useState(query.get("type") || "");
-  const [selectedBudget, setSelectedBudget] = useState(
-    getBudgetFromValue(query.get("budget"))
-  );
-  const [sortBy, setSortBy] = useState(query.get("sort") || "recent");
-
   const [showFilters, setShowFilters] = useState(false);
+
+  const [search, setSearch] = useState(searchParams.get("search") || "");
+  const [pgLocation, setPgLocation] = useState(searchParams.get("location") || "");
+  const [type, setType] = useState(searchParams.get("type") || "");
+
+  const [minPrice, setMinPrice] = useState(MIN_PRICE);
+  const [maxPrice, setMaxPrice] = useState(MAX_PRICE);
+
+  const [sortBy, setSortBy] = useState(searchParams.get("sort") || "recent");
+
+  const syncURL = useCallback(() => {
+    const params = new URLSearchParams();
+    if (search) params.set("search", search);
+    if (pgLocation) params.set("location", pgLocation);
+    if (type) params.set("type", type);
+    if (minPrice !== MIN_PRICE) params.set("minPrice", minPrice);
+    if (maxPrice !== MAX_PRICE) params.set("maxPrice", maxPrice);
+    if (sortBy !== "recent") params.set("sort", sortBy);
+    setSearchParams(params);
+  }, [search, pgLocation, type, minPrice, maxPrice, sortBy, setSearchParams]);
 
   const fetchPGs = async () => {
     setLoading(true);
@@ -85,15 +155,30 @@ const AllPGs = () => {
       const res = await fetch("http://localhost:5000/api/pgs");
       const data = await res.json();
       setPgs(data);
-    } catch (err) {
-      console.error("PG fetch error:", err);
-    }
+    } catch (err) { }
     setLoading(false);
   };
 
   useEffect(() => {
     fetchPGs();
   }, []);
+
+  useEffect(() => {
+    const urlMin = parseInt(searchParams.get("minPrice")) || MIN_PRICE;
+    const urlMax = parseInt(searchParams.get("maxPrice")) || MAX_PRICE;
+    setMinPrice(urlMin);
+    setMaxPrice(urlMax);
+  }, [searchParams]);
+
+  useEffect(() => {
+    syncURL();
+  }, [syncURL]);
+  const PROPERTY_TYPES = [
+    { label: "Boys PG", value: "boys" },
+    { label: "Girls PG", value: "girls" },
+    { label: "Co-Ed PG (Mixed)", value: "mixed" },
+  ];
+
   const filteredPGs = useMemo(() => {
     let f = [...pgs];
 
@@ -102,17 +187,20 @@ const AllPGs = () => {
         p.title.toLowerCase().includes(search.toLowerCase())
       );
 
-    if (pgLocation.trim())
+    if (pgLocation.trim()) {
+      const q = pgLocation.toLowerCase();
+
       f = f.filter((p) =>
-        p.location.toLowerCase().includes(pgLocation.toLowerCase())
+        (p.streetAddress?.toLowerCase().includes(q)) ||
+        (p.district?.toLowerCase().includes(q)) ||
+        (p.state?.toLowerCase().includes(q))
       );
-
-    if (type) f = f.filter((p) => p.propertyType === type);
-
-    if (selectedBudget) {
-      const { min = 0, max = Infinity } = selectedBudget;
-      f = f.filter((p) => p.monthlyRent >= min && p.monthlyRent <= max);
     }
+
+    if (type)
+      f = f.filter((p) => p.propertyType === type);
+
+    f = f.filter((p) => p.monthlyRent >= minPrice && p.monthlyRent <= maxPrice);
 
     f.sort((a, b) => {
       if (sortBy === "low-high") return a.monthlyRent - b.monthlyRent;
@@ -121,294 +209,361 @@ const AllPGs = () => {
     });
 
     return f;
-  }, [pgs, search, pgLocation, type, selectedBudget, sortBy]);
+  }, [pgs, search, pgLocation, type, minPrice, maxPrice, sortBy]);
+
 
   const clearFilters = () => {
     setSearch("");
     setPgLocation("");
-    setSelectedBudget(null);
     setType("");
+    setMinPrice(MIN_PRICE);
+    setMaxPrice(MAX_PRICE);
     setSortBy("recent");
   };
 
-  const isFilterActive =
-    search || pgLocation || type || selectedBudget || sortBy !== "recent";
+  const activeFiltersCount = [search, pgLocation, type, minPrice !== MIN_PRICE || maxPrice !== MAX_PRICE].filter(Boolean).length;
 
-  if (loading) {
+  const activeFilters = [
+    search && {
+      label: `Search: ${search.slice(0, 15)}${search.length > 15 ? "..." : ""}`,
+      onRemove: () => setSearch(""),
+      color: "emerald",
+    },
+    pgLocation && {
+      label: `Location: ${pgLocation.slice(0, 15)}${pgLocation.length > 15 ? "..." : ""}`,
+      onRemove: () => setPgLocation(""),
+      color: "emerald",
+    },
+    type && {
+      label: PROPERTY_TYPES.find((t) => t.value === type)?.label,
+      onRemove: () => setType(""),
+      color: "emerald",
+    },
+    (minPrice !== MIN_PRICE || maxPrice !== MAX_PRICE) && {
+      label: `₹${formatPrice(minPrice)} - ₹${formatPrice(maxPrice)}`,
+      onRemove: () => {
+        setMinPrice(MIN_PRICE);
+        setMaxPrice(MAX_PRICE);
+      },
+      color: "emerald",
+    },
+  ].filter(Boolean);
+
+  const getRating = (pg) => {
+    if (pg.averageRating) return pg.averageRating;
+    if (pg.ratings?.length) return pg.ratings.reduce((sum, r) => sum + (r.stars || 0), 0) / pg.ratings.length;
+    return null;
+  };
+
+  if (loading && pgs.length === 0) {
     return (
-      <div className="flex min-h-screen bg-gray-50">
+      <div className="min-h-screen flex flex-col bg-emerald-50/50">
         <Header />
-        <div className="flex-1 flex items-center justify-center">
-          <div className="w-14 h-14 border-4 border-indigo-600 border-t-transparent rounded-full animate-spin" />
+        <div className="flex-1 flex items-center justify-center p-8">
+          <div className="w-14 h-14 border-4 border-emerald-600 border-t-transparent rounded-full animate-spin" />
         </div>
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen flex flex-col bg-gray-50">
+    <div className="min-h-screen flex flex-col bg-gradient-to-br from-emerald-50 via-green-25 to-mint-50">
+      <Header />
+      <div className="flex flex-1 overflow-hidden">
+        <div className="flex flex-1 overflow-hidden">
+          <motion.aside
+            initial={{ x: -20, opacity: 0 }}
+            animate={{ x: 0, opacity: 1 }}
+            className="w-full lg:w-80 xl:w-96 bg-white/95 backdrop-blur-xl border-r border-emerald-100/50 lg:block hidden sticky h-[calc(100vh-80px)] top-20 overflow-y-auto px-6 py-8 shadow-lg"
+          >
+            <div className="mb-8 pb-6 border-b border-emerald-100">
+              <h2 className="text-xl font-bold text-slate-900 mb-2 flex items-center gap-2">
+                <Filter className="w-5 h-5 text-emerald-600" />
+                Filters
+              </h2>
+              <p className="text-sm text-slate-500">{activeFiltersCount} active</p>
+            </div>
 
-      <Header onToggleSidebar={() => setIsSidebarOpen((prev) => !prev)} />
-      <div className="flex flex-row flex-1 w-full h-full overflow-hidden">
-
-        <Sidebar isOpen={isSidebarOpen} />
-
-        <main className="flex-1 p-4 sm:p-6 md:p-10 w-full overflow-y-auto transition-all duration-300">
-
-          <div className="mb-6 pb-3 border-b border-gray-200">
-            <h1 className="text-2xl sm:text-3xl font-bold text-gray-900">Explore PGs</h1>
-            <p className="text-sm text-gray-500">
-              Showing{" "}
-              <span className="text-indigo-600 font-semibold">
-                {filteredPGs.length}
-              </span>{" "}
-              properties
-            </p>
-          </div>
-
-          <div className="lg:hidden mb-5">
-            <button
-              onClick={() => setShowFilters((prev) => !prev)}
-              className="px-4 py-2 bg-white border border-gray-200 rounded-lg shadow-sm text-sm font-medium flex items-center gap-2"
-            >
-              <svg className="w-5 h-5" fill="none" stroke="currentColor" strokeWidth="2">
-                <line x1="4" y1="21" x2="4" y2="14" />
-                <line x1="4" y1="10" x2="4" y2="3" />
-                <line x1="12" y1="21" x2="12" y2="12" />
-                <line x1="12" y1="8" x2="12" y2="3" />
-                <line x1="20" y1="21" x2="20" y2="16" />
-                <line x1="20" y1="12" x2="20" y2="3" />
-              </svg>
-              {showFilters ? "Hide Filters" : "Show Filters"}
-            </button>
-          </div>
-
-          <div className="flex flex-col lg:flex-row gap-10">
-
-            <aside
-              className={`lg:w-72 w-full flex-shrink-0 bg-white border border-gray-200 shadow-sm rounded-2xl p-6 space-y-6 transition-all duration-300 
-                ${showFilters ? "block" : "hidden lg:block"}`}
-            >
-              <div className="flex justify-between items-center pb-4 border-b border-gray-200">
-                <h2 className="text-sm font-semibold text-gray-800">Refine search</h2>
-                {isFilterActive && (
+            <AnimatePresence>
+              {activeFilters.length > 0 && (
+                <motion.div
+                  initial={{ opacity: 0, height: 0 }}
+                  animate={{ opacity: 1, height: "auto" }}
+                  exit={{ opacity: 0, height: 0 }}
+                  className="mb-8 p-5 bg-emerald-50/90 border border-emerald-100 rounded-2xl shadow-sm"
+                >
+                  <div className="flex flex-wrap gap-2 mb-4">
+                    {activeFilters.map((filter, idx) => (
+                      <FilterChip key={idx} {...filter} />
+                    ))}
+                  </div>
                   <button
                     onClick={clearFilters}
-                    className="text-xs text-indigo-600 hover:text-indigo-800"
+                    className="w-full text-emerald-600 hover:text-emerald-700 text-sm font-semibold px-4 py-2 hover:bg-emerald-100 rounded-xl transition-all border border-emerald-200"
                   >
-                    Reset
+                    Clear All Filters
                   </button>
-                )}
+                </motion.div>
+              )}
+            </AnimatePresence>
+
+            <div className="space-y-6">
+              <div>
+                <label className="block text-sm font-semibold text-slate-700 mb-3 uppercase tracking-wide flex items-center gap-2">
+                  <Search className="w-4 h-4 text-emerald-500" />
+                  Search PGs
+                </label>
+                <div className="relative">
+                  <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-emerald-400" />
+                  <input
+                    className="w-full pl-10 pr-4 py-3 bg-emerald-50/50 border border-emerald-200 rounded-xl text-sm focus:ring-2 focus:ring-emerald-400 focus:border-emerald-400 transition-all shadow-sm"
+                    value={search}
+                    onChange={(e) => setSearch(e.target.value)}
+                    placeholder="PG name..."
+                  />
+                </div>
               </div>
 
-              <FilterSection title="Search by Name">
-                <input
-                  className="w-full border border-gray-300 bg-white px-3 py-2 rounded-lg text-sm focus:ring-indigo-500 focus:border-indigo-500"
-                  value={search}
-                  onChange={(e) => setSearch(e.target.value)}
-                  placeholder="Ex: Green PG, Sunrise..."
-                />
-              </FilterSection>
+              <div>
+                <label className="block text-sm font-semibold text-slate-700 mb-3 uppercase tracking-wide flex items-center gap-2">
+                  <MapPin className="w-4 h-4 text-emerald-500" />
+                  Location
+                </label>
+                <div className="relative">
+                  <MapPin className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-emerald-400" />
+                  <input
+                    className="w-full pl-10 pr-4 py-3 bg-emerald-50/50 border border-emerald-200 rounded-xl text-sm focus:ring-2 focus:ring-emerald-400 focus:border-emerald-400 transition-all shadow-sm"
+                    value={pgLocation}
+                    onChange={(e) => setPgLocation(e.target.value)}
+                    placeholder="Hinjewadi, Baner..."
+                  />
+                </div>
+              </div>
 
-              <FilterSection title="Location">
-                <input
-                  className="w-full border border-gray-300 bg-white px-3 py-2 rounded-lg text-sm focus:ring-indigo-500 focus:border-indigo-500"
-                  value={pgLocation}
-                  onChange={(e) => setPgLocation(e.target.value)}
-                  placeholder="Ex: Hinjewadi, Baner..."
-                />
-              </FilterSection>
-
-              <FilterSection title="PG Type">
+              <div>
+                <label className="block text-sm font-semibold text-slate-700 mb-4 uppercase tracking-wide">PG Type</label>
                 <div className="space-y-2">
-                  {PROPERTY_TYPES.map((opt) => (
-                    <label key={opt.value} className="flex items-center gap-2">
-                      <input
-                        type="radio"
-                        name="type"
-                        className="text-indigo-600"
-                        checked={type === opt.value}
-                        onChange={() => setType(opt.value)}
-                      />
-                      <span className="text-sm">{opt.label}</span>
-                    </label>
-                  ))}
-
-                  <label className="flex items-center gap-2">
+                  <label className="flex items-center gap-3 p-4 rounded-xl hover:bg-emerald-50/50 cursor-pointer transition-all w-full border border-emerald-100">
                     <input
                       type="radio"
                       name="type"
-                      className="text-indigo-600"
-                      checked={type === ""}
+                      className="w-4 h-4 text-emerald-600 border-emerald-300 focus:ring-emerald-500 rounded"
+                      checked={!type}
                       onChange={() => setType("")}
                     />
-                    <span className="text-gray-600 text-sm">All Types</span>
+                    <span className="text-sm font-medium text-slate-900">All Types</span>
                   </label>
-                </div>
-              </FilterSection>
-
-              <FilterSection title="Monthly Budget">
-                <div className="space-y-2">
-                  {BUDGET_RANGES.map((range, i) => (
-                    <label key={i} className="flex items-center gap-2">
+                  {[
+                    { label: "Boys PG", value: "boys" },
+                    { label: "Girls PG", value: "girls" },
+                    { label: "Co-Ed PG (Mixed)", value: "mixed" },
+                  ].map((opt) => (
+                    <label
+                      key={opt.value}
+                      className="flex items-center gap-3 p-4 rounded-xl hover:bg-emerald-50/50 cursor-pointer transition-all w-full border border-emerald-100"
+                    >
                       <input
                         type="radio"
-                        name="budget"
-                        className="text-indigo-600"
-                        checked={selectedBudget?.value === range.value}
-                        onChange={() => setSelectedBudget(range)}
+                        name="type"
+                        className="w-4 h-4 text-emerald-600 border-emerald-300 focus:ring-emerald-500 rounded"
+                        checked={type === opt.value}
+                        onChange={() => setType(opt.value)}
                       />
-                      <span className="text-sm">{range.label}</span>
+                      <span className="text-sm font-medium text-slate-900">{opt.label}</span>
                     </label>
                   ))}
-
-                  <label className="flex items-center gap-2">
-                    <input
-                      type="radio"
-                      name="budget"
-                      className="text-indigo-600"
-                      checked={selectedBudget === null}
-                      onChange={() => setSelectedBudget(null)}
-                    />
-                    <span className="text-gray-600 text-sm">All Budgets</span>
-                  </label>
                 </div>
-              </FilterSection>
-            </aside>
+              </div>
 
-            <section className="flex-1 min-w-0">
+              <div>
+                <label className="block text-sm font-semibold text-slate-700 mb-2 uppercase tracking-wide flex items-center gap-2">
+                  <span>₹</span>Monthly Budget
+                </label>
+                <div className="bg-emerald-50/70 border border-emerald-100 rounded-2xl px-4 py-3 shadow-sm">
+                  <div className="flex items-center justify-between text-[11px] font-semibold text-slate-600 mb-1">
+                    <span>Min</span>
+                    <span className="text-emerald-700">Price Range</span>
+                    <span>Max</span>
+                  </div>
+                  <SinglePriceSlider
+                    maxPrice={maxPrice}
+                    setMaxPrice={setMaxPrice}
+                  />
 
-              <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-3 mb-6">
-                <div>
-                  <h2 className="text-xl font-semibold text-gray-900">
-                    Available PGs
-                  </h2>
+                  <div className="flex justify-between mt-1 text-[11px] text-slate-500">
+                    <span>₹{formatPrice(MIN_PRICE)}</span>
+                    <span>₹{formatPrice(MAX_PRICE)}+</span>
+                  </div>
                 </div>
+              </div>
 
+              <div>
+                <label className="block text-sm font-semibold text-slate-700 mb-3 uppercase tracking-wide flex items-center gap-2">
+                  Sort <Clock className="w-4 h-4 text-emerald-400" />
+                </label>
                 <select
-                  className="border border-gray-300 bg-white px-3 py-2 rounded-lg text-sm focus:ring-indigo-500"
+                  className="w-full px-4 py-3 bg-emerald-50/50 border border-emerald-200 rounded-xl text-sm focus:ring-2 focus:ring-emerald-400 focus:border-emerald-400 transition-all shadow-sm font-medium"
                   value={sortBy}
                   onChange={(e) => setSortBy(e.target.value)}
                 >
                   <option value="recent">Most Recent</option>
-                  <option value="low-high">Price: Low to High</option>
-                  <option value="high-low">Price: High to Low</option>
+                  <option value="low-high">Price: Low → High</option>
+                  <option value="high-low">Price: High → Low</option>
                 </select>
               </div>
+            </div>
+          </motion.aside>
 
+          <main className="flex-1 overflow-y-auto p-4 sm:p-6 lg:p-8">
+            <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} className="mb-8 max-w-6xl mx-auto">
+              <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4 mb-6">
+                <div>
+                  <h1 className="text-3xl lg:text-4xl font-bold text-slate-900">Explore PGs</h1>
+                  <p className="text-lg text-slate-600 mt-2">
+                    Showing <span className="font-bold text-emerald-600">{filteredPGs.length}</span> properties
+                  </p>
+                </div>
+              </div>
+
+              <motion.button
+                whileHover={{ scale: 1.02 }}
+                whileTap={{ scale: 0.98 }}
+                onClick={() => setShowFilters(!showFilters)}
+                className="lg:hidden w-full flex items-center justify-center gap-2 px-6 py-3.5 bg-gradient-to-r from-emerald-600 to-emerald-700 text-white font-semibold rounded-xl shadow-lg hover:shadow-xl hover:from-emerald-700 hover:to-emerald-800 transition-all mb-6 border border-emerald-500/20"
+              >
+                <Filter className="w-5 h-5" />
+                Filters ({activeFiltersCount})
+              </motion.button>
+            </motion.div>
+
+            <AnimatePresence>
+              {showFilters && (
+                <motion.div
+                  initial={{ opacity: 0, y: 20 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  exit={{ opacity: 0, y: 20 }}
+                  className="lg:hidden mb-8 p-6 bg-white/95 backdrop-blur-xl border border-emerald-100 rounded-2xl shadow-xl"
+                >
+                  <div className="space-y-4">
+                    <div>
+                      <label className="block text-sm font-semibold text-slate-700 mb-2 flex items-center gap-2">
+                        <Search className="w-4 h-4 text-emerald-500" />
+                        Search
+                      </label>
+                      <input
+                        className="w-full px-4 py-3 border border-emerald-200 rounded-xl focus:ring-2 focus:ring-emerald-400 shadow-sm"
+                        value={search}
+                        onChange={(e) => setSearch(e.target.value)}
+                        placeholder="PG name..."
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-sm font-semibold text-slate-700 mb-2 flex items-center gap-2">
+                        <MapPin className="w-4 h-4 text-emerald-500" />
+                        Location
+                      </label>
+                      <input
+                        className="w-full px-4 py-3 border border-emerald-200 rounded-xl focus:ring-2 focus:ring-emerald-400 shadow-sm"
+                        value={pgLocation}
+                        onChange={(e) => setPgLocation(e.target.value)}
+                        placeholder="Area name..."
+                      />
+                    </div>
+                  </div>
+                </motion.div>
+              )}
+            </AnimatePresence>
+
+            <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6 max-w-7xl mx-auto">
               {filteredPGs.length === 0 ? (
-                <div className="text-center py-16 bg-white border border-gray-200 rounded-xl shadow">
-                  <p className="text-gray-600">No PGs found.</p>
+                <motion.div
+                  initial={{ opacity: 0, scale: 0.95 }}
+                  animate={{ opacity: 1, scale: 1 }}
+                  className="col-span-full text-center py-20 bg-white/90 backdrop-blur-xl border-2 border-dashed border-emerald-200 rounded-2xl shadow-lg"
+                >
+                  <Search className="w-16 h-16 text-emerald-300 mx-auto mb-6" />
+                  <h3 className="text-2xl font-bold text-slate-900 mb-3">No PGs found</h3>
+                  <p className="text-slate-600 mb-8 max-w-md mx-auto">
+                    Try adjusting your filters or search criteria to see more results
+                  </p>
                   <button
                     onClick={clearFilters}
-                    className="mt-3 text-indigo-600 text-sm font-medium underline"
+                    className="px-8 py-3 bg-emerald-600 text-white font-semibold rounded-xl shadow-lg hover:shadow-xl hover:bg-emerald-700 transition-all border border-emerald-500/20"
                   >
-                    Clear filters
+                    Clear All Filters
                   </button>
-                </div>
+                </motion.div>
               ) : (
-                <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
-                  {filteredPGs.map((pg) => {
-                    const rating =
-                      pg.averageRating ||
-                      (pg.ratings?.length
-                        ? pg.ratings.reduce((s, r) => s + (r.stars || 0), 0) /
-                          pg.ratings.length
-                        : null);
-                    const ratingCount =
-                      pg.totalRatings || pg.ratings?.length || 0;
-
-                    return (
+                filteredPGs.map((pg, index) => {
+                  const rating = getRating(pg);
+                  return (
+                    <motion.div
+                      key={pg._id}
+                      initial={{ opacity: 0, y: 20 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      transition={{ delay: index * 0.05 }}
+                    >
                       <Link
-                        key={pg._id}
                         to={`/services/pg/${pg._id}`}
-                        className="group bg-white border border-gray-200 rounded-xl shadow-sm overflow-hidden hover:shadow-lg hover:-translate-y-1 transition-all"
+                        className="group bg-white border border-emerald-100/50 rounded-2xl shadow-sm overflow-hidden hover:shadow-2xl hover:-translate-y-2 hover:border-emerald-200/50 transition-all duration-300 backdrop-blur-sm"
                       >
-                        <img
-                          src={
-                            pg.images?.[0]
-                              ? `http://localhost:5000${pg.images[0]}`
-                              : "https://via.placeholder.com/400"
-                          }
-                          className="h-48 w-full object-cover group-hover:scale-[1.03] transition-transform"
-                          alt={pg.title}
-                        />
-                        <div className="p-5 space-y-3">
-                          <h3 className="text-lg font-semibold text-gray-800 line-clamp-1">
+                        <PGImageSlider images={pg.images || []} />
+                        <div className="p-6 space-y-4">
+                          <h3 className="text-xl font-bold text-slate-900 line-clamp-1 group-hover:text-emerald-600 transition-colors">
                             {pg.title}
                           </h3>
 
-                          <p className="text-xs text-gray-600 flex items-center">
-                            <svg
-                              className="w-4 h-4 mr-1 text-red-400"
-                              fill="currentColor"
-                              viewBox="0 0 20 20"
-                            >
+                          <p className="text-sm text-slate-600 flex items-center">
+                            <svg className="w-4 h-4 mr-2 text-emerald-400 flex-shrink-0" fill="currentColor">
                               <path d="M10 18l6-6a7 7 0 10-12 0l6 6z" />
                             </svg>
-                            {pg.location}
+                            {pg.streetAddress}
                           </p>
+
                           {rating ? (
-                            <div className="flex items-center text-xs text-amber-500">
-                              <svg
-                                className="w-4 h-4 mr-1"
-                                fill="currentColor"
-                                viewBox="0 0 20 20"
-                              >
-                                <path d="M9.049 2.927c.3-.921 1.62-.921 1.92 0L13.334 9a1 1 0 00.95.691h7.668a1 1 0 01.54 1.705l-6.21 4.512a1 1 0 00-.364 1.118l2.365 7.284c.3.921-.755 1.688-1.54 1.118l-6.21-4.512a1 1 0 00-1.175 0l-6.21 4.512c-.785.57-1.84-.197-1.54-1.118l2.365-7.284a1 1 0 00-.364-1.118L2.022 13.917A1 1 0 012.562 12.212h7.668a1 1 0 00.95-.691l2.365-7.284z" />
-                              </svg>
-                              <span className="font-semibold">{rating.toFixed(1)}</span>
-                              <span className="text-gray-500 ml-1">
-                                ({ratingCount} reviews)
-                              </span>
+                            <div className="flex items-center text-sm text-emerald-600 font-semibold">
+                              <Star className="w-4 h-4 mr-1 fill-current text-emerald-400" />
+                              {rating.toFixed(1)} ({pg.ratings?.length || 0} reviews)
                             </div>
                           ) : (
-                            <div className="text-xs text-gray-400 italic">
-                              No ratings yet
-                            </div>
+                            <div className="text-sm text-slate-400 italic">No ratings yet</div>
                           )}
-                          <div className="text-indigo-600 font-semibold">
-                            ₹{pg.monthlyRent.toLocaleString("en-IN")}/month
+
+                          <div className="text-emerald-600 font-bold text-2xl">
+                            ₹{pg.monthlyRent.toLocaleString("en-IN")}
+                            <span className="text-lg font-normal text-slate-600">/month</span>
                           </div>
+
                           {Array.isArray(pg.amenities) && pg.amenities.length > 0 && (
-                            <div className="pt-3 border-t border-gray-100 flex flex-wrap gap-2 text-xs">
+                            <div className="pt-4 border-t border-emerald-100 flex flex-wrap gap-2">
                               {pg.amenities.slice(0, 3).map((a, i) => (
                                 <span
                                   key={i}
-                                  className="inline-flex items-center px-2 py-1 rounded-full bg-blue-50 text-blue-700 border border-blue-100"
+                                  className="inline-flex items-center px-3 py-1.5 rounded-full bg-emerald-50/90 text-emerald-700 text-xs font-medium border border-emerald-100/50 shadow-sm"
                                 >
                                   <AmenityIcon label={a} />
-                                  {a}
+                                  <span className="truncate max-w-16">{a}</span>
                                 </span>
                               ))}
+                              {pg.amenities.length > 3 && (
+                                <span className="text-xs text-slate-500 px-3 py-1.5 bg-slate-50/90 rounded-full shadow-sm">
+                                  +{pg.amenities.length - 3} more
+                                </span>
+                              )}
                             </div>
                           )}
                         </div>
                       </Link>
-                    );
-                  })}
-                </div>
+                    </motion.div>
+                  );
+                })
               )}
-            </section>
-          </div>
-        </main>
-
-
+            </div>
+          </main>
+        </div>
       </div>
     </div>
   );
 };
-const FilterChip = ({ label, onRemove }) => (
-  <span className="inline-flex items-center px-3 py-1 text-xs font-medium text-blue-700 bg-blue-50 rounded-full border border-blue-200 shadow-sm">
-    {label}
-    <button
-      type="button"
-      onClick={onRemove}
-      className="ml-2 text-blue-500 hover:text-blue-700"
-    >
-      ✕
-    </button>
-  </span>
-);
 
 export default AllPGs;

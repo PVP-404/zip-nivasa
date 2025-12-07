@@ -8,7 +8,6 @@ import {
   ChevronDown,
   ChevronRight,
 } from "lucide-react";
-import Sidebar from "../../components/Sidebar";
 import Header from "../../components/Header";
 import LeafletMap from "../../components/maps/LeafletMap";
 import { fetchPGsNearMe } from "../../services/pgService";
@@ -127,7 +126,6 @@ const PGNearMe = () => {
 
   return (
     <div className="flex h-screen bg-gradient-to-br from-gray-50 via-indigo-50/30 to-gray-50 overflow-hidden">
-      <Sidebar />
       <div className="flex-1 flex flex-col overflow-hidden">
         <Header />
 
@@ -178,7 +176,7 @@ const PGNearMe = () => {
                       type="range"
                       value={radiusKm}
                       min={1}
-                      max={15}
+                      max={30}
                       onChange={(e) =>
                         setRadiusKm(Number(e.target.value))
                       }

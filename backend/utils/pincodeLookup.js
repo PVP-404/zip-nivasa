@@ -1,4 +1,3 @@
-// backend/utils/pincodeLookup.js
 
 import axios from "axios";
 
