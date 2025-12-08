@@ -70,7 +70,7 @@ export async function geocodeEloc(input) {
 
     const result = extractResult(response.data);
     if (result) {
-      console.log("✔ Mappls (Bearer) Success");
+      console.log(" Mappls (Bearer) Success");
       return {
         eLoc: result.eLoc,
         formattedAddress: result.formattedAddress,
@@ -103,7 +103,7 @@ export async function geocodeEloc(input) {
     const result = extractResult(response.data);
     if (!result) throw new Error("Browser fallback returned no result");
 
-    console.log("✔ Mappls Browser-mode Success");
+    console.log(" Mappls Browser-mode Success");
     return {
       eLoc: result.eLoc,
       formattedAddress: result.formattedAddress,

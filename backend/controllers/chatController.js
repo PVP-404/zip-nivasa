@@ -38,7 +38,7 @@ export const sendMessage = async (req, res) => {
   }
 };
 
-/** Conversation history with a specific receiver */
+// Conversation history with a specific receiver
 export const getHistory = async (req, res) => {
   try {
     const { receiverId } = req.params;
@@ -57,7 +57,7 @@ export const getHistory = async (req, res) => {
   }
 };
 
-/** List conversations (distinct partners) with last message + unread */
+// List conversations (distinct partners) with last message + unread
 export const getConversations = async (req, res) => {
   try {
     const myId = req.user.id;
