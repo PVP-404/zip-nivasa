@@ -5,8 +5,8 @@ import { requestFCMToken, registerTokenWithBackend } from "../services/fcm";
 import { motion } from "framer-motion";
 import { FaGoogle, FaFacebook } from "react-icons/fa";
 import { Eye, EyeOff, Loader2 } from "lucide-react";
-
-
+import { initializeGoogleLogin, renderGoogleButton, handleGoogleResponse } from "../services/googleAuth";
+import { useEffect } from "react";
 
 
 const Login = () => {
@@ -17,75 +17,94 @@ const Login = () => {
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
 
-const handleLogin = async (e) => {
-  e.preventDefault();
-  setError("");
+  useEffect(() => {
+    initializeGoogleLogin(async (response) => {
+      try {
+        const user = await handleGoogleResponse(response);
 
-  if (!email || !password) {
-    setError("Please enter both email and password.");
-    return;
-  }
+        if (!user.profileCompleted) {
+          return navigate("/complete-profile");
+        }
 
-  setLoading(true);
+        navigate("/dashboard/student");
 
-  try {
-    localStorage.clear();
+      } catch {
+        alert("Google login failed");
+      }
+    });
 
-    const res = await axios.post(
-      "http://localhost:5000/api/auth/login",
-      { email, password }
-    );
+    renderGoogleButton("google-login-btn");
+  }, []);
 
-    const { token, user } = res.data;
+  const handleLogin = async (e) => {
+    e.preventDefault();
+    setError("");
 
-    if (!token || !user) {
-      throw new Error("Invalid login response from server.");
+    if (!email || !password) {
+      setError("Please enter both email and password.");
+      return;
     }
 
-    localStorage.setItem("token", token);
-    localStorage.setItem("role", user.role);
-    localStorage.setItem("username", user.name);
-    localStorage.setItem("userId", user.id);
-    localStorage.removeItem("fcmToken");
+    setLoading(true);
 
     try {
-      const browserToken = await requestFCMToken();
+      localStorage.clear();
 
-      if (browserToken) {
-        localStorage.setItem("fcmToken", browserToken);
-        await registerTokenWithBackend(browserToken);
-        console.log("FCM token registered:", browserToken);
+      const res = await axios.post(
+        "http://localhost:5000/api/auth/login",
+        { email, password }
+      );
+
+      const { token, user } = res.data;
+
+      if (!token || !user) {
+        throw new Error("Invalid login response from server.");
       }
-    } catch (fcmErr) {
-      console.warn("FCM setup failed:", fcmErr);
+
+      localStorage.setItem("token", token);
+      localStorage.setItem("role", user.role);
+      localStorage.setItem("username", user.name);
+      localStorage.setItem("userId", user.id);
+      localStorage.removeItem("fcmToken");
+
+      try {
+        const browserToken = await requestFCMToken();
+
+        if (browserToken) {
+          localStorage.setItem("fcmToken", browserToken);
+          await registerTokenWithBackend(browserToken);
+          console.log("FCM token registered:", browserToken);
+        }
+      } catch (fcmErr) {
+        console.warn("FCM setup failed:", fcmErr);
+      }
+
+      switch (user.role) {
+        case "pgowner":
+          navigate("/dashboard/pgowner");
+          break;
+        case "messowner":
+          navigate("/dashboard/messowner");
+          break;
+        case "laundry":
+          navigate("/dashboard/laundry");
+          break;
+        case "tenant":
+        case "student":
+          navigate("/dashboard/student");
+          break;
+
+        default:
+          throw new Error("Unknown user role detected.");
+      }
+
+    } catch (err) {
+      const message = err.response?.data?.message || err.message;
+      setError(message);
+    } finally {
+      setLoading(false);
     }
-
-    switch (user.role) {
-      case "pgowner":
-        navigate("/dashboard/pgowner");
-        break;
-      case "messowner":
-        navigate("/dashboard/messowner");
-        break;
-      case "laundry":
-        navigate("/dashboard/laundry");
-        break;
-      case "tenant":
-      case "student":
-        navigate("/dashboard/student");
-        break;
-
-      default:
-        throw new Error("Unknown user role detected.");
-    }
-
-  } catch (err) {
-    const message = err.response?.data?.message || err.message;
-    setError(message);
-  } finally {
-    setLoading(false);
-  }
-};
+  };
 
 
   return (
@@ -185,13 +204,9 @@ const handleLogin = async (e) => {
             </div>
           </div>
 
-          <div className="grid grid-cols-2 gap-3">
-            <button className="inline-flex w-full justify-center items-center gap-2 rounded-md border border-gray-300 bg-white py-2 px-4 text-sm font-medium text-gray-500 shadow-sm hover:bg-gray-50">
-              <FaGoogle /> Google
-            </button>
-            <button className="inline-flex w-full justify-center items-center gap-2 rounded-md border border-gray-300 bg-white py-2 px-4 text-sm font-medium text-gray-500 shadow-sm hover:bg-gray-50">
-              <FaFacebook /> Facebook
-            </button>
+          <div className="grid grid-cols-1 gap-3">
+            <div id="google-login-btn" className="flex justify-center"></div>
+
           </div>
 
           <p className="mt-10 text-center text-sm text-gray-500">

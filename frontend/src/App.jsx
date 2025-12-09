@@ -40,6 +40,9 @@ import FCMInitializer from "./features/FCMInitializer";
 import NotificationToast from "./features/NotificationToast";
 import { subscribeForegroundNotifications } from "./services/fcm";
 
+import CompleteProfile from "./pages/profile/CompleteProfile";
+
+
 function App() {
   const [notif, setNotif] = useState(null);
 
@@ -70,6 +73,8 @@ function App() {
 
         <Route path="/accommodations" element={<SearchPGResults />} />
         <Route path="/messes" element={<AllMesses />} />
+        <Route path="/complete-profile" element={<CompleteProfile />} />
+
 
         {/* PROTECTED: NOTIFICATIONS */}
         <Route

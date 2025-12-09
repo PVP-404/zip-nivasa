@@ -15,6 +15,7 @@
     "chart.js": "^4.5.0",
     "firebase": "^12.6.0",
     "framer-motion": "^12.23.25",
+    "jwt-decode": "^4.0.0",
     "leaflet": "^1.9.4",
     "leaflet.heat": "^0.2.0",
     "leaflet.markercluster": "^1.5.3",
