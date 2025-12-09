@@ -7,6 +7,8 @@ import connectDB from "./config/db.js";
 import { createServer } from "http";
 import { Server } from "socket.io";
 import cron from "node-cron";
+import Mess from "./models/Mess.js";
+
 
 // Routes
 import pgRoutes from "./routes/pgRoutes.js";

@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useCallback, useMemo } from "react";
 import { useNavigate, Link } from "react-router-dom";
 import { fetchNotifications, markAllNotificationsRead } from "../services/notificationService";
-import { requestFCMToken ,deregisterTokenWithBackend } from "../services/fcm";
+import { requestFCMToken, deregisterTokenWithBackend } from "../services/fcm";
 import axios from "axios";
 import { Bell, ChevronRight, ChevronDown } from "lucide-react";
 
@@ -49,7 +49,7 @@ const Header = ({ onToggleSidebar }) => {
     notifications.filter(n => !n.isRead).length,
     [notifications]
   );
-  
+
   useEffect(() => {
     let mounted = true;
     let interval;
@@ -98,24 +98,24 @@ const Header = ({ onToggleSidebar }) => {
     }
   }, [showNotif, unreadCount]);
 
-const handleLogout = useCallback(async () => {
-  try {
-    //  Try to deregister FCM token from backend
-    await deregisterTokenWithBackend();
-  } catch (err) {
-    console.error("Error during FCM deregistration:", err);
-  } finally {
-    //  Clear all local data
-    localStorage.removeItem("token");
-    localStorage.removeItem("role");
-    localStorage.removeItem("username");
-    localStorage.removeItem("userId");
-    localStorage.removeItem("fcmToken");
+  const handleLogout = useCallback(async () => {
+    try {
+      //  Try to deregister FCM token from backend
+      await deregisterTokenWithBackend();
+    } catch (err) {
+      console.error("Error during FCM deregistration:", err);
+    } finally {
+      //  Clear all local data
+      localStorage.removeItem("token");
+      localStorage.removeItem("role");
+      localStorage.removeItem("username");
+      localStorage.removeItem("userId");
+      localStorage.removeItem("fcmToken");
 
-    //  Redirect to login
-    navigate("/login", { replace: true });
-  }
-}, [navigate]);
+      //  Redirect to login
+      navigate("/login", { replace: true });
+    }
+  }, [navigate]);
 
   const handleProfile = useCallback(() => {
     setShowDropdown(false);
@@ -130,85 +130,87 @@ const handleLogout = useCallback(async () => {
   return (
     <header className="w-full bg-gradient-to-r from-emerald-50/90 via-emerald-50/90 to-mint-50/90 shadow-2xl 
       px-4 sm:px-6 py-2 sm:py-2.5 flex items-center justify-between sticky top-0 z-50 backdrop-blur-sm border-b border-emerald-100">
-      
-      <div className="flex items-center gap-3 sm:gap-4">
-      {onToggleSidebar && (
-        <button
-          onClick={onToggleSidebar}
-          className="inline-flex items-center justify-center p-2 rounded-lg bg-emerald-500/10 border border-emerald-400/20 hover:bg-emerald-500/20 transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-emerald-300/60 cursor-pointer hover:scale-105"
-          aria-label="Toggle sidebar"
-        >
-          <svg className="w-5 h-5 text-emerald-700" viewBox="0 0 24 24" fill="none" stroke="currentColor">
-            <path d="M4 6h16M4 12h16M4 18h16" strokeWidth="2" strokeLinecap="round" />
-          </svg>
-        </button>
-      )}
 
-      <Link 
-        to="/" 
-        className="flex items-center gap-3 p-2 hover:bg-emerald-100/50 rounded-xl transition-all duration-200 group"
-      >
-        <div className="bg-emerald-100/80 backdrop-blur-sm p-2 rounded-xl border border-emerald-200/50 group-hover:shadow-md transition-all">
-          <div className="w-8 h-8 bg-gradient-to-br from-emerald-500 to-mint-500 rounded-lg flex items-center justify-center shadow-lg">
-            <span className="text-white font-bold text-xl">Z</span>
-          </div>
-        </div>
-        
-        <div className=" xs:block">
-          <h1 className="text-2xl sm:text-3xl font-bold text-slate-900 tracking-tight cursor-pointer hover:scale-105 transition-transform duration-200 group-hover:text-emerald-700">
-            Zip Nivasa
-          </h1>
-          <span className="block text-[10px] sm:text-xs font-normal text-emerald-600 tracking-wider mt-0.5">
-            Find. Connect. Live Better.
-          </span>
-        </div>
-      </Link>
-    </div>
       <div className="flex items-center gap-3 sm:gap-4">
-        <div className="relative">
+        {onToggleSidebar && (
           <button
-            onClick={toggleNotifications}
-            disabled={loading}
-            className="relative p-2 rounded-full hover:bg-emerald-100/50 transition-all duration-200 hover:scale-105 flex items-center justify-center focus:outline-none focus:ring-2 focus:ring-emerald-200/40 border border-emerald-200/30"
-            aria-label="Notifications"
+            onClick={onToggleSidebar}
+            className="inline-flex items-center justify-center p-2 rounded-lg bg-emerald-500/10 border border-emerald-400/20 hover:bg-emerald-500/20 transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-emerald-300/60 cursor-pointer hover:scale-105"
+            aria-label="Toggle sidebar"
           >
-            <svg className="w-6 h-6 text-slate-800" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M15 17h5l-1.4-1.4c-.4-.8-.6-1.7-.6-2.6V9a6 6 0 10-12 0v4c0 .9-.2 1.8-.6 2.6L4 17h5m6 0a3 3 0 11-6 0" />
+            <svg className="w-5 h-5 text-emerald-700" viewBox="0 0 24 24" fill="none" stroke="currentColor">
+              <path d="M4 6h16M4 12h16M4 18h16" strokeWidth="2" strokeLinecap="round" />
             </svg>
-            {unreadCount > 0 && (
-              <span className="absolute -top-1 -right-1 bg-emerald-500 text-white text-xs min-w-[20px] h-[20px] rounded-full flex items-center justify-center font-bold shadow-lg animate-pulse border-2 border-white">
-                {unreadCount > 99 ? '99+' : unreadCount}
-              </span>
-            )}
           </button>
+        )}
 
-          {showNotif && (
-            <div className="absolute right-0 mt-3 bg-white shadow-xl rounded-xl w-80 p-4 z-50 border border-emerald-100 max-h-96 overflow-hidden animate-fadeIn">
-              <div className="flex items-center justify-between mb-4 pb-2 border-b border-emerald-100">
-                <h3 className="font-bold text-lg text-slate-900">Notifications</h3>
-                <button
-                  onClick={() => navigate("/notifications")}
-                  className="text-emerald-600 hover:text-emerald-700 font-semibold text-sm flex items-center gap-1 hover:underline transition-all"
-                >
-                  View all
-                  <ChevronRight className="w-4 h-4" />
-                </button>
-              </div>
-              {recentNotifications.length === 0 ? (
-                <div className="text-center py-8">
-                  <Bell className="w-12 h-12 text-emerald-200 mx-auto mb-3" />
-                  <p className="text-slate-500 text-sm font-medium">No notifications yet</p>
-                </div>
-              ) : (
-                <div className="space-y-1 max-h-72 overflow-y-auto">
-                  {recentNotifications.map((n, i) => (
-                    <NotificationItem key={n._id || i} notification={n} index={i} />
-                  ))}
-                </div>
-              )}
+        <Link
+          to="/"
+          className="flex items-center gap-3 p-2 hover:bg-emerald-100/50 rounded-xl transition-all duration-200 group"
+        >
+          <div className="bg-emerald-100/80 backdrop-blur-sm p-2 rounded-xl border border-emerald-200/50 group-hover:shadow-md transition-all">
+            <div className="w-8 h-8 bg-gradient-to-br from-emerald-500 to-mint-500 rounded-lg flex items-center justify-center shadow-lg">
+              <span className="text-white font-bold text-xl">Z</span>
             </div>
-          )}
-        </div>
+          </div>
+
+          <div className=" xs:block">
+            <h1 className="text-2xl sm:text-3xl font-bold text-slate-900 tracking-tight cursor-pointer hover:scale-105 transition-transform duration-200 group-hover:text-emerald-700">
+              Zip Nivasa
+            </h1>
+            <span className="block text-[10px] sm:text-xs font-normal text-emerald-600 tracking-wider mt-0.5">
+              Find. Connect. Live Better.
+            </span>
+          </div>
+        </Link>
+      </div>
+      <div className="flex items-center gap-3 sm:gap-4">
+        {token && (
+          <div className="relative">
+            <button
+              onClick={toggleNotifications}
+              disabled={loading}
+              className="relative p-2 rounded-full hover:bg-emerald-100/50 transition-all duration-200 hover:scale-105 flex items-center justify-center focus:outline-none focus:ring-2 focus:ring-emerald-200/40 border border-emerald-200/30"
+              aria-label="Notifications"
+            >
+              <svg className="w-6 h-6 text-slate-800" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M15 17h5l-1.4-1.4c-.4-.8-.6-1.7-.6-2.6V9a6 6 0 10-12 0v4c0 .9-.2 1.8-.6 2.6L4 17h5m6 0a3 3 0 11-6 0" />
+              </svg>
+              {unreadCount > 0 && (
+                <span className="absolute -top-1 -right-1 bg-emerald-500 text-white text-xs min-w-[20px] h-[20px] rounded-full flex items-center justify-center font-bold shadow-lg animate-pulse border-2 border-white">
+                  {unreadCount > 99 ? '99+' : unreadCount}
+                </span>
+              )}
+            </button>
+
+            {showNotif && (
+              <div className="absolute right-0 mt-3 bg-white shadow-xl rounded-xl w-80 p-4 z-50 border border-emerald-100 max-h-96 overflow-hidden animate-fadeIn">
+                <div className="flex items-center justify-between mb-4 pb-2 border-b border-emerald-100">
+                  <h3 className="font-bold text-lg text-slate-900">Notifications</h3>
+                  <button
+                    onClick={() => navigate("/notifications")}
+                    className="text-emerald-600 hover:text-emerald-700 font-semibold text-sm flex items-center gap-1 hover:underline transition-all"
+                  >
+                    View all
+                    <ChevronRight className="w-4 h-4" />
+                  </button>
+                </div>
+                {recentNotifications.length === 0 ? (
+                  <div className="text-center py-8">
+                    <Bell className="w-12 h-12 text-emerald-200 mx-auto mb-3" />
+                    <p className="text-slate-500 text-sm font-medium">No notifications yet</p>
+                  </div>
+                ) : (
+                  <div className="space-y-1 max-h-72 overflow-y-auto">
+                    {recentNotifications.map((n, i) => (
+                      <NotificationItem key={n._id || i} notification={n} index={i} />
+                    ))}
+                  </div>
+                )}
+              </div>
+            )}
+          </div>
+        )}
         {!token ? (
           <div className="flex items-center gap-4">
             <Link
@@ -216,17 +218,9 @@ const handleLogout = useCallback(async () => {
               className="group relative px-6 py-3 bg-white/95 backdrop-blur-sm text-slate-800 rounded-2xl text-sm font-semibold border border-slate-200 shadow-lg hover:shadow-xl hover:bg-white hover:border-emerald-100 hover:-translate-y-0.5 transition-all duration-300 overflow-hidden"
             >
               <span className="relative z-10 flex items-center gap-2">
-                Login
+                Sign In
               </span>
               <div className="absolute inset-0 bg-gradient-to-r from-emerald-50/50 to-mint-50/50 -translate-x-full group-hover:translate-x-full transition-transform duration-700" />
-            </Link>
-
-            <Link
-              to="/register"
-              className="group relative px-6 py-3 bg-gradient-to-r from-emerald-500 to-mint-500 text-white rounded-2xl text-sm font-bold shadow-xl hover:shadow-2xl hover:from-emerald-600 hover:to-mint-600 hover:-translate-y-0.5 hover:scale-[1.02] transition-all duration-300 overflow-hidden border border-emerald-500/20"
-            >
-              <span className="relative z-10">Sign Up</span>
-              <div className="absolute inset-0 bg-white/20 -translate-x-full group-hover:translate-x-full transition-transform duration-700" />
             </Link>
           </div>
         ) : (

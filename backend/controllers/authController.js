@@ -1,5 +1,8 @@
 import bcrypt from "bcryptjs";
 import jwt from "jsonwebtoken";
+import { OAuth2Client } from "google-auth-library";
+
+const client = new OAuth2Client(process.env.GOOGLE_CLIENT_ID);
 
 import User from "../models/User.js";
 import Tenant from "../models/Tenant.js";
@@ -168,5 +171,105 @@ export const getUserPublic = async (req, res) => {
   } catch (err) {
     console.error("getUserPublic error:", err);
     return res.status(500).json({ success: false, message: "Server error" });
+  }
+};
+
+
+export const googleLogin = async (req, res) => {
+  try {
+    const { token } = req.body;
+
+    const ticket = await client.verifyIdToken({
+      idToken: token,
+      audience: process.env.GOOGLE_CLIENT_ID,
+    });
+
+    const payload = ticket.getPayload();
+
+    const { email, name, picture, sub } = payload;
+
+    let user = await User.findOne({ email });
+
+    // Block non-tenant users
+    if (user && user.role !== "tenant" && user.role !== "student") {
+      return res.status(403).json({
+        success: false,
+        message: "Only tenant/student can login with Google.",
+      });
+    }
+
+    // Create new tenant if first time
+    if (!user) {
+      user = await User.create({
+        name,
+        email,
+        password: sub, // dummy
+        googleId: sub,
+        profileImage: picture,
+        role: "tenant",
+        roleModel: "Tenant",
+        profileCompleted: false
+      });
+    }
+
+    const jwtToken = jwt.sign(
+      { id: user._id, role: user.role },
+      process.env.JWT_SECRET,
+      { expiresIn: "7d" }
+    );
+
+    res.json({
+      success: true,
+      token: jwtToken,
+      user: {
+        id: user._id,
+        email: user.email,
+        name: user.name,
+        role: user.role,
+        profileCompleted: user.profileCompleted,
+      },
+    });
+
+  } catch (err) {
+    console.error("Google Login Error:", err);
+    res.status(500).json({ success: false, message: "Google login error" });
+  }
+};
+
+export const completeProfile = async (req, res) => {
+  try {
+    const { phone, professionType, gender } = req.body;
+
+    if (!phone || !professionType || !gender) {
+      return res.status(400).json({ success: false, message: "All fields required" });
+    }
+
+    const user = await User.findById(req.user.id);
+    if (!user)
+      return res.status(404).json({ success: false, message: "User not found" });
+
+    // Create role record if missing
+    let tenantData = await Tenant.create({
+      professionType,
+      gender,
+      userId: user._id
+    });
+
+    user.phone = phone;
+    user.roleId = tenantData._id;
+    user.roleModel = "Tenant";
+    user.profileCompleted = true;
+
+    await user.save();
+
+    res.json({
+      success: true,
+      message: "Profile completed",
+      user
+    });
+
+  } catch (err) {
+    console.error("Complete Profile Error:", err);
+    res.status(500).json({ success: false, message: "Server error" });
   }
 };
