@@ -206,7 +206,14 @@ const Login = () => {
 
           <div className="grid grid-cols-1 gap-3">
             <div id="google-login-btn" className="flex justify-center"></div>
-
+            <div className="flex justify-center">
+              <button
+                onClick={() => navigate("/login-phone")}
+                className="w-[350px] h-[40px] border border-gray-300 rounded-md text-gray-700 hover:bg-gray-100 font-medium cursor-pointer flex items-center justify-center"
+              >
+                Sign In with Phone OTP
+              </button>
+            </div>
           </div>
 
           <p className="mt-10 text-center text-sm text-gray-500">

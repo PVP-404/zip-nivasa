@@ -41,6 +41,8 @@ import NotificationToast from "./features/NotificationToast";
 import { subscribeForegroundNotifications } from "./services/fcm";
 
 import CompleteProfile from "./pages/profile/CompleteProfile";
+import PhoneLogin from "./pages/auth/PhoneLogin";
+
 
 
 function App() {
@@ -74,6 +76,8 @@ function App() {
         <Route path="/accommodations" element={<SearchPGResults />} />
         <Route path="/messes" element={<AllMesses />} />
         <Route path="/complete-profile" element={<CompleteProfile />} />
+        <Route path="/login-phone" element={<PhoneLogin />} />
+
 
 
         {/* PROTECTED: NOTIFICATIONS */}
