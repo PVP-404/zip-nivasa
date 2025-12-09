@@ -1,6 +1,7 @@
 import bcrypt from "bcryptjs";
 import jwt from "jsonwebtoken";
 import { OAuth2Client } from "google-auth-library";
+import admin from "../config/firebaseAdmin.js";
 
 const client = new OAuth2Client(process.env.GOOGLE_CLIENT_ID);
 
@@ -271,5 +272,86 @@ export const completeProfile = async (req, res) => {
   } catch (err) {
     console.error("Complete Profile Error:", err);
     res.status(500).json({ success: false, message: "Server error" });
+  }
+};
+
+//phone otp login
+export const phoneLogin = async (req, res) => {
+  try {
+    ensureJwt();
+
+    const { idToken } = req.body;
+
+    if (!idToken) {
+      return res.status(400).json({
+        success: false,
+        message: "Firebase ID token required",
+      });
+    }
+
+    // Verify OTP with Firebase Admin
+    const decoded = await admin.auth().verifyIdToken(idToken);
+
+    const phone = decoded.phone_number; 
+
+    if (!phone) {
+      return res.status(400).json({
+        success: false,
+        message: "Firebase token does not contain phone number",
+      });
+    }
+
+    // Check if user already exists
+    let user = await User.findOne({ phone });
+
+    // If first-time login auto-create as tenant
+    if (!user) {
+      // Create tenant record
+      const tenant = await Tenant.create({
+        professionType: "student",
+        gender: "not-set",
+      });
+
+      user = await User.create({
+        name: "Phone User",
+        email: null,
+        phone,
+        password: phone,
+        role: "tenant",
+        roleId: tenant._id,
+        roleModel: "Tenant",
+        profileCompleted: false,
+        provider: "phone",
+      });
+
+      await tenant.updateOne({ userId: user._id });
+    }
+
+    // Generate JWT token
+    const jwtToken = jwt.sign(
+      { id: user._id, role: user.role },
+      process.env.JWT_SECRET,
+      { expiresIn: "7d" }
+    );
+
+    return res.json({
+      success: true,
+      token: jwtToken,
+      user: {
+        id: user._id,
+        email: user.email,
+        phone: user.phone,
+        name: user.name,
+        role: user.role,
+        profileCompleted: user.profileCompleted,
+      },
+    });
+
+  } catch (err) {
+    console.error("Phone Login Error:", err);
+    return res.status(500).json({
+      success: false,
+      message: "Phone login failed",
+    });
   }
 };
