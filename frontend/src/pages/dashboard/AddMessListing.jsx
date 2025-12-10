@@ -1,293 +1,764 @@
-import { addMess } from "../../services/messService";
-import React, { useState } from "react";
+import React, { useState, useMemo } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import Header from "../../components/Header";
 import Footer from "../../components/Footer";
 import Sidebar from "../../components/Sidebar";
+import LocationAutosuggest from "../../components/LocationAutosuggest";
+import { FaRupeeSign } from "react-icons/fa";
 
-const InputField = ({ label, id, name, type = "text", value, onChange, placeholder, error, textarea, required }) => (
-  <div>
-    <label htmlFor={id} className="block mb-2 font-semibold text-gray-700">{label}</label>
-    {textarea ? (
-      <textarea
-        id={id} name={name} rows="4" value={value} onChange={onChange} placeholder={placeholder} required={required}
-        className={`w-full border rounded-lg p-3 focus:outline-none focus:ring-2 resize-none transition duration-200 ${error ? "border-red-500 focus:ring-red-500" : "border-gray-300 focus:ring-blue-500"}`}
-      />
-    ) : (
-      <input
-        type={type} id={id} name={name} value={value} onChange={onChange} placeholder={placeholder} required={required}
-        className={`w-full border rounded-lg p-3 focus:outline-none focus:ring-2 transition duration-200 ${error ? "border-red-500 focus:ring-red-500" : "border-gray-300 focus:ring-blue-500"}`}
-      />
-    )}
-    {error && <p className="text-red-500 text-sm mt-1">{error}</p>}
-  </div>
+const UploadIcon = () => (
+  <svg className="w-8 h-8 text-emerald-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2}
+      d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12" />
+  </svg>
 );
 
-const initialDailyMenu = {
-  monday: { lunch: "", dinner: "" }, tuesday: { lunch: "", dinner: "" },
-  wednesday: { lunch: "", dinner: "" }, thursday: { lunch: "", dinner: "" },
-  friday: { lunch: "", dinner: "" }, saturday: { lunch: "", dinner: "" },
-  sunday: { lunch: "", dinner: "" },
-};
+const XCircleIcon = () => (
+  <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 20 20">
+    <path fillRule="evenodd"
+      d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z"
+      clipRule="evenodd" />
+  </svg>
+);
 
-const initialFormData = {
-  messName: "", location: "", address: "", contactNumber: "", description: "",
-  images: [], subscriptions: [{ planName: "Monthly", price: "" }],
-  dailyMenu: initialDailyMenu,
+const SpinnerIcon = () => (
+  <svg className="animate-spin h-5 w-5 text-emerald-500" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+    <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+    <path className="opacity-75" fill="currentColor"
+      d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z">
+    </path>
+  </svg>
+);
+
+const steps = [
+  { id: 1, name: "Mess Details & Location" },
+  { id: 2, name: "Pricing & Weekly Menu" },
+  { id: 3, name: "Description & Photos" },
+];
+
+const initialDailyMenu = {
+  monday: { lunch: "", dinner: "" },
+  tuesday: { lunch: "", dinner: "" },
+  wednesday: { lunch: "", dinner: "" },
+  thursday: { lunch: "", dinner: "" },
+  friday: { lunch: "", dinner: "" },
+  saturday: { lunch: "", dinner: "" },
+  sunday: { lunch: "", dinner: "" },
 };
 
 const AddMessListing = () => {
   const [currentStep, setCurrentStep] = useState(1);
-  const [formData, setFormData] = useState(initialFormData);
-  const [errors, setErrors] = useState({});
+  const [loading, setLoading] = useState(false);
 
+  const [pincodeLookupLoading, setPincodeLookupLoading] = useState(false);
+  const [pincodeError, setPincodeError] = useState(null);
+
+  const [formData, setFormData] = useState({
+    messName: "",
+    messType: "",
+    streetAddress: "",
+    pincode: "",
+    district: "",
+    state: "",
+    contactNumber: "",
+    basePrice: "",
+    description: "",
+    subscriptions: [{ planName: "Monthly", price: "" }],
+    dailyMenu: initialDailyMenu,
+    images: [],
+  });
+
+  const isStepValid = useMemo(() => {
+    switch (currentStep) {
+      case 1:
+        return (
+          formData.messName.trim() !== "" &&
+          formData.messType !== "" &&
+          formData.streetAddress.trim() !== "" &&
+          /^\d{6}$/.test(formData.pincode) &&
+          formData.district.trim() !== "" &&
+          formData.state.trim() !== "" &&
+          /^\d{10}$/.test(formData.contactNumber)
+        );
+      case 2:
+        return (
+          formData.basePrice > 0 &&
+          formData.subscriptions.length > 0 &&
+          formData.subscriptions.every(
+            (s) => s.planName.trim() !== "" && Number(s.price) > 0
+          )
+        );
+      case 3:
+        return (
+          formData.description.trim() !== "" &&
+          formData.images.length > 0
+        );
+      default:
+        return false;
+    }
+  }, [currentStep, formData]);
+
+  // ---------- Generic Handlers ----------
   const handleInputChange = (e) => {
     const { name, value } = e.target;
-    setFormData(prev => ({ ...prev, [name]: value }));
-    setErrors(prev => ({ ...prev, [name]: "" }));
+    setFormData((prev) => ({ ...prev, [name]: value }));
   };
 
-  const handleImageChange = (e) => {
-    const files = Array.from(e.target.files);
-    setFormData(prev => ({ ...prev, images: files }));
-    setErrors(prev => ({ ...prev, images: "" }));
+  const handlePincodeChange = async (e) => {
+    const pincode = e.target.value;
+    setFormData((prev) => ({ ...prev, pincode }));
+    setPincodeError(null);
+
+    if (pincode.length === 6 && /^\d{6}$/.test(pincode)) {
+      await performPincodeLookup(pincode);
+    } else {
+      setFormData((prev) => ({ ...prev, district: "", state: "" }));
+    }
   };
 
-  const updateSubscriptions = (newSubscriptions) => {
-    setFormData(prev => ({ ...prev, subscriptions: newSubscriptions }));
-  };
-  
-  const handleSubscriptionChange = (index, e) => {
-    const { name, value } = e.target;
-    const newSubscriptions = [...formData.subscriptions];
-    newSubscriptions[index][name] = value;
-    updateSubscriptions(newSubscriptions);
-  };
+  const performPincodeLookup = async (pincode) => {
+    try {
+      setPincodeLookupLoading(true);
+      setPincodeError(null);
 
-  const addSubscriptionField = () => {
-    updateSubscriptions([...formData.subscriptions, { planName: "", price: "" }]);
-  };
+      const res = await fetch(`http://localhost:5000/api/utilities/pincode/${pincode}`);
+      const data = await res.json();
 
-  const removeSubscriptionField = (index) => {
-    updateSubscriptions(formData.subscriptions.filter((_, i) => i !== index));
+      if (!res.ok) {
+        throw new Error(data.message || "Pincode lookup failed");
+      }
+
+      if (data.district && data.state) {
+        setFormData((prev) => ({
+          ...prev,
+          district: data.district,
+          state: data.state,
+        }));
+      } else {
+        setPincodeError("Invalid Pincode or no location data found.");
+        setFormData((prev) => ({ ...prev, district: "", state: "" }));
+      }
+    } catch (err) {
+      console.error("Pincode lookup error:", err);
+      setPincodeError(err.message || "Failed to lookup Pincode.");
+      setFormData((prev) => ({ ...prev, district: "", state: "" }));
+    } finally {
+      setPincodeLookupLoading(false);
+    }
   };
 
   const handleDailyMenuChange = (day, meal, e) => {
-    setFormData(prev => ({
+    const value = e.target.value;
+    setFormData((prev) => ({
       ...prev,
       dailyMenu: {
         ...prev.dailyMenu,
-        [day]: { ...prev.dailyMenu[day], [meal]: e.target.value },
+        [day]: { ...prev.dailyMenu[day], [meal]: value },
       },
     }));
   };
 
-  const validateStep = (step) => {
-    let currentErrors = {};
-    const { messName, location, address, contactNumber, description, images, subscriptions } = formData;
-
-    if (step === 1) {
-      if (!messName) currentErrors.messName = "Mess name is required.";
-      if (!location) currentErrors.location = "Location (city/area) is required.";
-      if (!address) currentErrors.address = "Full address is required.";
-      if (!contactNumber || !/^\d{10}$/.test(contactNumber)) {
-        currentErrors.contactNumber = "A valid 10-digit contact number is required.";
-      }
-      if (!description) currentErrors.description = "A description is required.";
-    }
-    
-    if (step === 2) {
-      if (images.length === 0) currentErrors.images = "Please upload at least one image.";
-      subscriptions.forEach((sub, index) => {
-        if (!sub.planName) currentErrors[`planName${index}`] = "Plan name is required.";
-        if (!sub.price || sub.price <= 0) currentErrors[`price${index}`] = "Price must be a positive number.";
-      });
-    }
-
-    setErrors(currentErrors);
-    return Object.keys(currentErrors).length === 0;
+  const handleSubscriptionChange = (index, e) => {
+    const { name, value } = e.target;
+    setFormData((prev) => {
+      const subs = [...prev.subscriptions];
+      subs[index][name] = value;
+      return { ...prev, subscriptions: subs };
+    });
   };
 
-  const handleNavigation = (direction) => () => {
-    const newStep = currentStep + direction;
-    if (direction === 1 && !validateStep(currentStep)) return;
-    if (newStep >= 1 && newStep <= 2) {
-      setCurrentStep(newStep);
+  const addSubscription = () => {
+    setFormData((prev) => ({
+      ...prev,
+      subscriptions: [...prev.subscriptions, { planName: "", price: "" }],
+    }));
+  };
+
+  const removeSubscription = (index) => {
+    setFormData((prev) => ({
+      ...prev,
+      subscriptions: prev.subscriptions.filter((_, i) => i !== index),
+    }));
+  };
+
+  const handleImageChange = (e) => {
+    const files = Array.from(e.target.files);
+    setFormData((prev) => ({
+      ...prev,
+      images: [...prev.images, ...files],
+    }));
+  };
+
+  const removeImage = (indexToRemove) => {
+    setFormData((prev) => ({
+      ...prev,
+      images: prev.images.filter((_, index) => index !== indexToRemove),
+    }));
+  };
+
+  const handleNext = () => {
+    if (!isStepValid) return;
+    if (currentStep < steps.length) {
+      setCurrentStep((s) => s + 1);
       window.scrollTo({ top: 0, behavior: "smooth" });
     }
   };
 
+  const handleBack = () => {
+    if (currentStep > 1) {
+      setCurrentStep((s) => s - 1);
+      window.scrollTo({ top: 0, behavior: "smooth" });
+    }
+  };
+
+  // ---------- Submit ----------
   const handleSubmit = async (e) => {
     e.preventDefault();
-    if (!validateStep(currentStep)) return;
+    if (!isStepValid || loading) return;
+
+    setLoading(true);
 
     try {
-      const ownerId = localStorage.getItem("ownerId");
-      if (!ownerId) return alert("Owner ID missing. Please log in again.");
+      const token = localStorage.getItem("token");
+      if (!token) {
+        alert("Please log in again.");
+        setLoading(false);
+        return;
+      }
 
-      const messData = {
-        messOwnerId: ownerId,
-        title: formData.messName,
-        description: formData.description,
-        location: formData.location,
-        price: formData.subscriptions.length > 0 ? parseInt(formData.subscriptions[0].price) : 0,
-        type: "Veg",
-        menu: Object.values(formData.dailyMenu).flatMap(meal => [meal.lunch, meal.dinner]).filter(Boolean),
-        contact: formData.contactNumber,
-        specialToday: {
+      const fd = new FormData();
+
+      fd.append("title", formData.messName);
+      fd.append("description", formData.description);
+      fd.append("streetAddress", formData.streetAddress);
+      fd.append("pincode", formData.pincode);
+      fd.append("district", formData.district);
+      fd.append("state", formData.state);
+      fd.append("price", formData.basePrice);
+      fd.append("type", formData.messType || "Veg");
+      fd.append("contact", formData.contactNumber);
+
+      // menu: flatten weekly menu into array of strings
+      const flatMenu = Object.values(formData.dailyMenu)
+        .flatMap((day) => [day.lunch, day.dinner])
+        .filter(Boolean);
+      fd.append("menu", JSON.stringify(flatMenu));
+
+      // subscriptions
+      fd.append("subscriptions", JSON.stringify(formData.subscriptions));
+
+      // specialToday (use Monday as base sample)
+      fd.append(
+        "specialToday",
+        JSON.stringify({
           lunch: formData.dailyMenu.monday.lunch || "",
           dinner: formData.dailyMenu.monday.dinner || "",
+        })
+      );
+
+      // images
+      formData.images.forEach((img) => fd.append("images", img));
+
+      const res = await fetch("http://localhost:5000/api/mess/add", {
+        method: "POST",
+        headers: {
+          Authorization: `Bearer ${token}`,
         },
-      };
+        body: fd,
+      });
 
-      const response = await addMess(messData);
+      const data = await res.json();
 
-      if (response.success) {
-        alert("Mess listing saved successfully! ");
-        setFormData(initialFormData);
-        setCurrentStep(1);
-      } else {
-        alert("Failed to save mess.");
+      if (!res.ok || !data.success) {
+        throw new Error(data.message || "Failed to save mess listing");
       }
+
+      alert("Mess listing saved successfully!");
+
+      setFormData({
+        messName: "",
+        messType: "",
+        streetAddress: "",
+        pincode: "",
+        district: "",
+        state: "",
+        contactNumber: "",
+        basePrice: "",
+        description: "",
+        subscriptions: [{ planName: "Monthly", price: "" }],
+        dailyMenu: initialDailyMenu,
+        images: [],
+      });
+      setCurrentStep(1);
     } catch (err) {
       console.error("Error saving mess:", err);
-      alert("Server error. Check console for details.");
+      alert(`Error: ${err.message}`);
+    } finally {
+      setLoading(false);
     }
   };
 
-
-  const renderStep1 = () => (
-    <motion.div key="step1" initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -20 }} transition={{ duration: 0.3 }} className="space-y-6">
-      <h2 className="text-2xl font-bold text-gray-800">1. Basic Details</h2>
-      <InputField label="Mess Name" id="messName" name="messName" value={formData.messName} onChange={handleInputChange} placeholder="e.g., Mahadev Tiffin Service" error={errors.messName} required />
-      
-      <div className="grid md:grid-cols-2 gap-6">
-        <InputField label="Location (City/Area)" id="location" name="location" value={formData.location} onChange={handleInputChange} placeholder="e.g., Pimpri-Chinchwad" error={errors.location} required />
-        <InputField label="Contact Number" id="contactNumber" name="contactNumber" type="tel" value={formData.contactNumber} onChange={handleInputChange} placeholder="e.g., 9876543210" error={errors.contactNumber} required />
-      </div>
-      
-      <InputField label="Full Address" id="address" name="address" value={formData.address} onChange={handleInputChange} placeholder="Street, Landmark, Pin Code" error={errors.address} required />
-      <InputField label="Description" id="description" name="description" textarea value={formData.description} onChange={handleInputChange} placeholder="Describe your mess, specialities, delivery radius, etc." error={errors.description} required />
-    </motion.div>
-  );
-
-  const renderStep2 = () => (
-    <motion.div key="step2" initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -20 }} transition={{ duration: 0.3 }} className="space-y-6">
-      <h2 className="text-2xl font-bold text-gray-800">2. Plans & Media</h2>
-      
-      <div>
-        <label htmlFor="images" className="block mb-2 font-semibold text-gray-700">Upload Images</label>
-        <input type="file" id="images" accept="image/*" multiple onChange={handleImageChange}
-          className={`w-full text-gray-700 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100 transition duration-200 ${errors.images ? "border-red-500" : ""}`}
-        />
-        <p className="mt-2 text-sm text-gray-500">Add high-quality photos of your food and kitchen.</p>
-        {errors.images && <p className="text-red-500 text-sm mt-1">{errors.images}</p>}
-        {formData.images.length > 0 && (
-          <div className="mt-4 grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
-            {formData.images.map((file, index) => (
-              <img key={index} src={URL.createObjectURL(file)} alt={`upload preview ${index + 1}`} className="w-full h-32 object-cover rounded-lg shadow-sm" />
-            ))}
-          </div>
-        )}
-      </div>
-
-      <div>
-        <label className="block mb-2 font-semibold text-gray-700">Subscription Plans</label>
-        {formData.subscriptions.map((sub, index) => (
-          <div key={index} className="flex gap-4 mb-4">
-            <div className="flex-1">
-              <input type="text" name="planName" value={sub.planName} onChange={(e) => handleSubscriptionChange(index, e)}
-                placeholder="e.g., Monthly Plan, Lunch Only" required
-                className={`w-full border rounded-lg p-3 focus:outline-none focus:ring-2 transition duration-200 ${errors[`planName${index}`] ? "border-red-500" : "border-gray-300 focus:ring-blue-500"}`}
-              />
-              {errors[`planName${index}`] && <p className="text-red-500 text-sm mt-1">{errors[`planName${index}`]}</p>}
-            </div>
-            <div className="flex-1">
-              <input type="number" name="price" value={sub.price} onChange={(e) => handleSubscriptionChange(index, e)}
-                placeholder="Price (₹)" required
-                className={`w-full border rounded-lg p-3 focus:outline-none focus:ring-2 transition duration-200 ${errors[`price${index}`] ? "border-red-500" : "border-gray-300 focus:ring-blue-500"}`}
-              />
-              {errors[`price${index}`] && <p className="text-red-500 text-sm mt-1">{errors[`price${index}`]}</p>}
-            </div>
-            {formData.subscriptions.length > 1 && (
-              <button type="button" onClick={() => removeSubscriptionField(index)} className="text-gray-400 hover:text-red-500 transition-colors">
-                <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" /></svg>
-              </button>
-            )}
-          </div>
-        ))}
-        <button type="button" onClick={addSubscriptionField} className="text-blue-600 hover:text-blue-800 transition-colors flex items-center gap-1 font-semibold text-sm">
-          <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" viewBox="0 0 20 20" fill="currentColor"><path fillRule="evenodd" d="M10 5a1 1 0 011 1v3h3a1 1 0 110 2h-3v3a1 1 0 11-2 0v-3H6a1 1 0 110-2h3V6a1 1 0 011-1z" clipRule="evenodd" /></svg> Add another plan
-        </button>
-      </div>
-
-      <div className="mt-8">
-        <h3 className="text-xl font-bold text-gray-800 mb-4">Weekly Menu</h3>
-        <p className="text-gray-600 text-sm mb-4">Provide a sample weekly menu to help customers decide.</p>
-        {Object.keys(formData.dailyMenu).map((day) => (
-          <div key={day} className="grid md:grid-cols-3 items-center gap-4 mb-4 p-4 border rounded-lg bg-gray-50">
-            <h4 className="font-semibold capitalize text-gray-700">{day}</h4>
-            <input type="text" name="lunch" value={formData.dailyMenu[day].lunch} onChange={(e) => handleDailyMenuChange(day, "lunch", e)}
-              placeholder="Lunch menu" className="w-full border rounded-lg p-2 focus:outline-none focus:ring-1 focus:ring-blue-500"
-            />
-            <input type="text" name="dinner" value={formData.dailyMenu[day].dinner} onChange={(e) => handleDailyMenuChange(day, "dinner", e)}
-              placeholder="Dinner menu" className="w-full border rounded-lg p-2 focus:outline-none focus:ring-1 focus:ring-blue-500"
-            />
-          </div>
-        ))}
-      </div>
-    </motion.div>
-  );
-
+  // ---------- Step Views ----------
   const renderStep = () => {
     switch (currentStep) {
-      case 1: return renderStep1();
-      case 2: return renderStep2();
-      default: return null;
+      case 1:
+        return (
+          <motion.div
+            key="step1"
+            initial={{ opacity: 0, x: 20 }}
+            animate={{ opacity: 1, x: 0 }}
+            exit={{ opacity: 0, x: -20 }}
+            className="space-y-6"
+          >
+            <div className="border-b pb-4 mb-4 border-emerald-100">
+              <h2 className="text-xl font-bold text-emerald-800">Mess Details & Location</h2>
+              <p className="text-sm text-emerald-500">
+                Add accurate details so hungry students can discover you easily.
+              </p>
+            </div>
+
+            <div className="grid md:grid-cols-2 gap-6">
+              <div>
+                <label className="block mb-2 text-sm font-semibold text-emerald-700">
+                  Mess Name <span className="text-emerald-500">*</span>
+                </label>
+                <input
+                  type="text"
+                  name="messName"
+                  value={formData.messName}
+                  onChange={handleInputChange}
+                  placeholder="e.g., Mahadev Tiffin Service"
+                  className="w-full border border-emerald-300 rounded-lg p-3 focus:ring-2 focus:ring-emerald-500 bg-white shadow-sm"
+                  required
+                />
+              </div>
+              <div>
+                <label className="block mb-2 text-sm font-semibold text-emerald-700">
+                  Mess Type <span className="text-emerald-500">*</span>
+                </label>
+                <select
+                  name="messType"
+                  value={formData.messType}
+                  onChange={handleInputChange}
+                  className="w-full border border-emerald-300 rounded-lg p-3 focus:ring-2 focus:ring-emerald-500 bg-white shadow-sm"
+                  required
+                >
+                  <option value="">Select Type</option>
+                  <option value="Veg">Veg</option>
+                  <option value="Non-Veg">Non-Veg</option>
+                  <option value="Both">Both</option>
+                </select>
+              </div>
+            </div>
+
+            <h3 className="text-lg font-bold text-emerald-800 pt-4 border-t mt-4 border-emerald-100">
+              Location
+            </h3>
+
+            <div className="grid md:grid-cols-3 gap-6">
+              <div>
+                <label className="block mb-2 text-sm font-semibold text-emerald-700">
+                  Pincode <span className="text-emerald-500">*</span>
+                </label>
+                <div className="relative">
+                  <input
+                    type="text"
+                    name="pincode"
+                    value={formData.pincode}
+                    onChange={handlePincodeChange}
+                    maxLength={6}
+                    placeholder="e.g., 411033"
+                    className="w-full border border-emerald-300 rounded-lg p-3 focus:ring-2 focus:ring-emerald-500 bg-white shadow-sm"
+                    required
+                  />
+                  {pincodeLookupLoading && (
+                    <div className="absolute inset-y-0 right-3 flex items-center">
+                      <SpinnerIcon />
+                    </div>
+                  )}
+                </div>
+                {pincodeError && (
+                  <p className="text-emerald-500 text-xs mt-1 bg-emerald-50/60 p-2 rounded-lg">
+                    {pincodeError}
+                  </p>
+                )}
+              </div>
+              <div>
+                <label className="block mb-2 text-sm font-semibold text-emerald-700">
+                  District / City <span className="text-emerald-500">*</span>
+                </label>
+                <input
+                  type="text"
+                  name="district"
+                  value={formData.district}
+                  onChange={handleInputChange}
+                  placeholder="e.g., Pimpri-Chinchwad"
+                  className="w-full border border-emerald-300 rounded-lg p-3 focus:ring-2 focus:ring-emerald-500 bg-emerald-50/80 disabled:bg-emerald-50 shadow-sm"
+                  required
+                  disabled={formData.pincode.length === 6 && !pincodeError}
+                />
+              </div>
+              <div>
+                <label className="block mb-2 text-sm font-semibold text-emerald-700">
+                  State <span className="text-emerald-500">*</span>
+                </label>
+                <input
+                  type="text"
+                  name="state"
+                  value={formData.state}
+                  onChange={handleInputChange}
+                  placeholder="e.g., Maharashtra"
+                  className="w-full border border-emerald-300 rounded-lg p-3 focus:ring-2 focus:ring-emerald-500 bg-emerald-50/80 disabled:bg-emerald-50 shadow-sm"
+                  required
+                  disabled={formData.pincode.length === 6 && !pincodeError}
+                />
+              </div>
+            </div>
+
+            <div>
+              <label className="block mb-2 text-sm font-semibold text-emerald-700">
+                Street Address (Building, Lane, Landmark){" "}
+                <span className="text-emerald-500">*</span>
+              </label>
+              <LocationAutosuggest
+                value={formData.streetAddress}
+                onChange={(address) =>
+                  setFormData((prev) => ({ ...prev, streetAddress: address }))
+                }
+              />
+              <p className="text-xs text-emerald-500 mt-1 bg-emerald-50/60 p-2 rounded-lg">
+                This exact address is used to compute latitude/longitude and Mappls eLoc.
+              </p>
+            </div>
+
+            <div>
+              <label className="block mb-2 text-sm font-semibold text-emerald-700">
+                Contact Number <span className="text-emerald-500">*</span>
+              </label>
+              <input
+                type="tel"
+                name="contactNumber"
+                value={formData.contactNumber}
+                onChange={handleInputChange}
+                maxLength={10}
+                placeholder="e.g., 9876543210"
+                className="w-full border border-emerald-300 rounded-lg p-3 focus:ring-2 focus:ring-emerald-500 bg-white shadow-sm"
+                required
+              />
+            </div>
+          </motion.div>
+        );
+      case 2:
+        return (
+          <motion.div
+            key="step2"
+            initial={{ opacity: 0, x: 20 }}
+            animate={{ opacity: 1, x: 0 }}
+            exit={{ opacity: 0, x: -20 }}
+            className="space-y-6"
+          >
+            <div className="border-b pb-4 mb-4 border-emerald-100">
+              <h2 className="text-xl font-bold text-emerald-800">Pricing & Weekly Menu</h2>
+              <p className="text-sm text-emerald-500">
+                Define your base plan and show a sample weekly menu.
+              </p>
+            </div>
+
+            <div className="grid md:grid-cols-2 gap-6">
+              <div>
+                <label className="block mb-2 text-sm font-semibold text-emerald-700">
+                  Base Monthly Price (₹) <span className="text-emerald-500">*</span>
+                </label>
+                <div className="relative">
+                  <FaRupeeSign className="absolute left-3 top-3 text-emerald-500 w-4 h-4" />
+                  <input
+                    type="number"
+                    name="basePrice"
+                    value={formData.basePrice}
+                    onChange={handleInputChange}
+                    placeholder="e.g., 3500"
+                    className="w-full pl-10 border border-emerald-300 rounded-lg p-3 focus:ring-2 focus:ring-emerald-500 bg-white shadow-sm"
+                    required
+                  />
+                </div>
+              </div>
+
+              <div>
+                <label className="block mb-2 text-sm font-semibold text-emerald-700">
+                  Subscription Plans <span className="text-emerald-500">*</span>
+                </label>
+                {formData.subscriptions.map((sub, idx) => (
+                  <div key={idx} className="flex gap-3 mb-2">
+                    <input
+                      type="text"
+                      name="planName"
+                      value={sub.planName}
+                      onChange={(e) => handleSubscriptionChange(idx, e)}
+                      placeholder="Plan name (e.g., Lunch Only)"
+                      className="flex-1 border border-emerald-300 rounded-lg p-2.5 focus:ring-2 focus:ring-emerald-500 bg-white text-sm"
+                    />
+                    <input
+                      type="number"
+                      name="price"
+                      value={sub.price}
+                      onChange={(e) => handleSubscriptionChange(idx, e)}
+                      placeholder="Price"
+                      className="w-32 border border-emerald-300 rounded-lg p-2.5 focus:ring-2 focus:ring-emerald-500 bg-white text-sm"
+                    />
+                    {formData.subscriptions.length > 1 && (
+                      <button
+                        type="button"
+                        onClick={() => removeSubscription(idx)}
+                        className="text-red-500 text-xs font-bold px-2"
+                      >
+                        ✕
+                      </button>
+                    )}
+                  </div>
+                ))}
+                <button
+                  type="button"
+                  onClick={addSubscription}
+                  className="mt-2 text-emerald-600 text-sm font-semibold hover:text-emerald-800"
+                >
+                  + Add another plan
+                </button>
+              </div>
+            </div>
+
+            <div className="mt-6">
+              <h3 className="text-lg font-bold text-emerald-800 mb-3">Weekly Menu</h3>
+              <p className="text-xs text-emerald-500 mb-4 bg-emerald-50/70 p-2 rounded-lg">
+                This is for display only – we will still store a simple menu list & todayʼs special.
+              </p>
+              {Object.keys(formData.dailyMenu).map((day) => (
+                <div
+                  key={day}
+                  className="grid md:grid-cols-3 items-center gap-4 mb-3 p-4 border rounded-lg bg-emerald-50/40"
+                >
+                  <h4 className="font-semibold capitalize text-emerald-800">
+                    {day}
+                  </h4>
+                  <input
+                    type="text"
+                    name="lunch"
+                    value={formData.dailyMenu[day].lunch}
+                    onChange={(e) => handleDailyMenuChange(day, "lunch", e)}
+                    placeholder="Lunch items"
+                    className="w-full border border-emerald-300 rounded-lg p-2 text-sm focus:ring-1 focus:ring-emerald-500 bg-white"
+                  />
+                  <input
+                    type="text"
+                    name="dinner"
+                    value={formData.dailyMenu[day].dinner}
+                    onChange={(e) => handleDailyMenuChange(day, "dinner", e)}
+                    placeholder="Dinner items"
+                    className="w-full border border-emerald-300 rounded-lg p-2 text-sm focus:ring-1 focus:ring-emerald-500 bg-white"
+                  />
+                </div>
+              ))}
+            </div>
+          </motion.div>
+        );
+      case 3:
+        return (
+          <motion.div
+            key="step3"
+            initial={{ opacity: 0, x: 20 }}
+            animate={{ opacity: 1, x: 0 }}
+            exit={{ opacity: 0, x: -20 }}
+            className="space-y-6"
+          >
+            <div className="border-b pb-4 mb-4 border-emerald-100">
+              <h2 className="text-xl font-bold text-emerald-800">Description & Photos</h2>
+              <p className="text-sm text-emerald-500">
+                Show students what they’ll actually get on the plate.
+              </p>
+            </div>
+
+            <div>
+              <label className="block mb-2 text-sm font-semibold text-emerald-700">
+                Description <span className="text-emerald-500">*</span>
+              </label>
+              <textarea
+                name="description"
+                rows={5}
+                value={formData.description}
+                onChange={handleInputChange}
+                placeholder="Describe food quality, timings, homely vibe, hygiene and any rules..."
+                className="w-full border border-emerald-300 rounded-lg p-3 focus:ring-2 focus:ring-emerald-500 bg-white shadow-sm resize-none"
+                required
+              />
+            </div>
+
+            <div>
+              <label className="block mb-2 text-sm font-semibold text-emerald-700">
+                Upload Images <span className="text-emerald-500">*</span>
+              </label>
+              <div className="border-2 border-dashed border-emerald-300 rounded-xl p-8 text-center bg-emerald-50/40 hover:bg-emerald-50 transition-colors relative group">
+                <input
+                  type="file"
+                  id="images"
+                  accept="image/*"
+                  multiple
+                  onChange={handleImageChange}
+                  className="absolute inset-0 w-full h-full opacity-0 cursor-pointer"
+                />
+                <div className="flex flex-col items-center justify-center text-emerald-500 pointer-events-none">
+                  <UploadIcon />
+                  <p className="mt-2 text-sm font-medium">
+                    Click to upload or drag and drop
+                  </p>
+                  <p className="text-xs text-emerald-400">
+                    JPG, PNG, GIF up to 5MB each
+                  </p>
+                </div>
+              </div>
+            </div>
+
+            {formData.images.length > 0 && (
+              <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-4 mt-4">
+                {formData.images.map((file, index) => (
+                  <div
+                    key={index}
+                    className="relative rounded-lg overflow-hidden shadow-sm border border-emerald-200 bg-white"
+                  >
+                    <img
+                      src={URL.createObjectURL(file)}
+                      alt={`preview-${index}`}
+                      className="w-full h-24 object-cover"
+                    />
+                    <button
+                      type="button"
+                      onClick={() => removeImage(index)}
+                      className="absolute top-1 right-1 bg-white/90 rounded-full p-1 text-emerald-500 hover:bg-emerald-50 shadow-xs"
+                    >
+                      <XCircleIcon />
+                    </button>
+                  </div>
+                ))}
+              </div>
+            )}
+          </motion.div>
+        );
+      default:
+        return null;
     }
   };
 
-
   return (
-    <div className="flex flex-col min-h-screen bg-gray-50 font-sans">
+    <div className="flex flex-col min-h-screen bg-gradient-to-br from-emerald-50 via-emerald-50 to-mint-50 font-sans">
       <Header userRole="mess_owner" isLoggedIn={true} />
+
       <div className="flex flex-1">
         <Sidebar />
-        <main className="flex-1 container mx-auto px-4 py-10 max-w-4xl">
-          <motion.h1 initial={{ opacity: 0, y: -20 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.5 }} className="text-3xl font-bold mb-2 text-gray-800">
-            Add New Mess Listing
-          </motion.h1>
-          <motion.p initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ duration: 0.8 }} className="text-gray-600 mb-6">
-            Provide detailed information to attract the right customers for your mess.
-          </motion.p>
-          <div className="w-full bg-white p-8 rounded-2xl shadow-2xl border border-gray-200">
-            <form onSubmit={handleSubmit} className="space-y-6">
-              <AnimatePresence mode="wait">
-                {renderStep()}
-              </AnimatePresence>
-              <div className="flex justify-between mt-8">
-                {currentStep > 1 && (
-                  <motion.button whileHover={{ scale: 1.02 }} whileTap={{ scale: 0.98 }} type="button" onClick={handleNavigation(-1)}
-                    className="px-6 py-3 bg-gray-300 text-gray-800 font-bold rounded-lg hover:bg-gray-400 transition-colors duration-200"
-                  > ← Back </motion.button>
-                )}
-                {currentStep < 2 ? (
-                  <motion.button whileHover={{ scale: 1.02 }} whileTap={{ scale: 0.98 }} type="button" onClick={handleNavigation(1)}
-                    className={`ml-auto px-6 py-3 bg-blue-600 text-white font-bold rounded-lg hover:bg-blue-700 transition-colors duration-200 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2`}
-                  > Next Step → </motion.button>
+        <main className="flex-1 p-6 md:p-10 max-w-5xl mx-auto w-full">
+          <motion.div initial={{ opacity: 0, y: -10 }} animate={{ opacity: 1, y: 0 }} className="mb-8">
+            <h1 className="text-3xl font-bold text-emerald-800">Add New Mess Listing</h1>
+            <p className="text-emerald-500 mt-1">
+              Help students and working professionals discover your homely mess on Zip Nivasa.
+            </p>
+          </motion.div>
+
+          <div className="bg-white/95 backdrop-blur-xl rounded-2xl shadow-2xl border border-emerald-100 overflow-hidden">
+            {/* Progress bar */}
+            <div className="bg-emerald-50/90 px-8 py-6 border-b border-emerald-100">
+              <div className="flex items-center justify-between relative">
+                <div className="absolute left-4 right-4 top-1/2 transform -translate-y-1/2 h-1 bg-emerald-100 rounded-full"></div>
+                <div
+                  className="absolute left-4 top-1/2 transform -translate-y-1/2 h-1 bg-emerald-500 rounded-full transition-all duration-500"
+                  style={{
+                    width: `${((currentStep - 1) / (steps.length - 1)) * 100}%`,
+                  }}
+                ></div>
+
+                {steps.map((step) => (
+                  <div key={step.id} className="relative z-10 flex flex-col items-center">
+                    <div
+                      className={`w-10 h-10 rounded-full flex items-center justify-center text-xs font-bold border-4 transition-all ${
+                        currentStep >= step.id
+                          ? "bg-emerald-500 border-emerald-300 text-white shadow-lg"
+                          : "bg-emerald-100 border-emerald-200 text-emerald-600"
+                      }`}
+                    >
+                      {step.id}
+                    </div>
+                    <span
+                      className={`mt-2 text-[10px] font-semibold uppercase tracking-wide text-center ${
+                        currentStep >= step.id ? "text-emerald-700" : "text-emerald-400"
+                      }`}
+                    >
+                      {step.name}
+                    </span>
+                  </div>
+                ))}
+              </div>
+            </div>
+
+            <form onSubmit={handleSubmit} className="p-8">
+              <AnimatePresence mode="wait">{renderStep()}</AnimatePresence>
+
+              <div className="flex justify-between items-center mt-10 pt-6 border-t border-emerald-100">
+                {currentStep > 1 ? (
+                  <button
+                    type="button"
+                    onClick={handleBack}
+                    className="px-6 py-2.5 text-emerald-600 font-semibold rounded-lg hover:bg-emerald-50 border border-emerald-200 hover:border-emerald-300 flex items-center gap-2"
+                  >
+                    <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
+                    </svg>
+                    Back
+                  </button>
                 ) : (
-                  <motion.button whileHover={{ scale: 1.02 }} whileTap={{ scale: 0.98 }} type="submit"
-                    className="ml-auto px-6 py-3 bg-green-600 text-white font-bold rounded-lg hover:bg-green-700 transition-colors duration-200 focus:outline-none focus:ring-2 focus:ring-green-500 focus:ring-offset-2"
-                  > Submit Listing </motion.button>
+                  <div></div>
+                )}
+
+                {currentStep < steps.length ? (
+                  <button
+                    type="button"
+                    onClick={handleNext}
+                    disabled={!isStepValid}
+                    className={`px-8 py-3 rounded-lg font-bold text-white shadow-md flex items-center gap-2 ${
+                      isStepValid
+                        ? "bg-gradient-to-r from-emerald-500 to-emerald-600 hover:from-emerald-600 hover:to-emerald-700 hover:shadow-lg"
+                        : "bg-emerald-200 cursor-not-allowed border border-emerald-300"
+                    }`}
+                  >
+                    Next Step
+                    <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+                    </svg>
+                  </button>
+                ) : (
+                  <button
+                    type="submit"
+                    disabled={!isStepValid || loading}
+                    className={`px-8 py-3 rounded-lg font-bold text-white shadow-md flex items-center gap-2 ${
+                      isStepValid && !loading
+                        ? "bg-gradient-to-r from-emerald-600 to-emerald-700 hover:from-emerald-700 hover:to-emerald-800 hover:shadow-lg"
+                        : "bg-emerald-200 cursor-not-allowed border border-emerald-300"
+                    }`}
+                  >
+                    {loading ? (
+                      <>
+                        <SpinnerIcon />
+                        Submitting...
+                      </>
+                    ) : (
+                      "Submit Listing"
+                    )}
+                  </button>
                 )}
               </div>
             </form>
           </div>
         </main>
       </div>
+
       <Footer />
     </div>
   );
 };
 
-export default AddMessListing;  
+export default AddMessListing;
