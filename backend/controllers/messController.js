@@ -1,4 +1,3 @@
-// backend/controllers/messController.js
 import Mess from "../models/Mess.js";
 import User from "../models/User.js";
 import { geocodeAddress } from "../utils/geocode.js";
@@ -10,7 +9,6 @@ import { distanceKm } from "../utils/distance.js";
 
 export const addMess = async (req, res) => {
   try {
-    // 🔒 Require logged-in mess owner
     const userId = req.user?.id;
     if (!userId) {
       return res.status(401).json({ success: false, message: "Unauthorized" });
@@ -23,7 +21,6 @@ export const addMess = async (req, res) => {
         .json({ success: false, message: "Only mess owners can add mess listings" });
     }
 
-    // 📸 Upload images to Cloudinary (if any)
     let imagePaths = [];
     if (req.files && req.files.length > 0) {
       imagePaths = await Promise.all(
@@ -31,7 +28,6 @@ export const addMess = async (req, res) => {
       );
     }
 
-    // 🧹 Extract & normalize body
     const {
       title,
       description,
@@ -54,7 +50,6 @@ export const addMess = async (req, res) => {
       });
     }
 
-    // 🧾 Parse menu & specialToday (they come as JSON strings from FormData)
     let parsedMenu = [];
     if (menu) {
       if (typeof menu === "string") {
@@ -187,14 +182,13 @@ export const getAllMesses = async (req, res) => {
 
 export const getMessesByOwner = async (req, res) => {
   try {
-    // 🔒 use logged-in user instead of trusting param
     const ownerId = req.user.id;
 
     const messes = await Mess.find({ messOwnerId: ownerId })
       .populate("ratings.studentId", "name email")
       .sort({ createdAt: -1 });
 
-    res.json(messes); // keep as array for existing frontend mapping
+    res.json(messes); 
   } catch (err) {
     console.error("GET MESSES BY OWNER ERROR:", err);
     res.status(500).json({ success: false, message: err.message });
@@ -284,7 +278,7 @@ export const getMessesNearMe = async (req, res) => {
 
     const nearby = allMesses
       .map((mess) => {
-        const dist = distanceKm(       // ✅ use local helper
+        const dist = distanceKm(      
           latitude,
           longitude,
           mess.latitude,
