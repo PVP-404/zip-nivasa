@@ -242,7 +242,7 @@ const OwnerCTASection = memo(function OwnerCTASection() {
 
               <div className="flex flex-col sm:flex-row gap-3 justify-center lg:justify-start">
                 <Link
-                  to="/register"
+                  to="/dashboard/add-mess"
                   className="inline-flex items-center justify-center gap-2 bg-emerald-500 hover:bg-emerald-400 text-white font-semibold py-3 px-6 rounded-xl transition-all duration-200"
                 >
                   <FaUserCheck className="w-4 h-4" />
@@ -311,7 +311,7 @@ const Home = () => {
       const encodedLocation = encodeURIComponent(location);
       const path =
         type === "mess"
-          ? `/messes?location=${encodedLocation}`
+          ? `/messes?search=${encodedLocation}`
           : `/pgs/all?location=${encodedLocation}&type=${type}`;
       navigate(path);
     },
@@ -421,7 +421,7 @@ const Home = () => {
             <div className="mt-4 pt-4 border-t border-slate-100 flex items-center justify-center gap-2 text-sm">
               <span className="text-slate-500">Are you a property owner?</span>
               <Link
-                to="/register"
+                to="/dashboard/add-mess"
                 className="text-emerald-600 hover:text-emerald-700 font-medium inline-flex items-center gap-1 hover:underline"
               >
                 List your property

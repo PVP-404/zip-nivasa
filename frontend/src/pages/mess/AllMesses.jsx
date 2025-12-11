@@ -136,8 +136,6 @@ const AllMesses = () => {
     { value: "non-veg", label: "Non-Vegetarian", count: messes.filter(m => m.type?.toLowerCase() === "non-veg").length },
     { value: "both", label: "Both", count: messes.filter(m => m.type?.toLowerCase() === "both").length }
   ];
-
-  // 🔹 Optimized filtering + sorting
   const processedMesses = useMemo(() => {
     let filtered = messes
       .filter((m) => {
