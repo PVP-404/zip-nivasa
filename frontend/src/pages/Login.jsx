@@ -3,27 +3,36 @@ import { Link, useNavigate } from "react-router-dom";
 import axios from "axios";
 import { requestFCMToken, registerTokenWithBackend } from "../services/fcm";
 import { motion } from "framer-motion";
-import { FaGoogle, FaFacebook } from "react-icons/fa";
+
 import { Eye, EyeOff, Loader2 } from "lucide-react";
 import { initializeGoogleLogin, renderGoogleButton, handleGoogleResponse } from "../services/googleAuth";
 import { useEffect } from "react";
+import { useLocation } from "react-router-dom";
 
 
 const Login = () => {
   const navigate = useNavigate();
+  const location = useLocation();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
+  const redirectPath = location.state?.from || null;
 
   useEffect(() => {
+    const redirectPath = location.state?.from || null;
+
     initializeGoogleLogin(async (response) => {
       try {
         const user = await handleGoogleResponse(response);
 
         if (!user.profileCompleted) {
           return navigate("/complete-profile");
+        }
+
+        if (redirectPath) {
+          return navigate(redirectPath, { replace: true });
         }
 
         navigate("/dashboard/student");
@@ -34,7 +43,8 @@ const Login = () => {
     });
 
     renderGoogleButton("google-login-btn");
-  }, []);
+  }, [location, navigate]);
+
 
   const handleLogin = async (e) => {
     e.preventDefault();
@@ -77,6 +87,9 @@ const Login = () => {
         }
       } catch (fcmErr) {
         console.warn("FCM setup failed:", fcmErr);
+      }
+      if (redirectPath) {
+        return navigate(redirectPath, { replace: true });
       }
 
       switch (user.role) {
@@ -174,7 +187,7 @@ const Login = () => {
 
             <div className="flex items-center justify-between">
               <div className="text-sm">
-                <a href="#" className="font-medium text-emerald-600 hover:text-emerald-500">
+                <a href="#" className="font-medium text-emerald-600 hover:text-emerald-500 cursor-pointer">
                   Forgot your password?
                 </a>
               </div>
@@ -209,7 +222,7 @@ const Login = () => {
             <div className="flex justify-center">
               <button
                 onClick={() => navigate("/login-phone")}
-                className="w-[350px] h-[40px] border border-gray-300 rounded-md text-gray-700 hover:bg-gray-100 font-medium cursor-pointer flex items-center justify-center"
+                className="w-[350px] h-[40px] border border-gray-300 rounded-md text-gray-700 hover:bg-gray-100 font-medium flex items-center justify-center"
               >
                 Sign In with Phone OTP
               </button>

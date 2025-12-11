@@ -1,6 +1,8 @@
-import React, { useState, useEffect, useRef } from "react";
+// src/pages/dashboard/StudentDashboard.jsx
+import React, { useState, useEffect, useRef, useMemo } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { LocateFixed } from "lucide-react";
+
 import Header from "../../components/Header";
 import Footer from "../../components/Footer";
 import Sidebar from "../../components/Sidebar";
@@ -25,22 +27,28 @@ const mockLaundryList = [
   },
 ];
 
+// Simple safe array helper
+const toArray = (val) =>
+  Array.isArray(val) ? val : Array.isArray(val?.data) ? val.data : [];
+
 const ImageSlideshow = ({ images = [], alt, className }) => {
   const [currentIndex, setCurrentIndex] = useState(0);
 
+  const safeImages =
+    images && images.length > 0
+      ? images
+      : ["https://placehold.co/600x400?text=Zip+Nivasa"];
+
   useEffect(() => {
-    if (!images || images.length <= 1) return;
+    if (!safeImages || safeImages.length <= 1) return;
     const id = setInterval(
-      () => setCurrentIndex((prev) => (prev + 1) % images.length),
+      () => setCurrentIndex((prev) => (prev + 1) % safeImages.length),
       2500
     );
     return () => clearInterval(id);
-  }, [images]);
+  }, [safeImages]);
 
-  const currentImage =
-    images && images.length > 0
-      ? images[currentIndex]
-      : "https://via.placeholder.com/400?text=Zip+Nivasa";
+  const currentImage = safeImages[currentIndex];
 
   return (
     <div
@@ -51,9 +59,9 @@ const ImageSlideshow = ({ images = [], alt, className }) => {
         alt={alt}
         className="w-full h-full object-cover transition-transform duration-700 ease-out group-hover:scale-[1.03]"
       />
-      {images.length > 1 && (
+      {safeImages.length > 1 && (
         <div className="absolute bottom-2 left-1/2 -translate-x-1/2 flex gap-1.5">
-          {images.map((_, idx) => (
+          {safeImages.map((_, idx) => (
             <div
               key={idx}
               className={`w-1.5 h-1.5 rounded-full shadow-sm transition-all ${
@@ -77,88 +85,73 @@ const StudentDashboard = () => {
   const [housingOptions, setHousingOptions] = useState([]);
   const [laundryOptions, setLaundryOptions] = useState([]);
   const [query, setQuery] = useState("");
-  const [selectedMess, setSelectedMess] = useState(null);
   const [activeService, setActiveService] = useState("housing");
   const [loading, setLoading] = useState(true);
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
 
-  const overlayRef = useRef(null);
   const searchInputRef = useRef(null);
 
+  // ---------- Fetch PGs ----------
   const fetchPGs = async () => {
     try {
       const res = await fetch("http://localhost:5000/api/pgs");
       const data = await res.json();
-      const formattedPGs = data.map((pg) => ({
+
+      const list = toArray(data);
+
+      const formattedPGs = list.map((pg) => ({
         id: pg._id,
         name: pg.title,
         type: pg.propertyType,
-        location: pg.streetAddress,
+        location: pg.streetAddress || pg.location || "",
         price: pg.monthlyRent,
-        rating: 4.6,
+        rating: 4.6, // TODO: replace with real rating field if available
         images:
-          pg.images?.length > 0
+          pg.images && pg.images.length > 0
             ? pg.images
-            : ["https://via.placeholder.com/400?text=Zip+Nivasa"],
-        amenities: pg.amenities,
+            : ["https://placehold.co/600x400?text=Zip+Nivasa"],
+        amenities: pg.amenities || [],
         contact: "+919999999999",
       }));
+
       setHousingOptions(formattedPGs);
     } catch (err) {
       console.error("Failed to load PG listings:", err);
+      setHousingOptions([]);
     }
   };
 
+  // ---------- Fetch Messes (via messService) ----------
   const fetchMesses = async () => {
     try {
       const res = await getAllMesses();
-      setMesses(res);
+
+      // Handle whatever shape comes back safely
+      const list = Array.isArray(res)
+        ? res
+        : Array.isArray(res?.messes)
+        ? res.messes
+        : [];
+
+      setMesses(list);
     } catch (error) {
       console.error("Error fetching messes", error);
+      setMesses([]);
     }
   };
 
+  // ---------- Initial load ----------
   useEffect(() => {
     const loadData = async () => {
       setLoading(true);
-      await Promise.all([fetchMesses(), fetchPGs()]);
+      await Promise.all([fetchPGs(), fetchMesses()]);
       setLaundryOptions(mockLaundryList);
       setLoading(false);
     };
     loadData();
   }, []);
 
-  useEffect(() => {
-    const onKey = (e) => e.key === "Escape" && setSelectedMess(null);
-    window.addEventListener("keydown", onKey);
-    return () => window.removeEventListener("keydown", onKey);
-  }, []);
-
-  const filtered = {
-    mess: messes.filter((m) =>
-      (m.title || m.name || "").toLowerCase().includes(query.toLowerCase())
-    ),
-    housing: housingOptions.filter(
-      (h) =>
-        h.name.toLowerCase().includes(query.toLowerCase()) ||
-        h.location.toLowerCase().includes(query.toLowerCase()) ||
-        h.type.toLowerCase().includes(query.toLowerCase())
-    ),
-    laundry: laundryOptions.filter(
-      (l) =>
-        l.name.toLowerCase().includes(query.toLowerCase()) ||
-        l.services.some((s) =>
-          s.toLowerCase().includes(query.toLowerCase())
-        )
-    ),
-  };
-
-  const handleServiceChange = (service) => {
-    setActiveService(service);
-    setQuery("");
-    if (searchInputRef.current) searchInputRef.current.value = "";
-  };
-
+  // ---------- Services ----------
   const services = [
     {
       key: "mess",
@@ -187,11 +180,7 @@ const StudentDashboard = () => {
   );
 
   const StarIcon = () => (
-    <svg
-      className="w-4 h-4 text-emerald-400"
-      fill="currentColor"
-      viewBox="0 0 20 20"
-    >
+    <svg className="w-4 h-4 text-emerald-400" fill="currentColor" viewBox="0 0 20 20">
       <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z" />
     </svg>
   );
@@ -205,6 +194,43 @@ const StudentDashboard = () => {
     </div>
   );
 
+  const handleServiceChange = (service) => {
+    setActiveService(service);
+    setQuery("");
+    if (searchInputRef.current) searchInputRef.current.value = "";
+  };
+
+  // ---------- Filtered results (safe with useMemo) ----------
+  const filtered = useMemo(() => {
+    const q = query.toLowerCase().trim();
+
+    const safeMesses = toArray(messes);
+    const safeHousing = toArray(housingOptions);
+    const safeLaundry = toArray(laundryOptions);
+
+    return {
+      mess: safeMesses.filter((m) =>
+        (m.title || m.name || "")
+          .toString()
+          .toLowerCase()
+          .includes(q)
+      ),
+      housing: safeHousing.filter(
+        (h) =>
+          h.name.toLowerCase().includes(q) ||
+          h.location.toLowerCase().includes(q) ||
+          h.type.toLowerCase().includes(q)
+      ),
+      laundry: safeLaundry.filter(
+        (l) =>
+          l.name.toLowerCase().includes(q) ||
+          l.services.some((s) => s.toLowerCase().includes(q))
+      ),
+    };
+  }, [query, messes, housingOptions, laundryOptions]);
+
+  const activeList = filtered[activeService] || [];
+
   return (
     <div className="bg-gradient-to-br from-emerald-50 via-green-25 to-mint-50 min-h-screen flex flex-col w-full h-full overflow-hidden font-sans">
       <Header onToggleSidebar={() => setIsSidebarOpen((prev) => !prev)} />
@@ -213,6 +239,7 @@ const StudentDashboard = () => {
         <Sidebar isOpen={isSidebarOpen} />
 
         <main className="flex-1 w-full overflow-y-auto custom-scrollbar">
+          {/* Top bar */}
           <div className="px-4 sm:px-6 md:px-8 pt-4 pb-3 sticky top-0 z-20 bg-gradient-to-r from-emerald-50/95 via-emerald-50/95 to-mint-50/95 backdrop-blur border-b border-emerald-100">
             <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
               <div>
@@ -222,9 +249,7 @@ const StudentDashboard = () => {
                 <h1 className="text-2xl sm:text-3xl font-bold text-slate-900 mt-1">
                   Hi, {username}
                 </h1>
-                <p className="text-sm text-slate-500 mt-1">
-                  Find. Connect. Live
-                </p>
+                <p className="text-sm text-slate-500 mt-1">Find. Connect. Live</p>
               </div>
               <div className="flex items-center gap-3">
                 <Link
@@ -232,12 +257,14 @@ const StudentDashboard = () => {
                   className="flex items-center gap-2 bg-emerald-600 hover:bg-emerald-700 text-white px-5 py-3 rounded-xl shadow-md hover:shadow-lg transition-all duration-200 text-sm font-semibold border border-emerald-500/20"
                 >
                   <LocateFixed className="w-5 h-5" />
-                  <span>Near Me</span>
+                  <span>PGs Near Me</span>
                 </Link>
               </div>
             </div>
           </div>
+
           <div className="px-4 sm:px-6 md:px-8 pb-10">
+            {/* Service selector */}
             <section className="mt-4 mb-6">
               <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
                 {services.map((s) => (
@@ -281,6 +308,7 @@ const StudentDashboard = () => {
               </div>
             </section>
 
+            {/* Sticky search / count bar */}
             <div className="flex flex-col sm:flex-row justify-between items-center mb-6 gap-4 sticky top-[4.5rem] sm:top-[4.75rem] bg-emerald-50/95 backdrop-blur z-10 py-2 border-b border-emerald-100">
               <div className="self-start sm:self-center">
                 <h3 className="text-xl font-semibold text-slate-900">
@@ -289,8 +317,8 @@ const StudentDashboard = () => {
                   {activeService === "laundry" && "Laundry Shops"}
                 </h3>
                 <p className="text-xs text-slate-500 mt-0.5">
-                  {filtered[activeService].length} result
-                  {filtered[activeService].length !== 1 ? "s" : ""} found
+                  {activeList.length} result
+                  {activeList.length !== 1 ? "s" : ""} found
                 </p>
               </div>
 
@@ -307,6 +335,8 @@ const StudentDashboard = () => {
                 />
               </div>
             </div>
+
+            {/* Cards grid */}
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 2xl:grid-cols-4 gap-6">
               {loading && (
                 <>
@@ -316,7 +346,7 @@ const StudentDashboard = () => {
                 </>
               )}
 
-              {!loading && filtered[activeService].length === 0 && (
+              {!loading && activeList.length === 0 && (
                 <div className="col-span-full flex flex-col items-center justify-center py-16 text-center">
                   <div className="bg-emerald-100 p-4 rounded-full mb-3">
                     <Icon
@@ -333,6 +363,7 @@ const StudentDashboard = () => {
                 </div>
               )}
 
+              {/* Housing Cards */}
               {!loading &&
                 activeService === "housing" &&
                 filtered.housing.map((pg) => (
@@ -402,6 +433,7 @@ const StudentDashboard = () => {
                   </div>
                 ))}
 
+              {/* Mess Cards */}
               {!loading &&
                 activeService === "mess" &&
                 filtered.mess.map((mess) => {
@@ -427,7 +459,7 @@ const StudentDashboard = () => {
                               : "bg-red-50 text-red-700"
                           }`}
                         >
-                          {mess.type}
+                          {mess.type || "Mess"}
                         </span>
                       </div>
 
@@ -475,6 +507,8 @@ const StudentDashboard = () => {
                     </div>
                   );
                 })}
+
+              {/* Laundry Cards */}
               {!loading &&
                 activeService === "laundry" &&
                 filtered.laundry.map((laundry) => (

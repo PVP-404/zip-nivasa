@@ -70,7 +70,7 @@ function App() {
         <Route path="/about" element={<AboutUs />} />
 
         <Route path="/pgs/all" element={<AllPGs />} />
-        <Route path="/services/pg/:id" element={<PGDetails />} />
+        
         <Route path="/pgs/near-me" element={<PGNearMe />} />
 
         <Route path="/accommodations" element={<SearchPGResults />} />
@@ -108,6 +108,16 @@ function App() {
             </ProtectedRoute>
           }
         />
+
+        <Route path="/services/pg/:id"
+         element={
+         
+         <ProtectedRoute>
+          <PGDetails />
+         </ProtectedRoute>
+         } 
+         
+         />
 
         <Route
           path="/inbox"
