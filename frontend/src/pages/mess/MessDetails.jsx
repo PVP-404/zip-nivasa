@@ -1,4 +1,3 @@
-// src/pages/mess/MessDetails.jsx
 import React, { useEffect, useState, useMemo, useCallback, useRef } from "react";
 import { useParams, Link, useNavigate } from "react-router-dom";
 import { motion, AnimatePresence } from "framer-motion"; // npm i framer-motion
@@ -20,9 +19,6 @@ import {
   AlertCircle, Info, Award, TrendingUp, Zap
 } from "lucide-react";
 
-// ============================================
-// 🔹 UTILITY FUNCTIONS
-// ============================================
 
 const formatPrice = (price) => {
   return new Intl.NumberFormat('en-IN', {
@@ -68,9 +64,6 @@ const getInitials = (name) => {
   return name.split(' ').map(n => n[0]).join('').toUpperCase().slice(0, 2);
 };
 
-// ============================================
-// 🔹 MAIN COMPONENT
-// ============================================
 
 const MessDetails = () => {
   const { id } = useParams();
@@ -105,9 +98,6 @@ const MessDetails = () => {
   const tabsRef = useRef(null);
   const [isTabsSticky, setIsTabsSticky] = useState(false);
 
-  // ============================================
-  // 🔹 DATA FETCHING
-  // ============================================
 
   useEffect(() => {
     const fetchMess = async () => {
@@ -165,9 +155,6 @@ const MessDetails = () => {
     return () => observer.disconnect();
   }, [loading]);
 
-  // ============================================
-  // 🔹 DERIVED DATA
-  // ============================================
 
   const derivedData = useMemo(() => {
     if (!mess) return null;
@@ -223,9 +210,6 @@ const MessDetails = () => {
     return filtered.sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
   }, [derivedData?.ratings, reviewFilter]);
 
-  // ============================================
-  // 🔹 HANDLERS
-  // ============================================
 
   const handleImageNavigation = useCallback((direction) => {
     if (!derivedData?.images) return;
@@ -317,9 +301,6 @@ const MessDetails = () => {
     }
   };
 
-  // ============================================
-  // 🔹 RENDER STATES
-  // ============================================
 
   if (loading) {
     return <LoadingSkeleton />;
@@ -329,9 +310,6 @@ const MessDetails = () => {
     return <ErrorState error={error} onRetry={() => window.location.reload()} />;
   }
 
-  // ============================================
-  // 🔹 MAIN RENDER
-  // ============================================
 
   return (
     <div className="min-h-screen bg-slate-50">
@@ -619,41 +597,49 @@ const MessDetails = () => {
         </div>
 
         {/* Tabs Navigation */}
-        <div
-          ref={tabsRef}
-          className={`sticky top-0 z-40 bg-white border-b border-slate-200 transition-shadow ${
-            isTabsSticky ? 'shadow-md' : ''
+<div
+  ref={tabsRef}
+  className={`sticky top-0 bg-white/95 backdrop-blur-sm relative z-[9999] border-b border-slate-200 transition-shadow ${
+    isTabsSticky ? "shadow-md" : ""
+  }`}
+>
+  <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+    <div className="flex items-center gap-1 overflow-x-auto py-2 scrollbar-hide pointer-events-auto">
+      
+      {["overview", "menu", "photos", "reviews", "location"].map((tab) => (
+        <button
+          key={tab}
+          onClick={() => setActiveTab(tab)}
+          className={`relative px-5 py-3 text-sm font-medium rounded-xl whitespace-nowrap transition-all cursor-pointer ${
+            activeTab === tab
+              ? "text-emerald-600 bg-emerald-50"
+              : "text-slate-600 hover:text-slate-900 hover:bg-slate-50"
           }`}
         >
-          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-            <div className="flex items-center gap-1 overflow-x-auto py-2 scrollbar-hide">
-              {['overview', 'menu', 'photos', 'reviews', 'location'].map((tab) => (
-                <button
-                  key={tab}
-                  onClick={() => setActiveTab(tab)}
-                  className={`relative px-5 py-3 text-sm font-medium rounded-xl whitespace-nowrap transition-all ${
-                    activeTab === tab
-                      ? 'text-emerald-600 bg-emerald-50'
-                      : 'text-slate-600 hover:text-slate-900 hover:bg-slate-50'
-                  }`}
-                >
-                  {tab.charAt(0).toUpperCase() + tab.slice(1)}
-                  {tab === 'reviews' && derivedData.ratings.length > 0 && (
-                    <span className="ml-2 px-2 py-0.5 bg-slate-200 text-slate-600 text-xs rounded-full">
-                      {derivedData.ratings.length}
-                    </span>
-                  )}
-                  {activeTab === tab && (
-                    <motion.div
-                      layoutId="activeTab"
-                      className="absolute bottom-0 left-0 right-0 h-0.5 bg-emerald-500 rounded-full"
-                    />
-                  )}
-                </button>
-              ))}
-            </div>
-          </div>
-        </div>
+          {tab.charAt(0).toUpperCase() + tab.slice(1)}
+
+          {/* Reviews badge */}
+          {tab === "reviews" && derivedData?.ratings?.length > 0 && (
+            <span className="ml-2 px-2 py-0.5 bg-slate-200 text-slate-600 text-xs rounded-full">
+              {derivedData.ratings.length}
+            </span>
+          )}
+
+          {/* Active indicator animation */}
+          {activeTab === tab && (
+            <motion.div
+              layoutId="activeTab"
+              className="absolute bottom-0 left-0 right-0 h-0.5 bg-emerald-500 rounded-full"
+            />
+          )}
+        </button>
+      ))}
+
+    </div>
+  </div>
+</div>
+
+
 
         {/* Tab Content */}
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
@@ -741,9 +727,6 @@ const MessDetails = () => {
 
 export default MessDetails;
 
-// ============================================
-// 🔹 SUB COMPONENTS
-// ============================================
 
 // Quick Stat Component
 const QuickStat = ({ icon, label, value }) => (
@@ -1297,10 +1280,10 @@ const MobileCTA = ({ mess, derivedData }) => (
       <button
         onClick={() => derivedData.contactNumber && (window.location.href = `tel:${derivedData.contactNumber}`)}
         disabled={!derivedData.contactNumber}
-        className={`flex-1 flex items-center justify-center gap-2 py-3 rounded-xl font-semibold transition-all ${
+        className={`flex-1 flex items-center justify-center gap-2 py-3 rounded-xl font-semibold transition-all disabled:cursor-not-allowed ${
           derivedData.contactNumber
             ? 'bg-emerald-600 text-white'
-            : 'bg-slate-200 text-slate-500'
+            : 'bg-slate-200 text-slate-500 '
         }`}
       >
         <Phone className="w-5 h-5" />
