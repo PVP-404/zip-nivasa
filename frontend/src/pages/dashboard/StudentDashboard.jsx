@@ -7,6 +7,8 @@ import Header from "../../components/Header";
 import Footer from "../../components/Footer";
 import Sidebar from "../../components/Sidebar";
 import { getAllMesses } from "../../services/messService";
+const API = import.meta.env.VITE_API_URL || "http://localhost:5000";
+
 
 const mockLaundryList = [
   {
@@ -94,7 +96,8 @@ const StudentDashboard = () => {
   // ---------- Fetch PGs ----------
   const fetchPGs = async () => {
     try {
-      const res = await fetch("http://localhost:5000/api/pgs");
+      const res = await fetch(`${API}/api/pgs`);
+
       const data = await res.json();
 
       const list = toArray(data);

@@ -2,6 +2,8 @@ import React, { useEffect, useState } from "react";
 import { useParams } from "react-router-dom";
 import Header from "../../components/Header";
 import Footer from "../../components/Footer";
+const API = import.meta.env.VITE_API_URL || "http://localhost:5000";
+
 
 const PGBooking = () => {
   const { id } = useParams();
@@ -11,7 +13,7 @@ const PGBooking = () => {
   const [moveOut, setMoveOut] = useState("");
 
   const fetchPG = async () => {
-    const res = await fetch(`http://localhost:5000/api/pgs/${id}`);
+    const res = await fetch(`${API}/api/pgs/${id}`);
     const data = await res.json();
     setPg(data.pg);
   };
@@ -23,7 +25,7 @@ const PGBooking = () => {
   const handleBook = async () => {
     const payload = { id, moveIn, moveOut };
 
-    await fetch("http://localhost:5000/api/bookings", {
+    await fetch(`${API}/api/bookings`, {
       method: "POST",
       headers: {
         "Content-Type": "application/json",

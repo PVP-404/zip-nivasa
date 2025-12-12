@@ -2,6 +2,8 @@ import { getToken, onMessage } from "firebase/messaging";
 import { messaging } from "../config/firebase";
 import axios from "axios";
 
+const API = import.meta.env.VITE_API_URL || "http://localhost:5000";
+
 export async function requestFCMToken() {
   try {
     const permission = await Notification.requestPermission();
@@ -12,7 +14,6 @@ export async function requestFCMToken() {
     });
 
     if (token) {
-      // Save in localStorage so we can deregister on logout
       localStorage.setItem("fcmToken", token);
     }
 
@@ -49,16 +50,13 @@ export async function registerTokenWithBackend(token) {
     if (!jwt || !token) return;
 
     await axios.post(
-      "http://localhost:5000/api/notifications/register-token",
+      `${API}/api/notifications/register-token`,
       { token },
       { headers: { Authorization: `Bearer ${jwt}` } }
     );
-  } catch {
-    // ignore
-  }
+  } catch {}
 }
 
-// New helper: call  on logout
 export async function deregisterTokenWithBackend() {
   try {
     const jwt = localStorage.getItem("token");
@@ -67,7 +65,7 @@ export async function deregisterTokenWithBackend() {
     if (!jwt || !fcmToken) return;
 
     await axios.post(
-      "http://localhost:5000/api/notifications/deregister-token",
+      `${API}/api/notifications/deregister-token`,
       { token: fcmToken },
       { headers: { Authorization: `Bearer ${jwt}` } }
     );

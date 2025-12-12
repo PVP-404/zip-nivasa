@@ -10,10 +10,11 @@ const MapSearchBar = ({ onLocationSelected }) => {
     if (!query.trim()) return;
 
     try {
+      const API = import.meta.env.VITE_API_URL || "http://localhost:5000";
       setLoading(true);
-      const res = await axios.get("http://localhost:5000/api/map/geocode", {
+      const res = await axios.get(`${API}/api/map/geocode`, {
         params: { address: query },
-      });
+      })
 
       const { lat, lng } = res.data;
       onLocationSelected({ lat, lng, label: query });

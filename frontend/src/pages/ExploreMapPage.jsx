@@ -5,6 +5,8 @@ import MapSearchBar from "../components/MapSearchBar";
 import Header from "../components/Header";
 import Sidebar from "../components/Sidebar";
 import Footer from "../components/Footer";
+const API = import.meta.env.VITE_API_URL || "http://localhost:5000";
+
 
 const ExploreMapPage = () => {
   const [allMarkers, setAllMarkers] = useState([]);
@@ -16,7 +18,7 @@ const ExploreMapPage = () => {
     const fetchLocations = async () => {
       try {
         const res = await axios.get(
-          "http://localhost:5000/api/map/locations"
+          `${API}/api/map/locations`
         );
         setAllMarkers(res.data);
         setFilteredMarkers(res.data.filter((m) => m.type === "pg"));

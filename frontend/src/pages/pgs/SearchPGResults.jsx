@@ -2,6 +2,8 @@ import React, { useEffect, useState, useMemo } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
 import Header from "../../components/Header";
 import Footer from "../../components/Footer";
+const API = import.meta.env.VITE_API_URL || "http://localhost:5000";
+
 
 const SearchPGResults = () => {
   const [pgs, setPgs] = useState([]);
@@ -36,7 +38,7 @@ const SearchPGResults = () => {
   const fetchPGs = async () => {
     try {
       setLoading(true);
-      const res = await fetch("http://localhost:5000/api/pgs");
+      const res = await fetch(`${API}/api/pgs`);
       const data = await res.json();
       setPgs(data);
     } finally {
@@ -108,7 +110,7 @@ const SearchPGResults = () => {
               <img
                 src={
                   pg.images?.[0]
-                    ? `http://localhost:5000${pg.images[0]}`
+                    ? `${API}${pg.images[0]}`
                     : "https://via.placeholder.com/400"
                 }
                 className="h-48 w-full object-cover rounded-lg"

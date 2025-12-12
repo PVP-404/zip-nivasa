@@ -3,6 +3,8 @@ import axios from "axios";
 import { useNavigate } from "react-router-dom";
 import { motion } from "framer-motion";
 import { FaUser, FaPhone, FaBriefcase, FaVenusMars } from "react-icons/fa";
+const API = import.meta.env.VITE_API_URL || "http://localhost:5000";
+
 
 const CompleteProfile = () => {
   const navigate = useNavigate();
@@ -20,7 +22,7 @@ const CompleteProfile = () => {
       const token = localStorage.getItem("token");
 
       const res = await axios.put(
-        "http://localhost:5000/api/auth/complete-profile",
+        `${API}/api/auth/complete-profile`,
         { phone, professionType, gender },
         { headers: { Authorization: `Bearer ${token}` } }
       );
