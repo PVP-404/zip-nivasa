@@ -1,4 +1,4 @@
-import PG from "../models/PGModel.js";
+import PG from "../models/pgmodel_temp.js";
 
 export const createPGService = async (data) => {
   const pg = new PG(data);

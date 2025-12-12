@@ -1,4 +1,4 @@
-import PG from "../models/PGModel.js";
+import PG from "../models/pgmodel_temp.js";
 import Mess from "../models/Mess.js";
 import { distanceKm } from "../utils/distance.js";
 import { getMapplsToken } from "../utils/mapplsToken.js";
