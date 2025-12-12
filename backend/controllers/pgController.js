@@ -1,4 +1,4 @@
-import PG from "../models/pgmodel_temp.js";
+import PG from "../models/PGModel.js";
 import User from "../models/User.js";
 import { geocodeAddress } from "../utils/geocode.js";
 import { geocodeEloc } from "../utils/mapplsGeocode.js";
