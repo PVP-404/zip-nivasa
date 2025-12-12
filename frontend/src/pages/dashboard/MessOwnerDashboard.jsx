@@ -97,54 +97,42 @@ const MessOwnerDashboard = () => {
   }, []);
 
   /* ------------ LOAD DATA ---------------- */
-  useEffect(() => {
-    if (!ownerId) return;
+useEffect(() => {
+  if (!ownerId) return;
 
-    const loadData = async () => {
-      try {
-        const messes = await getMessesByOwner(ownerId);
+  const loadData = async () => {
+    try {
+      const res = await getMessesByOwner(ownerId);
+      const messes = Array.isArray(res) ? res : [];
 
-        const fakeInquiries = [
-          {
-            id: "1",
-            customerName: "Amit Sharma",
-            message: "Interested in monthly tiffin service.",
-            contact: "9876543210",
-            status: "New",
-          },
-          {
-            id: "2",
-            customerName: "Priya Verma",
-            message: "Do you offer dinner-only plans?",
-            contact: "9988776655",
-            status: "Contacted",
-          },
-        ];
+      const fakeInquiries = [
+      ];
 
-        const reviews = messes.flatMap((m) =>
-          (m.ratings || []).map((r) => ({
-            messName: m.title,
-            customer: r.studentId?.name || "Student",
-            rating: r.stars,
-            comment: r.comment,
-            date: r.date,
-          }))
-        );
+      const reviews = messes.flatMap((m) =>
+        (m.ratings || []).map((r) => ({
+          messName: m.title,
+          customer: r.studentId?.name || "Student",
+          rating: r.stars,
+          comment: r.comment,
+          date: r.date,
+        }))
+      );
 
-        setData({
-          messes,
-          inquiries: fakeInquiries,
-          reviews,
-        });
-      } catch (err) {
-        console.error(err);
-      } finally {
-        setLoading(false);
-      }
-    };
+      setData({
+        messes,
+        inquiries: fakeInquiries,
+        reviews,
+      });
+    } catch (err) {
+      console.error(err);
+    } finally {
+      setLoading(false);
+    }
+  };
 
-    loadData();
-  }, [ownerId]);
+  loadData();
+}, [ownerId]);
+
 
   /* ------------ HANDLERS ---------------- */
   const handleDelete = async (id) => {

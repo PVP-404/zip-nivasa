@@ -44,7 +44,10 @@ const __dirname = path.dirname(__filename);
 const app = express();
 const httpServer = createServer(app);
 const PORT = process.env.PORT || 5000;
-
+// health check for Render
+app.get('/healthz', (req, res) => {
+  res.status(200).send('OK');
+});
 // Middleware
 app.use(
   cors({
