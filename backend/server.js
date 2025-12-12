@@ -44,6 +44,10 @@ const __dirname = path.dirname(__filename);
 const app = express();
 const httpServer = createServer(app);
 const PORT = process.env.PORT || 5000;
+const allowedOrigins = [
+  process.env.CLIENT_URL,           // frontend on Render
+  "http://localhost:5173",          // local dev
+];
 // health check for Render
 app.get('/healthz', (req, res) => {
   res.status(200).send('OK');
@@ -51,7 +55,12 @@ app.get('/healthz', (req, res) => {
 // Middleware
 app.use(
   cors({
-    origin: "*",
+    origin: function (origin, callback) {
+      if (!origin) return callback(null, true); // mobile / postman
+      if (allowedOrigins.includes(origin)) return callback(null, true);
+      return callback(new Error("Not allowed by CORS"));
+    },
+    credentials: true,
     methods: ["GET", "POST", "PUT", "PATCH", "DELETE"],
   })
 );
@@ -87,7 +96,7 @@ app.use("/api/profile", profileRoutes);
 // Socket.io
 const io = new Server(httpServer, {
   cors: {
-    origin: ["http://localhost:5173"],
+    origin: allowedOrigins,
     methods: ["GET", "POST"],
     credentials: true
   },
