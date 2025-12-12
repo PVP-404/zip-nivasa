@@ -1,6 +1,7 @@
 import axios from "axios";
 
-const API = "http://localhost:5000/api/mess";
+const API = import.meta.env.VITE_API_URL + "/api/mess" || "http://localhost:5000/api/mess";
+
 
 const safeRequest = async (callback, defaultValue) => {
   try {

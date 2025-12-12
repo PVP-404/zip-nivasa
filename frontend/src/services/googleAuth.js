@@ -1,6 +1,7 @@
 import { jwtDecode } from "jwt-decode";
 import axios from "axios";
 import { requestFCMToken, registerTokenWithBackend } from "./fcm";
+const API = import.meta.env.VITE_API_URL || "http://localhost:5000";
 
 export const initializeGoogleLogin = (callback) => {
   google.accounts.id.initialize({
@@ -27,9 +28,9 @@ export const handleGoogleResponse = async (response) => {
 
     // Send Google token to backend
     const res = await axios.post(
-      "http://localhost:5000/api/auth/google-login",
-      { token: credential }
-    );
+  `${API}/api/auth/google-login`,
+  { token: credential }
+);
 
     const { token, user } = res.data;
 

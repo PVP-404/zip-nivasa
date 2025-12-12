@@ -3,6 +3,9 @@ import { motion } from "framer-motion";
 import { Link } from "react-router-dom";
 import { FaUserPlus, FaSignInAlt, FaCheckCircle, FaSpinner, FaSchool, FaBuilding, FaUtensils, FaMapMarkerAlt, FaKey, FaExclamationCircle } from "react-icons/fa"; 
 
+const API = import.meta.env.VITE_API_URL || "http://localhost:5000";
+
+
 const CustomInput = ({ name, placeholder, value, onChange, type = "text", required = true, className = "", children, maxLength, minLength }) => (
     <motion.div className="relative" initial={{ opacity: 0, y: 5 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.2 }}>
         <input 
@@ -131,7 +134,7 @@ const Register = () => {
                 return acc;
             }, {});
 
-            const res = await fetch("http://localhost:5000/api/auth/register", {
+            const res = await fetch(`${API}/api/auth/register`, {
                 method: "POST",
                 headers: { "Content-Type": "application/json" },
                 body: JSON.stringify({ 

@@ -2,6 +2,8 @@ import React, { useState, useEffect } from "react";
 import { useParams } from "react-router-dom";
 import Header from "../../components/Header";
 import Footer from "../../components/Footer";
+const API = import.meta.env.VITE_API_URL || "http://localhost:5000";
+
 
 const PGEnquiry = () => {
   const { id } = useParams();
@@ -9,7 +11,7 @@ const PGEnquiry = () => {
   const [message, setMessage] = useState("");
 
   const fetchPG = async () => {
-    const res = await fetch(`http://localhost:5000/api/pgs/${id}`);
+    const res = await fetch(`${API}/api/pgs/${id}`);
     const data = await res.json();
     setPg(data.pg);
   };
@@ -21,7 +23,7 @@ const PGEnquiry = () => {
   const sendEnquiry = async () => {
     const payload = { pgId: id, message };
 
-    await fetch("http://localhost:5000/api/enquiries", {
+    await fetch(`${API}/api/enquiries`, {
       method: "POST",
       headers: {
         "Content-Type": "application/json",

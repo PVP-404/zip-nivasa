@@ -31,7 +31,7 @@ const PhoneLogin = () => {
       const confirmation = await signInWithPhoneNumber(auth, fullPhone, recaptcha);
 
       window.confirmationResult = confirmation;
-      setStep("otp");      
+      setStep("otp");
       setResendCooldown(30); // Start 30-second cooldown
     } catch (err) {
       console.error("OTP Error:", err);
@@ -65,9 +65,9 @@ const PhoneLogin = () => {
 
       const result = await window.confirmationResult.confirm(otp);
       const firebaseToken = await result.user.getIdToken();
-
+      const API = import.meta.env.VITE_API_URL || "http://localhost:5000";
       // Backend verification
-      const res = await axios.post("http://localhost:5000/api/auth/phone-login", {
+      const res = await axios.post(`${API}/api/auth/phone-login`, {
         idToken: firebaseToken,
       });
 

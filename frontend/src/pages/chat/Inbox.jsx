@@ -3,6 +3,7 @@ import axios from "axios";
 import { Link } from "react-router-dom";
 import Sidebar from "../../components/Sidebar";
 import Header from "../../components/Header";
+const API = import.meta.env.VITE_API_URL || "http://localhost:5000";
 
 export default function Inbox() {
   const [rows, setRows] = useState([]);
@@ -10,12 +11,9 @@ export default function Inbox() {
 
   const loadInbox = async () => {
     try {
-      const res = await axios.get(
-        "http://localhost:5000/api/chat/conversations",
-        {
-          headers: { Authorization: `Bearer ${token}` },
-        }
-      );
+      const res = await axios.get(`${API}/api/chat/conversations`, {
+        headers: { Authorization: `Bearer ${token}` },
+      });
       if (res.data?.success) {
         setRows(res.data.conversations || res.data.inbox || []);
       }
@@ -70,11 +68,10 @@ export default function Inbox() {
                       </span>
                     </div>
                     <div
-                      className={`text-sm line-clamp-1 ${
-                        r.unreadCount
+                      className={`text-sm line-clamp-1 ${r.unreadCount
                           ? "text-gray-900 font-semibold"
                           : "text-gray-600"
-                      }`}
+                        }`}
                     >
                       {lastText}
                     </div>

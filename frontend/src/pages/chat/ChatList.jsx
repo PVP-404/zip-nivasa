@@ -10,11 +10,14 @@ export default function ChatList() {
 
   const fetchConvos = async () => {
     try {
-      const res = await fetch("http://localhost:5000/api/chat/conversations", {
+      const API = import.meta.env.VITE_API_URL || "http://localhost:5000";
+
+      const res = await fetch(`${API}/api/chat/conversations`, {
         headers: {
           Authorization: `Bearer ${token}`,
         },
       });
+
       const data = await res.json();
       if (data.success) setConvos(data.conversations || []);
     } catch (e) {
@@ -66,11 +69,10 @@ export default function ChatList() {
                         </span>
                       </div>
                       <div
-                        className={`text-sm mt-1 line-clamp-1 ${
-                          unreadCount
+                        className={`text-sm mt-1 line-clamp-1 ${unreadCount
                             ? "text-gray-900 font-semibold"
                             : "text-gray-600"
-                        }`}
+                          }`}
                       >
                         {lastMessage?.message || "No messages"}
                       </div>

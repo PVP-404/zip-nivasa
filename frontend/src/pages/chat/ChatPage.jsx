@@ -13,6 +13,8 @@ import socket, {
 } from "../../services/socket";
 import Sidebar from "../../components/Sidebar";
 import Header from "../../components/Header";
+const API = import.meta.env.VITE_API_URL || "http://localhost:5000";
+
 
 const Icon = ({ d, className = "w-5 h-5" }) => (
   <svg className={className} fill="currentColor" viewBox="0 0 20 20">
@@ -22,9 +24,8 @@ const Icon = ({ d, className = "w-5 h-5" }) => (
 
 const TickIcon = ({ delivered, read }) => (
   <span
-    className={`ml-1 text-[11px] font-semibold ${
-      read ? "text-blue-400" : delivered ? "text-gray-400" : "text-gray-300"
-    }`}
+    className={`ml-1 text-[11px] font-semibold ${read ? "text-blue-400" : delivered ? "text-gray-400" : "text-gray-300"
+      }`}
   >
     {delivered ? "✓✓" : "✓"}
   </span>
@@ -63,7 +64,7 @@ export default function ChatPage({ receiverId }) {
     const markRead = async () => {
       try {
         await axios.post(
-          "http://localhost:5000/api/chat/mark-read",
+          `${API}/api/chat/mark-read`,
           { partnerId: receiverId },
           { headers: { Authorization: `Bearer ${token}` } }
         );
@@ -71,7 +72,7 @@ export default function ChatPage({ receiverId }) {
         setMessages((prev) =>
           prev.map((m) =>
             String(m.sender) === String(receiverId) &&
-            String(m.receiver) === String(userId)
+              String(m.receiver) === String(userId)
               ? { ...m, readAt: new Date().toISOString() }
               : m
           )
@@ -84,8 +85,8 @@ export default function ChatPage({ receiverId }) {
     };
 
     Promise.all([
-      axios.get(`http://localhost:5000/api/auth/user/${receiverId}`),
-      axios.get(`http://localhost:5000/api/chat/history/${receiverId}`, {
+      axios.get(`${API}/api/auth/user/${receiverId}`),
+      axios.get(`${API}/api/chat/history/${receiverId}`, {
         headers: { Authorization: `Bearer ${token}` },
       }),
     ])
@@ -285,7 +286,7 @@ export default function ChatPage({ receiverId }) {
           <div className="max-w-4xl mx-auto px-4 py-4 space-y-3">
             {messages.map((m) => {
               const mine = String(m.sender) === String(userId);
-              const delivered = true; 
+              const delivered = true;
               const read = !!m.readAt;
 
               return (
@@ -295,11 +296,10 @@ export default function ChatPage({ receiverId }) {
                 >
                   <div className="max-w-[70%]">
                     <div
-                      className={`px-4 py-2 rounded-2xl shadow-sm ${
-                        mine
+                      className={`px-4 py-2 rounded-2xl shadow-sm ${mine
                           ? "bg-gradient-to-r from-indigo-600 to-purple-600 text-white rounded-br-sm"
                           : "bg-white text-gray-800 border border-gray-200 rounded-bl-sm"
-                      }`}
+                        }`}
                     >
                       <p className="whitespace-pre-wrap break-words">
                         {m.message}
@@ -307,11 +307,10 @@ export default function ChatPage({ receiverId }) {
                     </div>
 
                     <div
-                      className={`mt-1 px-1 flex items-center gap-1 text-[11px] ${
-                        mine
+                      className={`mt-1 px-1 flex items-center gap-1 text-[11px] ${mine
                           ? "justify-end text-gray-200/80"
                           : "justify-start text-gray-400"
-                      }`}
+                        }`}
                     >
                       <span>{formatTime(m.createdAt)}</span>
                       {mine && <TickIcon delivered={delivered} read={read} />}

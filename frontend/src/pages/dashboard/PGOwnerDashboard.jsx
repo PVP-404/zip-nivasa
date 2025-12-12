@@ -4,6 +4,8 @@ import { useNavigate } from "react-router-dom";
 import Header from "../../components/Header";
 import Sidebar from "../../components/Sidebar";
 import Footer from "../../components/Footer";
+const API = import.meta.env.VITE_API_URL || "http://localhost:5000";
+
 
 const PGOwnerDashboard = () => {
   const navigate = useNavigate();
@@ -26,7 +28,7 @@ const PGOwnerDashboard = () => {
 
   const fetchUserProfile = async () => {
     try {
-      const res = await fetch("http://localhost:5000/api/auth/me", {
+      const res = await fetch(`${API}/api/auth/me`, {
         headers: { Authorization: `Bearer ${token}` },
       });
 
@@ -46,7 +48,7 @@ const PGOwnerDashboard = () => {
 
   const fetchListings = async () => {
     try {
-      const res = await fetch("http://localhost:5000/api/pgs/owner/list", {
+      const res = await fetch(`${API}/api/pgs/owner/list`, {
         headers: { Authorization: `Bearer ${token}` },
       });
 

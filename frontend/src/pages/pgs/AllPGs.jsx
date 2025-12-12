@@ -4,6 +4,8 @@ import { motion, AnimatePresence } from "framer-motion";
 import { Filter, Search, MapPin, ChevronDown, X, Star, Clock } from "lucide-react";
 import Header from "../../components/Header";
 import Footer from "../../components/Footer";
+const API = import.meta.env.VITE_API_URL || "http://localhost:5000";
+
 
 
 const MIN_PRICE = 3000;
@@ -14,7 +16,7 @@ const formatPrice = (value) => new Intl.NumberFormat("en-IN").format(value);
 const getImageURL = (img) => {
   if (!img) return "https://via.placeholder.com/400";
   if (img.startsWith("http") || img.includes("cloudinary")) return img;
-  return `http://localhost:5000${img}`;
+  return `${API}${img}`;
 };
 
 const AmenityIcon = ({ label }) => {
@@ -152,7 +154,7 @@ const AllPGs = () => {
   const fetchPGs = async () => {
     setLoading(true);
     try {
-      const res = await fetch("http://localhost:5000/api/pgs");
+      const res = await fetch(`${API}/api/pgs`);
       const data = await res.json();
       setPgs(data);
     } catch (err) { }

@@ -5,6 +5,8 @@ import Footer from "../../components/Footer";
 import Sidebar from "../../components/Sidebar";
 import PGMapModal from "../../components/maps/PGMapModal";
 import AppLayout from "../../layouts/AppLayout";
+const API = import.meta.env.VITE_API_URL || "http://localhost:5000";
+
 
 const Icon = ({ path, className = "w-5 h-5", stroke = false }) => (
   <svg
@@ -47,8 +49,8 @@ const PGDetails = () => {
     const fetchData = async () => {
       try {
         const [pgRes, allRes] = await Promise.all([
-          fetch(`http://localhost:5000/api/pgs/${id}`),
-          fetch(`http://localhost:5000/api/pgs`),
+          fetch(`${API}/api/pgs/${id}`),
+          fetch(`${API}/api/pgs`),
         ]);
 
         const pgData = await pgRes.json();
@@ -447,7 +449,7 @@ const PGDetails = () => {
                         <img
                           src={
                             rec.images?.[0]
-                              ? `http://localhost:5000${rec.images[0]}`
+                              ? `${API}${rec.images[0]}`
                               : "https://via.placeholder.com/400"
                           }
                           className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"

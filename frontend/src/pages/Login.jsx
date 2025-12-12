@@ -8,6 +8,8 @@ import { Eye, EyeOff, Loader2 } from "lucide-react";
 import { initializeGoogleLogin, renderGoogleButton, handleGoogleResponse } from "../services/googleAuth";
 import { useEffect } from "react";
 import { useLocation } from "react-router-dom";
+const API = import.meta.env.VITE_API_URL || "http://localhost:5000";
+
 
 
 const Login = () => {
@@ -61,7 +63,7 @@ const Login = () => {
       localStorage.clear();
 
       const res = await axios.post(
-        "http://localhost:5000/api/auth/login",
+        `${API}/api/auth/login`,
         { email, password }
       );
 

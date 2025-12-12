@@ -5,6 +5,7 @@ import Footer from "../../components/Footer";
 import Sidebar from "../../components/Sidebar";
 import LocationAutosuggest from "../../components/LocationAutosuggest";
 import { FaRupeeSign } from "react-icons/fa";
+const API_BASE = import.meta.env.VITE_API_URL || "http://localhost:5000";
 
 const UploadIcon = () => (
   <svg className="w-8 h-8 text-emerald-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -121,7 +122,7 @@ const AddMessListing = () => {
       setPincodeLookupLoading(true);
       setPincodeError(null);
 
-      const res = await fetch(`http://localhost:5000/api/utilities/pincode/${pincode}`);
+      const res = await fetch(`${API_BASE}/api/utilities/pincode/${pincode}`);
       const data = await res.json();
 
       if (!res.ok) {
@@ -259,7 +260,7 @@ const AddMessListing = () => {
       // images
       formData.images.forEach((img) => fd.append("images", img));
 
-      const res = await fetch("http://localhost:5000/api/mess/add", {
+      const res = await fetch(`${API_BASE}/api/mess/add`, {
         method: "POST",
         headers: {
           Authorization: `Bearer ${token}`,
