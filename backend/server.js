@@ -9,169 +9,167 @@ import { Server } from "socket.io";
 import cron from "node-cron";
 import Mess from "./models/Mess.js";
 
-
 // Routes
 import pgRoutes from "./routes/pgRoutes.js";
 import authRoutes from "./routes/authRoutes.js";
 import chatRoutes from "./routes/chatRoutes.js";
 import profileRoutes from "./routes/profileRoutes.js";
-
-import utilityRoutes from './routes/utilityRoutes.js';
-
-//notification
+import utilityRoutes from "./routes/utilityRoutes.js";
 import notificationRoutes from "./routes/notificationRoutes.js";
-import { notifyNewMessage } from "./utils/pushNotifications.js";
 import userNotificationRoutes from "./routes/userNotificationRoutes.js";
-import { addNotification } from "./controllers/userNotificationController.js";
-
-// Models
-import Message from "./models/Message.js";
-
-//messes
 import messOwnerRoutes from "./routes/messOwnerRoutes.js";
 import messRoutes from "./routes/messRoutes.js";
-
 import mapRoutes from "./routes/mapRoutes.js";
 
+// Utils / Controllers
+import { notifyNewMessage } from "./utils/pushNotifications.js";
+import { addNotification } from "./controllers/userNotificationController.js";
+import Message from "./models/Message.js";
+
 dotenv.config();
-console.log("Mappls key loaded:", !!process.env.MAPPLS_REST_KEY);
 
-
-// __dirname support
+// ----------------------------------------------------
+// __dirname support (ESM)
+// ----------------------------------------------------
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
+// ----------------------------------------------------
+// App + Server
+// ----------------------------------------------------
 const app = express();
 const httpServer = createServer(app);
 const PORT = process.env.PORT || 5000;
+
+// ----------------------------------------------------
+// Allowed CORS Origins
+// ----------------------------------------------------
 const allowedOrigins = [
-  process.env.CLIENT_URL,           // frontend on Render
-  "http://localhost:5173",          // local dev
-];
-// health check for Render
-app.get('/healthz', (req, res) => {
-  res.status(200).send('OK');
+  process.env.CLIENT_URL,        // Render frontend
+  "http://localhost:5173",       // Local dev
+].filter(Boolean);
+
+console.log("✅ Allowed CORS Origins:", allowedOrigins);
+
+// ----------------------------------------------------
+// Health check (Render requirement)
+// ----------------------------------------------------
+app.get("/healthz", (req, res) => {
+  res.status(200).send("OK");
 });
+
+// ----------------------------------------------------
 // Middleware
+// ----------------------------------------------------
 app.use(
   cors({
-    origin: function (origin, callback) {
-      if (!origin) return callback(null, true); // mobile / postman
-      if (allowedOrigins.includes(origin)) return callback(null, true);
+    origin: (origin, callback) => {
+      if (!origin) return callback(null, true); // Postman / mobile / server calls
+
+      if (allowedOrigins.includes(origin)) {
+        return callback(null, true);
+      }
+
+      console.error("❌ Blocked by CORS:", origin);
       return callback(new Error("Not allowed by CORS"));
     },
     credentials: true,
     methods: ["GET", "POST", "PUT", "PATCH", "DELETE"],
   })
 );
+
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
-// // Static folder
-// app.use("/uploads", express.static(path.join(__dirname, "uploads")));
-
-// DB
+// ----------------------------------------------------
+// Database
+// ----------------------------------------------------
 connectDB();
 
-// API routes
+// ----------------------------------------------------
+// Routes
+// ----------------------------------------------------
+app.get("/", (req, res) => {
+  res.send("Zip Nivasa Backend Running");
+});
+
 app.use("/api/auth", authRoutes);
 app.use("/api/pgs", pgRoutes);
 app.use("/api/chat", chatRoutes);
 app.use("/api/map", mapRoutes);
-app.use('/api/utilities', utilityRoutes);
+app.use("/api/utilities", utilityRoutes);
 app.use("/api/notifications", notificationRoutes);
 app.use("/api/user-notifications", userNotificationRoutes);
-// Test route
-app.get("/", (req, res) => {
-  res.send("Zip Nivasa Backend Running ");
-});
-
-// API mess Routes
 app.use("/api/mess-owner", messOwnerRoutes);
 app.use("/api/mess", messRoutes);
-
-//profile routes 
 app.use("/api/profile", profileRoutes);
 
-// Socket.io
+// ----------------------------------------------------
+// Socket.IO
+// ----------------------------------------------------
 const io = new Server(httpServer, {
   cors: {
     origin: allowedOrigins,
+    credentials: true,
     methods: ["GET", "POST"],
-    credentials: true
   },
-  transports: ["websocket", "polling"]
+  transports: ["websocket", "polling"],
 });
 
 const onlineUsers = new Map(); // userId -> socketId
 
 io.on("connection", (socket) => {
-  console.log("User connected:", socket.id);
+  console.log("🔌 User connected:", socket.id);
 
-  // Register userId with socket
   socket.on("register", (userId) => {
     if (!userId) return;
     onlineUsers.set(userId, socket.id);
     io.emit("online_users", Array.from(onlineUsers.keys()));
   });
 
-  // Typing events
   socket.on("typing", ({ sender, receiver }) => {
-    const rSock = onlineUsers.get(receiver);
-    if (rSock) io.to(rSock).emit("typing", { sender });
+    const rSocket = onlineUsers.get(receiver);
+    if (rSocket) io.to(rSocket).emit("typing", { sender });
   });
 
   socket.on("stop_typing", ({ sender, receiver }) => {
-    const rSock = onlineUsers.get(receiver);
-    if (rSock) io.to(rSock).emit("stop_typing", { sender });
+    const rSocket = onlineUsers.get(receiver);
+    if (rSocket) io.to(rSocket).emit("stop_typing", { sender });
   });
 
-  //  SAVE MESSAGE + EMIT (IMPORTANT)
-  socket.on("send_message", async (data) => {
+  socket.on("send_message", async ({ sender, receiver, message }) => {
     try {
-      const { sender, receiver, message } = data;
-
-      // Validation
       if (!sender || !receiver || !message?.trim()) return;
 
-      // Save message to DB
       const saved = await Message.create({
         sender,
         receiver,
         message: message.trim(),
       });
 
-      const msgToSend = {
+      const payload = {
         _id: saved._id,
-        sender: saved.sender,
-        receiver: saved.receiver,
+        sender,
+        receiver,
         message: saved.message,
         createdAt: saved.createdAt,
         readAt: saved.readAt,
       };
 
-      // Send to receiver if online
-      const receiverSocket = onlineUsers.get(receiver);
-      if (receiverSocket) {
-        io.to(receiverSocket).emit("receive_message", msgToSend);
-      }
+      const rSocket = onlineUsers.get(receiver);
+      if (rSocket) io.to(rSocket).emit("receive_message", payload);
 
-      // Echo back to sender
-      const senderSocket = onlineUsers.get(sender);
-      if (senderSocket) {
-        io.to(senderSocket).emit("receive_message", msgToSend);
-      }
+      const sSocket = onlineUsers.get(sender);
+      if (sSocket) io.to(sSocket).emit("receive_message", payload);
 
-      // Save notification to DB (for Notification Page)
       await addNotification({
         userId: receiver,
         senderId: sender,
         title: "New Message",
-        body: message.substring(0, 40) + "...",
+        body: message.slice(0, 40) + "...",
         chatUserId: sender,
       });
 
-      // Send Firebase Push Notification
       await notifyNewMessage({
         senderId: sender,
         receiverId: receiver,
@@ -179,17 +177,14 @@ io.on("connection", (socket) => {
       });
 
     } catch (err) {
-      console.error("Socket Error:", err);
+      console.error("❌ Socket error:", err.message);
     }
   });
 
-
-  //  Mark messages as read (real-time)
   socket.on("read_messages", ({ readerId, partnerId }) => {
-    const partnerSocket = onlineUsers.get(partnerId);
-
-    if (partnerSocket) {
-      io.to(partnerSocket).emit("message_read", {
+    const pSocket = onlineUsers.get(partnerId);
+    if (pSocket) {
+      io.to(pSocket).emit("message_read", {
         readerId,
         partnerId,
         readAt: new Date().toISOString(),
@@ -197,7 +192,6 @@ io.on("connection", (socket) => {
     }
   });
 
-  //Disconnect
   socket.on("disconnect", () => {
     for (const [uid, sid] of onlineUsers.entries()) {
       if (sid === socket.id) {
@@ -208,7 +202,10 @@ io.on("connection", (socket) => {
     io.emit("online_users", Array.from(onlineUsers.keys()));
   });
 });
-// Reset today's specials every midnight
+
+// ----------------------------------------------------
+// Cron Job: Reset daily mess specials
+// ----------------------------------------------------
 cron.schedule("0 0 * * *", async () => {
   try {
     await Mess.updateMany({}, {
@@ -216,20 +213,20 @@ cron.schedule("0 0 * * *", async () => {
         "specialToday.lunch": "",
         "specialToday.dinner": "",
         "specialToday.imageUrl": "",
-        "specialToday.date": new Date()
-      }
+        "specialToday.date": new Date(),
+      },
     });
-    console.log(" Daily specials reset successfully at midnight");
+    console.log("🕛 Daily specials reset");
   } catch (err) {
-    console.error(" Error resetting daily specials:", err.message);
+    console.error("❌ Cron error:", err.message);
   }
 });
-export { io, onlineUsers };
 
-// Start server
+// ----------------------------------------------------
+// Start Server
+// ----------------------------------------------------
 httpServer.listen(PORT, () => {
-  console.log(` Server + Socket.io running on port ${PORT}`);
+  console.log(`🚀 Server + Socket.IO running on port ${PORT}`);
 });
 
-
-
+export { io, onlineUsers };
