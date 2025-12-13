@@ -371,10 +371,12 @@ const Header = ({ onToggleSidebar }) => {
     } catch (err) {
       console.error("FCM deregistration error:", err);
     } finally {
+
       // Clear all auth data
       ["token", "role", "username", "userId", "fcmToken"].forEach((key) => {
         localStorage.removeItem(key);
       });
+
 
       setIsLoggingOut(false);
       navigate("/login", { replace: true });

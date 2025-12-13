@@ -239,41 +239,104 @@ export const googleLogin = async (req, res) => {
 
 export const completeProfile = async (req, res) => {
   try {
-    const { phone, professionType, gender } = req.body;
+    const { phone, role, gender } = req.body;
 
-    if (!phone || !professionType || !gender) {
-      return res.status(400).json({ success: false, message: "All fields required" });
+    if (!phone || !role || !gender) {
+      return res.status(400).json({
+        success: false,
+        message: "Phone, role and gender are required",
+      });
     }
 
     const user = await User.findById(req.user.id);
-    if (!user)
-      return res.status(404).json({ success: false, message: "User not found" });
+    if (!user) {
+      return res.status(404).json({
+        success: false,
+        message: "User not found",
+      });
+    }
 
-    // Create role record if missing
-    let tenantData = await Tenant.create({
-      professionType,
-      gender,
-      userId: user._id
-    });
+    // Prevent duplicate completion
+    if (user.profileCompleted) {
+      return res.status(400).json({
+        success: false,
+        message: "Profile already completed",
+      });
+    }
+
+    let roleDoc;
+    let roleModel;
+
+    switch (role) {
+      case "student":
+      case "tenant":
+        roleDoc = await Tenant.create({
+          gender,
+          userId: user._id,
+        });
+        roleModel = "Tenant";
+        user.role = "tenant";
+        break;
+
+      case "pgowner":
+        roleDoc = await PGOwner.create({
+          gender,
+          userId: user._id,
+        });
+        roleModel = "PGOwner";
+        user.role = "pgowner";
+        break;
+
+      case "messowner":
+        roleDoc = await MessOwner.create({
+          gender,
+          userId: user._id,
+        });
+        roleModel = "MessOwner";
+        user.role = "messowner";
+        break;
+
+      case "laundry":
+        roleDoc = await LaundryOwner.create({
+          gender,
+          userId: user._id,
+        });
+        roleModel = "LaundryOwner";
+        user.role = "laundry";
+        break;
+
+      default:
+        return res.status(400).json({
+          success: false,
+          message: "Invalid role",
+        });
+    }
 
     user.phone = phone;
-    user.roleId = tenantData._id;
-    user.roleModel = "Tenant";
+    user.roleId = roleDoc._id;
+    user.roleModel = roleModel;
     user.profileCompleted = true;
 
     await user.save();
 
-    res.json({
+    return res.json({
       success: true,
-      message: "Profile completed",
-      user
+      message: "Profile completed successfully",
+      user: {
+        id: user._id,
+        role: user.role,
+        profileCompleted: true,
+      },
     });
-
   } catch (err) {
     console.error("Complete Profile Error:", err);
-    res.status(500).json({ success: false, message: "Server error" });
+    return res.status(500).json({
+      success: false,
+      message: "Server error",
+    });
   }
 };
+
 
 //phone otp login
 export const phoneLogin = async (req, res) => {

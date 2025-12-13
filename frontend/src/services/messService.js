@@ -72,9 +72,17 @@ export const deleteMess = async (id) => {
 };
 
 export const publishSpecial = async (data) => {
-  return safeRequest(() => axios.post(`${API}/publish-special`, data), {
-    success: false,
-  });
+  const token = localStorage.getItem("token");
+
+  return safeRequest(
+    () =>
+      axios.post(`${API}/publish-special`, data, {
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      }),
+    { success: false }
+  );
 };
 
 export const getMessById = async (id) => {
