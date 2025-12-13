@@ -28,49 +28,44 @@ import Message from "./models/Message.js";
 
 dotenv.config();
 
-// ----------------------------------------------------
-// __dirname support (ESM)
-// ----------------------------------------------------
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
-// ----------------------------------------------------
-// App + Server
-// ----------------------------------------------------
 const app = express();
 const httpServer = createServer(app);
 const PORT = process.env.PORT || 5000;
 
-// ----------------------------------------------------
-// Allowed CORS Origins
-// ----------------------------------------------------
+
+const normalizeOrigin = (origin) =>
+  origin ? origin.replace(/\/$/, "") : origin;
+
 const allowedOrigins = [
   process.env.CLIENT_URL,        // Render frontend
   "http://localhost:5173",       // Local dev
-].filter(Boolean);
+]
+  .filter(Boolean)
+  .map(normalizeOrigin);
 
 console.log("✅ Allowed CORS Origins:", allowedOrigins);
 
-// ----------------------------------------------------
-// Health check (Render requirement)
-// ----------------------------------------------------
+//health check render
 app.get("/healthz", (req, res) => {
   res.status(200).send("OK");
 });
 
-// ----------------------------------------------------
-// Middleware
-// ----------------------------------------------------
+//middleware
 app.use(
   cors({
     origin: (origin, callback) => {
-      if (!origin) return callback(null, true); // Postman / mobile / server calls
+      if (!origin) return callback(null, true); // Postman / mobile / SSR
 
-      if (allowedOrigins.includes(origin)) {
+      const normalized = normalizeOrigin(origin);
+
+      if (allowedOrigins.includes(normalized)) {
         return callback(null, true);
       }
 
-      console.error("❌ Blocked by CORS:", origin);
+      console.error("Blocked by CORS:", normalized);
       return callback(new Error("Not allowed by CORS"));
     },
     credentials: true,
@@ -81,14 +76,10 @@ app.use(
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
-// ----------------------------------------------------
-// Database
-// ----------------------------------------------------
+
 connectDB();
 
-// ----------------------------------------------------
-// Routes
-// ----------------------------------------------------
+//routes
 app.get("/", (req, res) => {
   res.send("Zip Nivasa Backend Running");
 });
@@ -104,9 +95,7 @@ app.use("/api/mess-owner", messOwnerRoutes);
 app.use("/api/mess", messRoutes);
 app.use("/api/profile", profileRoutes);
 
-// ----------------------------------------------------
-// Socket.IO
-// ----------------------------------------------------
+//socket.io
 const io = new Server(httpServer, {
   cors: {
     origin: allowedOrigins,
@@ -119,7 +108,7 @@ const io = new Server(httpServer, {
 const onlineUsers = new Map(); // userId -> socketId
 
 io.on("connection", (socket) => {
-  console.log("🔌 User connected:", socket.id);
+  console.log(" User connected:", socket.id);
 
   socket.on("register", (userId) => {
     if (!userId) return;
@@ -177,7 +166,7 @@ io.on("connection", (socket) => {
       });
 
     } catch (err) {
-      console.error("❌ Socket error:", err.message);
+      console.error("Socket error:", err.message);
     }
   });
 
@@ -203,9 +192,8 @@ io.on("connection", (socket) => {
   });
 });
 
-// ----------------------------------------------------
-// Cron Job: Reset daily mess specials
-// ----------------------------------------------------
+//Cron Job – Reset daily mess specials
+   
 cron.schedule("0 0 * * *", async () => {
   try {
     await Mess.updateMany({}, {
@@ -216,17 +204,14 @@ cron.schedule("0 0 * * *", async () => {
         "specialToday.date": new Date(),
       },
     });
-    console.log("🕛 Daily specials reset");
+    console.log("Daily specials reset");
   } catch (err) {
-    console.error("❌ Cron error:", err.message);
+    console.error(" Cron error:", err.message);
   }
 });
 
-// ----------------------------------------------------
-// Start Server
-// ----------------------------------------------------
 httpServer.listen(PORT, () => {
-  console.log(`🚀 Server + Socket.IO running on port ${PORT}`);
+  console.log(` Server + Socket.IO running on port ${PORT}`);
 });
 
 export { io, onlineUsers };
