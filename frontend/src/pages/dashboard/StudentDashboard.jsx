@@ -1,570 +1,962 @@
 // src/pages/dashboard/StudentDashboard.jsx
-import React, { useState, useEffect, useRef, useMemo } from "react";
-import { Link, useNavigate } from "react-router-dom";
-import { LocateFixed } from "lucide-react";
-
-import Header from "../../components/Header";
-import Footer from "../../components/Footer";
-import Sidebar from "../../components/Sidebar";
+import React, {
+  useState,
+  useEffect,
+  useRef,
+  useMemo,
+  useCallback,
+  memo,
+  lazy,
+  Suspense,
+} from "react";
+import { Link, useNavigate, useSearchParams } from "react-router-dom";
+import {
+  MapPin,
+  Star,
+  Phone,
+  ChevronRight,
+  Search,
+  X,
+  Loader2,
+  Home,
+  UtensilsCrossed,
+  Shirt,
+  Navigation,
+  Heart,
+  Filter,
+  RefreshCw,
+  WifiOff,
+  AlertCircle,
+  ChevronLeft,
+  ArrowRight,
+  Grid3X3,
+  LayoutList,
+  SlidersHorizontal,
+} from "lucide-react";
 import { getAllMesses } from "../../services/messService";
+
+// Lazy load heavy components
+const Header = lazy(() => import("../../components/Header"));
+const Footer = lazy(() => import("../../components/Footer"));
+const Sidebar = lazy(() => import("../../components/Sidebar"));
+
 const API = import.meta.env.VITE_API_URL || "http://localhost:5000";
 
+// ============ Constants ============
+const DEBOUNCE_MS = 300;
+const SKELETON_COUNT = 6;
 
-const mockLaundryList = [
+const SERVICES = [
+  { key: "housing", label: "Housing", description: "PGs & Hostels", icon: Home },
+  { key: "mess", label: "Mess", description: "Daily Meals", icon: UtensilsCrossed },
+  { key: "laundry", label: "Laundry", description: "Wash & Iron", icon: Shirt },
+];
+
+const MOCK_LAUNDRY = [
   {
     id: 1,
-    name: "Quick Wash",
-    location: "Main Street",
-    rating: 4.3,
+    name: "Quick Wash Laundry",
+    location: "Main Street, Sector 12",
+    rating: 4.5,
+    reviewCount: 128,
     services: ["Washing", "Ironing", "Dry Cleaning"],
-    price: "₹50/kg",
+    price: 50,
+    turnaround: "24 hours",
   },
   {
     id: 2,
-    name: "Fresh Clean",
+    name: "Fresh & Clean",
     location: "Campus Road",
-    rating: 4.6,
-    services: ["Washing", "Ironing"],
-    price: "₹40/kg",
+    rating: 4.7,
+    reviewCount: 89,
+    services: ["Washing", "Ironing", "Premium Care"],
+    price: 60,
+    turnaround: "Same Day",
+  },
+  {
+    id: 3,
+    name: "Express Laundry",
+    location: "Market Complex",
+    rating: 4.3,
+    reviewCount: 56,
+    services: ["Washing", "Dry Cleaning"],
+    price: 45,
+    turnaround: "48 hours",
   },
 ];
 
-// Simple safe array helper
+// ============ Utilities ============
 const toArray = (val) =>
   Array.isArray(val) ? val : Array.isArray(val?.data) ? val.data : [];
 
-const ImageSlideshow = ({ images = [], alt, className }) => {
-  const [currentIndex, setCurrentIndex] = useState(0);
+const formatPrice = (price) => {
+  if (!price && price !== 0) return "N/A";
+  return `₹${price.toLocaleString("en-IN")}`;
+};
 
-  const safeImages =
-    images && images.length > 0
-      ? images
-      : ["https://placehold.co/600x400?text=Zip+Nivasa"];
+const cn = (...classes) => classes.filter(Boolean).join(" ");
+
+// ============ Custom Hooks ============
+const useDebounce = (value, delay = DEBOUNCE_MS) => {
+  const [debouncedValue, setDebouncedValue] = useState(value);
 
   useEffect(() => {
-    if (!safeImages || safeImages.length <= 1) return;
-    const id = setInterval(
-      () => setCurrentIndex((prev) => (prev + 1) % safeImages.length),
-      2500
-    );
-    return () => clearInterval(id);
-  }, [safeImages]);
+    const timer = setTimeout(() => setDebouncedValue(value), delay);
+    return () => clearTimeout(timer);
+  }, [value, delay]);
 
-  const currentImage = safeImages[currentIndex];
+  return debouncedValue;
+};
+
+const useLocalStorage = (key, initialValue) => {
+  const [value, setValue] = useState(() => {
+    try {
+      const item = localStorage.getItem(key);
+      return item ? JSON.parse(item) : initialValue;
+    } catch {
+      return initialValue;
+    }
+  });
+
+  const setStoredValue = useCallback(
+    (newValue) => {
+      try {
+        const valueToStore = typeof newValue === "function" ? newValue(value) : newValue;
+        setValue(valueToStore);
+        localStorage.setItem(key, JSON.stringify(valueToStore));
+      } catch (err) {
+        console.error("LocalStorage error:", err);
+      }
+    },
+    [key, value]
+  );
+
+  return [value, setStoredValue];
+};
+
+const useOnlineStatus = () => {
+  const [isOnline, setIsOnline] = useState(navigator.onLine);
+
+  useEffect(() => {
+    const handleOnline = () => setIsOnline(true);
+    const handleOffline = () => setIsOnline(false);
+
+    window.addEventListener("online", handleOnline);
+    window.addEventListener("offline", handleOffline);
+
+    return () => {
+      window.removeEventListener("online", handleOnline);
+      window.removeEventListener("offline", handleOffline);
+    };
+  }, []);
+
+  return isOnline;
+};
+
+// ============ Sub Components ============
+
+// Skeleton Loader
+const Skeleton = memo(({ className = "" }) => (
+  <div className={cn("animate-pulse bg-gray-200 rounded-lg", className)} />
+));
+
+Skeleton.displayName = "Skeleton";
+
+// Card Skeleton
+const CardSkeleton = memo(() => (
+  <div className="bg-white rounded-xl border border-gray-100 overflow-hidden">
+    <Skeleton className="h-44 rounded-none" />
+    <div className="p-4 space-y-3">
+      <Skeleton className="h-5 w-3/4" />
+      <Skeleton className="h-4 w-1/2" />
+      <div className="flex gap-2 pt-2">
+        <Skeleton className="h-9 flex-1" />
+        <Skeleton className="h-9 flex-1" />
+      </div>
+    </div>
+  </div>
+));
+
+CardSkeleton.displayName = "CardSkeleton";
+
+// Image Slideshow
+const ImageSlideshow = memo(({ images = [], alt, className = "" }) => {
+  const [currentIndex, setCurrentIndex] = useState(0);
+  const [isLoading, setIsLoading] = useState(true);
+  const [hasError, setHasError] = useState(false);
+  const intervalRef = useRef(null);
+
+  const safeImages = useMemo(
+    () => (images.length > 0 ? images : ["/placeholder-property.jpg"]),
+    [images]
+  );
+
+  useEffect(() => {
+    if (safeImages.length <= 1) return;
+
+    intervalRef.current = setInterval(() => {
+      setCurrentIndex((prev) => (prev + 1) % safeImages.length);
+    }, 3500);
+
+    return () => clearInterval(intervalRef.current);
+  }, [safeImages.length]);
+
+  const goTo = useCallback((e, index) => {
+    e.preventDefault();
+    e.stopPropagation();
+    setCurrentIndex(index);
+  }, []);
 
   return (
-    <div
-      className={`relative overflow-hidden bg-emerald-50/50 ${className} group`}
-    >
-      <img
-        src={currentImage}
-        alt={alt}
-        className="w-full h-full object-cover transition-transform duration-700 ease-out group-hover:scale-[1.03]"
-      />
-      {safeImages.length > 1 && (
-        <div className="absolute bottom-2 left-1/2 -translate-x-1/2 flex gap-1.5">
+    <div className={cn("relative overflow-hidden bg-gray-100 group", className)}>
+      {isLoading && (
+        <div className="absolute inset-0 flex items-center justify-center">
+          <Loader2 className="w-6 h-6 text-gray-400 animate-spin" />
+        </div>
+      )}
+
+      {hasError ? (
+        <div className="absolute inset-0 flex flex-col items-center justify-center bg-gray-50">
+          <Home className="w-8 h-8 text-gray-300 mb-2" />
+          <span className="text-xs text-gray-400">No image</span>
+        </div>
+      ) : (
+        <img
+          src={safeImages[currentIndex]}
+          alt={alt}
+          loading="lazy"
+          onLoad={() => setIsLoading(false)}
+          onError={() => {
+            setIsLoading(false);
+            setHasError(true);
+          }}
+          className={cn(
+            "w-full h-full object-cover transition-all duration-500",
+            isLoading ? "opacity-0" : "opacity-100",
+            "group-hover:scale-105"
+          )}
+        />
+      )}
+
+      {/* Navigation Arrows */}
+      {safeImages.length > 1 && !hasError && (
+        <>
+          <button
+            onClick={(e) => {
+              e.preventDefault();
+              e.stopPropagation();
+              setCurrentIndex((prev) => (prev - 1 + safeImages.length) % safeImages.length);
+            }}
+            className="absolute left-2 top-1/2 -translate-y-1/2 w-7 h-7 rounded-full bg-white/80 
+              flex items-center justify-center opacity-0 group-hover:opacity-100 
+              transition-opacity hover:bg-white shadow-sm"
+            aria-label="Previous image"
+          >
+            <ChevronLeft className="w-4 h-4 text-gray-700" />
+          </button>
+          <button
+            onClick={(e) => {
+              e.preventDefault();
+              e.stopPropagation();
+              setCurrentIndex((prev) => (prev + 1) % safeImages.length);
+            }}
+            className="absolute right-2 top-1/2 -translate-y-1/2 w-7 h-7 rounded-full bg-white/80 
+              flex items-center justify-center opacity-0 group-hover:opacity-100 
+              transition-opacity hover:bg-white shadow-sm"
+            aria-label="Next image"
+          >
+            <ChevronRight className="w-4 h-4 text-gray-700" />
+          </button>
+        </>
+      )}
+
+      {/* Dots */}
+      {safeImages.length > 1 && !hasError && (
+        <div className="absolute bottom-2 left-1/2 -translate-x-1/2 flex gap-1">
           {safeImages.map((_, idx) => (
-            <div
+            <button
               key={idx}
-              className={`w-1.5 h-1.5 rounded-full shadow-sm transition-all ${
-                idx === currentIndex
-                  ? "bg-white scale-125"
-                  : "bg-white/50 scale-100"
-              }`}
+              onClick={(e) => goTo(e, idx)}
+              className={cn(
+                "w-1.5 h-1.5 rounded-full transition-all",
+                idx === currentIndex ? "bg-white w-3" : "bg-white/60"
+              )}
+              aria-label={`Go to image ${idx + 1}`}
             />
           ))}
         </div>
       )}
     </div>
   );
-};
+});
 
-const StudentDashboard = () => {
-  const username = localStorage.getItem("username") || "Student";
+ImageSlideshow.displayName = "ImageSlideshow";
 
+// Rating Badge
+const RatingBadge = memo(({ rating, count }) => (
+  <div className="flex items-center gap-1 bg-emerald-50 px-2 py-1 rounded-md">
+    <Star className="w-3.5 h-3.5 text-emerald-500 fill-emerald-500" />
+    <span className="text-xs font-semibold text-emerald-700">
+      {rating?.toFixed(1) || "New"}
+    </span>
+    {count > 0 && (
+      <span className="text-xs text-gray-400">({count})</span>
+    )}
+  </div>
+));
+
+RatingBadge.displayName = "RatingBadge";
+
+// Service Tab
+const ServiceTab = memo(({ service, isActive, onClick }) => {
+  const Icon = service.icon;
+
+  return (
+    <button
+      onClick={() => onClick(service.key)}
+      className={cn(
+        "flex items-center gap-3 p-4 rounded-xl border-2 transition-all duration-200 text-left w-full",
+        isActive
+          ? "bg-emerald-50 border-emerald-500"
+          : "bg-white border-gray-100 hover:border-gray-200 hover:bg-gray-50"
+      )}
+    >
+      <div
+        className={cn(
+          "p-2.5 rounded-lg transition-colors",
+          isActive ? "bg-emerald-500 text-white" : "bg-gray-100 text-gray-500"
+        )}
+      >
+        <Icon className="w-5 h-5" />
+      </div>
+      <div className="flex-1 min-w-0">
+        <h3 className={cn(
+          "font-semibold text-sm",
+          isActive ? "text-emerald-700" : "text-gray-900"
+        )}>
+          {service.label}
+        </h3>
+        <p className="text-xs text-gray-500 truncate">{service.description}</p>
+      </div>
+    </button>
+  );
+});
+
+ServiceTab.displayName = "ServiceTab";
+
+// Search Input
+const SearchInput = memo(({ value, onChange, onClear, placeholder }) => (
+  <div className="relative group">
+    <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400 
+      group-focus-within:text-emerald-500 transition-colors" />
+    <input
+      type="text"
+      value={value}
+      onChange={(e) => onChange(e.target.value)}
+      placeholder={placeholder}
+      className="w-full pl-10 pr-9 py-2.5 text-sm bg-white border border-gray-200 rounded-lg
+        focus:outline-none focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500
+        transition-all placeholder-gray-400"
+    />
+    {value && (
+      <button
+        onClick={onClear}
+        className="absolute right-3 top-1/2 -translate-y-1/2 p-0.5 rounded-full 
+          hover:bg-gray-100 transition-colors"
+        aria-label="Clear search"
+      >
+        <X className="w-4 h-4 text-gray-400" />
+      </button>
+    )}
+  </div>
+));
+
+SearchInput.displayName = "SearchInput";
+
+// Housing Card
+const HousingCard = memo(({ item, onFavorite, isFavorite }) => {
   const navigate = useNavigate();
-  const [messes, setMesses] = useState([]);
-  const [housingOptions, setHousingOptions] = useState([]);
-  const [laundryOptions, setLaundryOptions] = useState([]);
-  const [query, setQuery] = useState("");
-  const [activeService, setActiveService] = useState("housing");
-  const [loading, setLoading] = useState(true);
-  const [isSidebarOpen, setIsSidebarOpen] = useState(false);
 
+  const handleNavigate = useCallback(() => {
+    navigate(`/services/pg/${item.id}`);
+  }, [navigate, item.id]);
+
+  return (
+    <article
+      className="bg-white rounded-xl border border-gray-100 overflow-hidden 
+        hover:shadow-lg hover:border-gray-200 transition-all duration-300 group cursor-pointer"
+      onClick={handleNavigate}
+    >
+      {/* Image */}
+      <div className="relative h-44">
+        <ImageSlideshow images={item.images} alt={item.name} className="h-full" />
+
+        {/* Favorite Button */}
+        <button
+          onClick={(e) => {
+            e.stopPropagation();
+            onFavorite?.(item.id);
+          }}
+          className={cn(
+            "absolute top-3 right-3 p-2 rounded-full transition-all",
+            isFavorite
+              ? "bg-red-500 text-white"
+              : "bg-white/90 text-gray-500 hover:bg-white hover:text-red-500"
+          )}
+          aria-label={isFavorite ? "Remove from favorites" : "Add to favorites"}
+        >
+          <Heart className={cn("w-4 h-4", isFavorite && "fill-current")} />
+        </button>
+
+        {/* Price Badge */}
+        <div className="absolute bottom-3 right-3 bg-white/95 backdrop-blur-sm px-2.5 py-1 rounded-lg shadow-sm">
+          <span className="text-sm font-bold text-gray-900">
+            {formatPrice(item.price)}
+          </span>
+          <span className="text-xs text-gray-500">/mo</span>
+        </div>
+
+        {/* Rating Badge */}
+        {item.rating && (
+          <div className="absolute top-3 left-3 bg-white/95 backdrop-blur-sm px-2 py-1 rounded-lg shadow-sm flex items-center gap-1">
+            <Star className="w-3.5 h-3.5 text-amber-400 fill-amber-400" />
+            <span className="text-xs font-semibold text-gray-900">{item.rating}</span>
+          </div>
+        )}
+      </div>
+
+      {/* Content */}
+      <div className="p-4">
+        <div className="mb-2">
+          <h3 className="font-semibold text-gray-900 line-clamp-1 group-hover:text-emerald-600 transition-colors">
+            {item.name}
+          </h3>
+          <p className="text-xs text-emerald-600 font-medium uppercase tracking-wide">
+            {item.type}
+          </p>
+        </div>
+
+        <p className="text-sm text-gray-500 flex items-center gap-1.5 mb-4 line-clamp-1">
+          <MapPin className="w-3.5 h-3.5 text-gray-400 flex-shrink-0" />
+          {item.location}
+        </p>
+
+        {/* Actions */}
+        <div className="flex gap-2 pt-3 border-t border-gray-100">
+          <a
+            href={`tel:${item.contact}`}
+            onClick={(e) => e.stopPropagation()}
+            className="flex-1 flex items-center justify-center gap-1.5 py-2 rounded-lg
+              bg-gray-50 text-gray-700 text-sm font-medium
+              hover:bg-gray-100 transition-colors"
+          >
+            <Phone className="w-3.5 h-3.5" />
+            Call
+          </a>
+          <button
+            onClick={(e) => {
+              e.stopPropagation();
+              handleNavigate();
+            }}
+            className="flex-1 flex items-center justify-center gap-1.5 py-2 rounded-lg
+              bg-emerald-500 text-white text-sm font-medium
+              hover:bg-emerald-600 transition-colors"
+          >
+            Details
+            <ArrowRight className="w-3.5 h-3.5" />
+          </button>
+        </div>
+      </div>
+    </article>
+  );
+});
+
+HousingCard.displayName = "HousingCard";
+
+// Mess Card
+const MessCard = memo(({ item, onClick }) => {
+  const avgRating = useMemo(() => {
+    if (item.averageRating) return item.averageRating;
+    if (item.ratings?.length > 0) {
+      return item.ratings.reduce((sum, r) => sum + (r.stars || 0), 0) / item.ratings.length;
+    }
+    return null;
+  }, [item]);
+
+  return (
+    <article
+      onClick={() => onClick(item._id)}
+      className="bg-white rounded-xl border border-gray-100 p-5
+        hover:shadow-lg hover:border-gray-200 transition-all duration-300 cursor-pointer group"
+    >
+      {/* Header */}
+      <div className="flex items-start justify-between gap-3 mb-3">
+        <div className="flex-1 min-w-0">
+          <h3 className="font-semibold text-gray-900 line-clamp-1 group-hover:text-emerald-600 transition-colors">
+            {item.title || item.name}
+          </h3>
+          <p className="text-sm text-gray-500 flex items-center gap-1 mt-1">
+            <MapPin className="w-3.5 h-3.5 text-gray-400 flex-shrink-0" />
+            <span className="line-clamp-1">{item.location}</span>
+          </p>
+        </div>
+
+        <span
+          className={cn(
+            "px-2 py-1 rounded-md text-xs font-semibold uppercase",
+            item.type === "Veg"
+              ? "bg-green-50 text-green-700"
+              : item.type === "Non-Veg"
+              ? "bg-red-50 text-red-700"
+              : "bg-orange-50 text-orange-700"
+          )}
+        >
+          {item.type || "Both"}
+        </span>
+      </div>
+
+      {/* Stats */}
+      <div className="flex items-center gap-3 mb-4">
+        <RatingBadge rating={avgRating} count={item.ratings?.length} />
+        <span className="text-gray-300">•</span>
+        <span className="text-lg font-bold text-gray-900">
+          {formatPrice(item.price)}
+          <span className="text-xs font-normal text-gray-500">/mo</span>
+        </span>
+      </div>
+
+      {/* CTA */}
+      <button
+        className="w-full py-2.5 rounded-lg border border-emerald-200 text-emerald-600 
+          text-sm font-medium hover:bg-emerald-500 hover:text-white hover:border-emerald-500 
+          transition-all duration-200 flex items-center justify-center gap-2"
+      >
+        View Menu
+        <ChevronRight className="w-4 h-4" />
+      </button>
+    </article>
+  );
+});
+
+MessCard.displayName = "MessCard";
+
+// Laundry Card
+const LaundryCard = memo(({ item }) => (
+  <article className="bg-white rounded-xl border border-gray-100 p-5
+    hover:shadow-lg hover:border-gray-200 transition-all duration-300">
+    {/* Header */}
+    <div className="flex items-start justify-between gap-3 mb-3">
+      <div className="flex-1 min-w-0">
+        <h3 className="font-semibold text-gray-900 line-clamp-1">{item.name}</h3>
+        <p className="text-sm text-gray-500 flex items-center gap-1 mt-1">
+          <MapPin className="w-3.5 h-3.5 text-gray-400" />
+          {item.location}
+        </p>
+      </div>
+      <RatingBadge rating={item.rating} count={item.reviewCount} />
+    </div>
+
+    {/* Services */}
+    <div className="flex flex-wrap gap-1.5 mb-4">
+      {item.services.map((service, i) => (
+        <span
+          key={i}
+          className="px-2 py-1 text-xs font-medium bg-gray-50 text-gray-600 rounded-full"
+        >
+          {service}
+        </span>
+      ))}
+    </div>
+
+    {/* Footer */}
+    <div className="flex items-center justify-between pt-3 border-t border-gray-100">
+      <div>
+        <span className="text-lg font-bold text-gray-900">₹{item.price}</span>
+        <span className="text-xs text-gray-500">/kg</span>
+      </div>
+      <span className="text-xs text-gray-500">{item.turnaround}</span>
+    </div>
+  </article>
+));
+
+LaundryCard.displayName = "LaundryCard";
+
+// Empty State
+const EmptyState = memo(({ service, onReset }) => (
+  <div className="col-span-full flex flex-col items-center justify-center py-16">
+    <div className="w-16 h-16 bg-gray-100 rounded-full flex items-center justify-center mb-4">
+      <Search className="w-8 h-8 text-gray-300" />
+    </div>
+    <h3 className="text-lg font-semibold text-gray-900 mb-1">No results found</h3>
+    <p className="text-gray-500 text-sm text-center max-w-sm mb-4">
+      We couldn't find any {service} matching your search. Try different keywords.
+    </p>
+    <button
+      onClick={onReset}
+      className="flex items-center gap-2 px-4 py-2 text-sm font-medium text-emerald-600 
+        hover:bg-emerald-50 rounded-lg transition-colors"
+    >
+      <RefreshCw className="w-4 h-4" />
+      Clear Search
+    </button>
+  </div>
+));
+
+EmptyState.displayName = "EmptyState";
+
+// Error State
+const ErrorState = memo(({ message, onRetry }) => (
+  <div className="col-span-full flex flex-col items-center justify-center py-16">
+    <div className="w-16 h-16 bg-red-50 rounded-full flex items-center justify-center mb-4">
+      <AlertCircle className="w-8 h-8 text-red-400" />
+    </div>
+    <h3 className="text-lg font-semibold text-gray-900 mb-1">Something went wrong</h3>
+    <p className="text-gray-500 text-sm text-center max-w-sm mb-4">{message}</p>
+    <button
+      onClick={onRetry}
+      className="flex items-center gap-2 px-4 py-2 bg-emerald-500 text-white text-sm 
+        font-medium rounded-lg hover:bg-emerald-600 transition-colors"
+    >
+      <RefreshCw className="w-4 h-4" />
+      Try Again
+    </button>
+  </div>
+));
+
+ErrorState.displayName = "ErrorState";
+
+// Offline Banner
+const OfflineBanner = memo(() => (
+  <div className="bg-amber-50 border-b border-amber-100 px-4 py-2">
+    <div className="flex items-center justify-center gap-2 text-amber-700">
+      <WifiOff className="w-4 h-4" />
+      <span className="text-sm font-medium">You're offline</span>
+    </div>
+  </div>
+));
+
+OfflineBanner.displayName = "OfflineBanner";
+
+// ============ Main Component ============
+const StudentDashboard = () => {
+  const navigate = useNavigate();
+  const [searchParams, setSearchParams] = useSearchParams();
+  const isOnline = useOnlineStatus();
   const searchInputRef = useRef(null);
 
-  // ---------- Fetch PGs ----------
-  const fetchPGs = async () => {
-    try {
-      const res = await fetch(`${API}/api/pgs`);
+  // User info
+  const username = useMemo(() => localStorage.getItem("username") || "Student", []);
 
-      const data = await res.json();
+  // UI State
+  const [isSidebarOpen, setIsSidebarOpen] = useState(false);
+  const [viewMode, setViewMode] = useLocalStorage("dashboardViewMode", "grid");
+  const [favorites, setFavorites] = useLocalStorage("favorites", []);
 
-      const list = toArray(data);
+  // Data State
+  const [housing, setHousing] = useState([]);
+  const [messes, setMesses] = useState([]);
+  const [laundry] = useState(MOCK_LAUNDRY);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
 
-      const formattedPGs = list.map((pg) => ({
-        id: pg._id,
-        name: pg.title,
-        type: pg.propertyType,
-        location: pg.streetAddress || pg.location || "",
-        price: pg.monthlyRent,
-        rating: 4.6, // TODO: replace with real rating field if available
-        images:
-          pg.images && pg.images.length > 0
-            ? pg.images
-            : ["https://placehold.co/600x400?text=Zip+Nivasa"],
-        amenities: pg.amenities || [],
-        contact: "+919999999999",
-      }));
+  // Filter State
+  const [activeService, setActiveService] = useState(
+    searchParams.get("tab") || "housing"
+  );
+  const [searchQuery, setSearchQuery] = useState(searchParams.get("q") || "");
+  const debouncedSearch = useDebounce(searchQuery);
 
-      setHousingOptions(formattedPGs);
-    } catch (err) {
-      console.error("Failed to load PG listings:", err);
-      setHousingOptions([]);
-    }
-  };
+  // Fetch housing data
+  const fetchHousing = useCallback(async () => {
+    const res = await fetch(`${API}/api/pgs`);
+    if (!res.ok) throw new Error("Failed to fetch housing");
+    const data = await res.json();
+    const list = toArray(data);
 
-  // ---------- Fetch Messes (via messService) ----------
-  const fetchMesses = async () => {
-    try {
-      const res = await getAllMesses();
+    return list.map((pg) => ({
+      id: pg._id,
+      name: pg.title,
+      type: pg.propertyType || "PG",
+      location: pg.streetAddress || pg.location || "",
+      price: pg.monthlyRent,
+      rating: pg.averageRating || 4.5,
+      images: pg.images?.length > 0 ? pg.images : [],
+      amenities: pg.amenities || [],
+      contact: pg.contact || "+919999999999",
+    }));
+  }, []);
 
-      // Handle whatever shape comes back safely
-      const list = Array.isArray(res)
-        ? res
-        : Array.isArray(res?.messes)
-        ? res.messes
-        : [];
+  // Fetch messes
+  const fetchMesses = useCallback(async () => {
+    const res = await getAllMesses();
+    return Array.isArray(res) ? res : Array.isArray(res?.messes) ? res.messes : [];
+  }, []);
 
-      setMesses(list);
-    } catch (error) {
-      console.error("Error fetching messes", error);
-      setMesses([]);
-    }
-  };
-
-  // ---------- Initial load ----------
+  // Load data
   useEffect(() => {
     const loadData = async () => {
       setLoading(true);
-      await Promise.all([fetchPGs(), fetchMesses()]);
-      setLaundryOptions(mockLaundryList);
-      setLoading(false);
+      setError(null);
+
+      try {
+        const [housingData, messData] = await Promise.all([
+          fetchHousing(),
+          fetchMesses(),
+        ]);
+        setHousing(housingData);
+        setMesses(messData);
+      } catch (err) {
+        console.error("Error loading data:", err);
+        setError(err.message || "Failed to load data");
+      } finally {
+        setLoading(false);
+      }
     };
+
     loadData();
-  }, []);
+  }, [fetchHousing, fetchMesses]);
 
-  // ---------- Services ----------
-  const services = [
-    {
-      key: "mess",
-      title: "Mess Services",
-      desc: "Healthy daily meals",
-      icon: "M8.1 13.34l2.83-2.83L3.91 3.5a4.008 4.008 0 0 0 0 5.66l4.19 4.18zm6.78-1.81c1.53.71 3.68.21 5.27-1.38 1.91-1.91 2.28-4.65.81-6.12-1.46-1.46-4.2-1.1-6.12.81-1.59 1.59-2.09 3.74-1.38 5.27L3.7 19.87l1.41 1.41L12 14.41l6.88 6.88 1.41-1.41L13.41 13l1.47-1.47z",
-    },
-    {
-      key: "housing",
-      title: "Housing",
-      desc: "PGs, Hostels & Flats",
-      icon: "M10.707 2.293a1 1 0 00-1.414 0l-7 7a1 1 0 001.414 1.414L4 10.414V17a1 1 0 001 1h2a1 1 0 001-1v-2a1 1 0 011-1h2a1 1 0 011 1v2a1 1 0 001 1h2a1 1 0 001-1v-6.586l.293.293a1 1 0 001.414-1.414l-7-7z",
-    },
-    {
-      key: "laundry",
-      title: "Laundry",
-      desc: "Wash & Dry Clean",
-      icon: "M3 4a1 1 0 011-1h12a1 1 0 110 2H4a1 1 0 01-1-1zm0 4a1 1 0 011-1h12a1 1 0 110 2H4a1 1 0 01-1-1zm0 4a1 1 0 011-1h12a1 1 0 110 2H4a1 1 0 01-1-1zm0 4a1 1 0 011-1h12a1 1 0 110 2H4a1 1 0 01-1-1z",
-    },
-  ];
+  // Update URL params
+  useEffect(() => {
+    const params = new URLSearchParams();
+    if (activeService !== "housing") params.set("tab", activeService);
+    if (debouncedSearch) params.set("q", debouncedSearch);
+    setSearchParams(params, { replace: true });
+  }, [activeService, debouncedSearch, setSearchParams]);
 
-  const Icon = ({ path, className = "w-6 h-6" }) => (
-    <svg className={className} fill="currentColor" viewBox="0 0 20 20">
-      <path d={path} />
-    </svg>
-  );
+  // Filtered data
+  const filteredData = useMemo(() => {
+    const q = debouncedSearch.toLowerCase().trim();
 
-  const StarIcon = () => (
-    <svg className="w-4 h-4 text-emerald-400" fill="currentColor" viewBox="0 0 20 20">
-      <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z" />
-    </svg>
-  );
-
-  const CardSkeleton = () => (
-    <div className="bg-white rounded-xl shadow-sm border border-emerald-100 p-4 animate-pulse">
-      <div className="h-44 bg-emerald-50/50 rounded-lg mb-4" />
-      <div className="h-4 bg-emerald-100 rounded w-3/4 mb-2" />
-      <div className="h-3 bg-emerald-100 rounded w-1/2 mb-4" />
-      <div className="h-8 bg-emerald-100 rounded" />
-    </div>
-  );
-
-  const handleServiceChange = (service) => {
-    setActiveService(service);
-    setQuery("");
-    if (searchInputRef.current) searchInputRef.current.value = "";
-  };
-
-  // ---------- Filtered results (safe with useMemo) ----------
-  const filtered = useMemo(() => {
-    const q = query.toLowerCase().trim();
-
-    const safeMesses = toArray(messes);
-    const safeHousing = toArray(housingOptions);
-    const safeLaundry = toArray(laundryOptions);
+    const filterFn = (items, fields) => {
+      if (!q) return items;
+      return items.filter((item) =>
+        fields.some((field) => {
+          const value = item[field];
+          if (Array.isArray(value)) {
+            return value.some((v) => v.toLowerCase().includes(q));
+          }
+          return value?.toString().toLowerCase().includes(q);
+        })
+      );
+    };
 
     return {
-      mess: safeMesses.filter((m) =>
-        (m.title || m.name || "")
-          .toString()
-          .toLowerCase()
-          .includes(q)
-      ),
-      housing: safeHousing.filter(
-        (h) =>
-          h.name.toLowerCase().includes(q) ||
-          h.location.toLowerCase().includes(q) ||
-          h.type.toLowerCase().includes(q)
-      ),
-      laundry: safeLaundry.filter(
-        (l) =>
-          l.name.toLowerCase().includes(q) ||
-          l.services.some((s) => s.toLowerCase().includes(q))
-      ),
+      housing: filterFn(housing, ["name", "location", "type"]),
+      mess: filterFn(messes, ["title", "name", "location"]),
+      laundry: filterFn(laundry, ["name", "location", "services"]),
     };
-  }, [query, messes, housingOptions, laundryOptions]);
+  }, [housing, messes, laundry, debouncedSearch]);
 
-  const activeList = filtered[activeService] || [];
+  const activeList = filteredData[activeService] || [];
+
+  // Handlers
+  const handleServiceChange = useCallback((service) => {
+    setActiveService(service);
+    setSearchQuery("");
+  }, []);
+
+  const handleFavorite = useCallback((id) => {
+    setFavorites((prev) =>
+      prev.includes(id) ? prev.filter((f) => f !== id) : [...prev, id]
+    );
+  }, [setFavorites]);
+
+  const handleReset = useCallback(() => {
+    setSearchQuery("");
+    searchInputRef.current?.focus();
+  }, []);
+
+  const handleRetry = useCallback(() => {
+    window.location.reload();
+  }, []);
+
+  const handleMessClick = useCallback((id) => {
+    navigate(`/mess/${id}`);
+  }, [navigate]);
 
   return (
-    <div className="bg-gradient-to-br from-emerald-50 via-green-25 to-mint-50 min-h-screen flex flex-col w-full h-full overflow-hidden font-sans">
-      <Header onToggleSidebar={() => setIsSidebarOpen((prev) => !prev)} />
+    <div className="min-h-screen bg-gray-50 flex flex-col">
+      {/* Offline Banner */}
+      {!isOnline && <OfflineBanner />}
 
-      <div className="flex flex-row flex-1 w-full h-full overflow-hidden">
-        <Sidebar isOpen={isSidebarOpen} />
+      {/* Header */}
+      <Suspense fallback={<div className="h-16 bg-white border-b border-gray-100" />}>
+        <Header onToggleSidebar={() => setIsSidebarOpen((prev) => !prev)} />
+      </Suspense>
 
-        <main className="flex-1 w-full overflow-y-auto custom-scrollbar">
-          {/* Top bar */}
-          <div className="px-4 sm:px-6 md:px-8 pt-4 pb-3 sticky top-0 z-20 bg-gradient-to-r from-emerald-50/95 via-emerald-50/95 to-mint-50/95 backdrop-blur border-b border-emerald-100">
-            <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-              <div>
-                <p className="text-xs uppercase tracking-[0.15em] text-emerald-600 font-semibold">
-                  Welcome back
-                </p>
-                <h1 className="text-2xl sm:text-3xl font-bold text-slate-900 mt-1">
-                  Hi, {username}
-                </h1>
-                <p className="text-sm text-slate-500 mt-1">Find. Connect. Live</p>
-              </div>
-              <div className="flex items-center gap-3">
+      <div className="flex flex-1 overflow-hidden">
+        {/* Sidebar */}
+        <Suspense fallback={null}>
+          <Sidebar isOpen={isSidebarOpen} />
+        </Suspense>
+
+        {/* Main Content */}
+        <main className="flex-1 overflow-y-auto">
+          {/* Welcome Header */}
+          <section className="bg-white border-b border-gray-100 px-4 sm:px-6 lg:px-8 py-6">
+            <div className="max-w-7xl mx-auto">
+              <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+                <div>
+                  <p className="text-xs text-emerald-600 font-medium uppercase tracking-wider">
+                    Welcome back
+                  </p>
+                  <h1 className="text-2xl sm:text-3xl font-bold text-gray-900 mt-1">
+                    Hi, {username} 👋
+                  </h1>
+                  <p className="text-gray-500 text-sm mt-1">
+                    Find your perfect stay, meals, and services
+                  </p>
+                </div>
+
                 <Link
                   to="/pgs/near-me"
-                  className="flex items-center gap-2 bg-emerald-600 hover:bg-emerald-700 text-white px-5 py-3 rounded-xl shadow-md hover:shadow-lg transition-all duration-200 text-sm font-semibold border border-emerald-500/20"
+                  className="inline-flex items-center gap-2 bg-emerald-500 hover:bg-emerald-600 
+                    text-white px-5 py-2.5 rounded-lg font-medium text-sm transition-colors shadow-sm"
                 >
-                  <LocateFixed className="w-5 h-5" />
-                  <span>PGs Near Me</span>
+                  <Navigation className="w-4 h-4" />
+                  PGs Near Me
                 </Link>
               </div>
             </div>
-          </div>
+          </section>
 
-          <div className="px-4 sm:px-6 md:px-8 pb-10">
-            {/* Service selector */}
-            <section className="mt-4 mb-6">
-              <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-                {services.map((s) => (
-                  <button
-                    key={s.key}
-                    type="button"
-                    onClick={() => handleServiceChange(s.key)}
-                    className={`relative p-5 rounded-2xl text-left transition-all duration-300 border flex flex-col justify-between h-full ${
-                      activeService === s.key
-                        ? "bg-white border-emerald-500 shadow-md ring-1 ring-emerald-500/50 -translate-y-1"
-                        : "bg-white border-emerald-100 shadow-sm hover:border-emerald-300 hover:shadow-lg"
-                    }`}
-                  >
-                    <div className="flex items-start justify-between gap-3">
-                      <div>
-                        <h2
-                          className={`font-semibold text-base sm:text-lg ${
-                            activeService === s.key
-                              ? "text-emerald-700"
-                              : "text-slate-900"
-                          }`}
-                        >
-                          {s.title}
-                        </h2>
-                        <p className="text-xs sm:text-sm text-slate-500 mt-1">
-                          {s.desc}
-                        </p>
-                      </div>
-                      <div
-                        className={`p-2.5 rounded-xl ${
-                          activeService === s.key
-                            ? "bg-emerald-100 text-emerald-600"
-                            : "bg-emerald-50 text-emerald-500"
-                        }`}
-                      >
-                        <Icon path={s.icon} className="w-6 h-6" />
-                      </div>
-                    </div>
-                  </button>
-                ))}
+          {/* Content */}
+          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
+            {/* Service Tabs */}
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 mb-6">
+              {SERVICES.map((service) => (
+                <ServiceTab
+                  key={service.key}
+                  service={service}
+                  isActive={activeService === service.key}
+                  onClick={handleServiceChange}
+                />
+              ))}
+            </div>
+
+            {/* Search & Filters */}
+            <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-3 mb-6">
+              <div className="flex-1">
+                <SearchInput
+                  ref={searchInputRef}
+                  value={searchQuery}
+                  onChange={setSearchQuery}
+                  onClear={handleReset}
+                  placeholder={`Search ${activeService}...`}
+                />
               </div>
-            </section>
 
-            {/* Sticky search / count bar */}
-            <div className="flex flex-col sm:flex-row justify-between items-center mb-6 gap-4 sticky top-[4.5rem] sm:top-[4.75rem] bg-emerald-50/95 backdrop-blur z-10 py-2 border-b border-emerald-100">
-              <div className="self-start sm:self-center">
-                <h3 className="text-xl font-semibold text-slate-900">
-                  {activeService === "housing" && "Explore Stays"}
-                  {activeService === "mess" && "Best Messes"}
-                  {activeService === "laundry" && "Laundry Shops"}
-                </h3>
-                <p className="text-xs text-slate-500 mt-0.5">
-                  {activeList.length} result
-                  {activeList.length !== 1 ? "s" : ""} found
+              <div className="flex items-center gap-2">
+                <button
+                  onClick={() => setViewMode(viewMode === "grid" ? "list" : "grid")}
+                  className="p-2.5 bg-white border border-gray-200 rounded-lg hover:bg-gray-50 transition-colors"
+                  aria-label={`Switch to ${viewMode === "grid" ? "list" : "grid"} view`}
+                >
+                  {viewMode === "grid" ? (
+                    <LayoutList className="w-4 h-4 text-gray-500" />
+                  ) : (
+                    <Grid3X3 className="w-4 h-4 text-gray-500" />
+                  )}
+                </button>
+
+                <button
+                  className="flex items-center gap-2 px-3 py-2.5 bg-white border border-gray-200 
+                    rounded-lg hover:bg-gray-50 transition-colors text-sm font-medium text-gray-700"
+                >
+                  <SlidersHorizontal className="w-4 h-4" />
+                  <span className="hidden sm:inline">Filters</span>
+                </button>
+              </div>
+            </div>
+
+            {/* Results Header */}
+            <div className="flex items-center justify-between mb-4">
+              <div>
+                <h2 className="text-lg font-semibold text-gray-900">
+                  {activeService === "housing" && "Available PGs"}
+                  {activeService === "mess" && "Mess Services"}
+                  {activeService === "laundry" && "Laundry Services"}
+                </h2>
+                <p className="text-sm text-gray-500">
+                  {loading ? "Loading..." : `${activeList.length} results`}
                 </p>
               </div>
 
-              <div className="relative w-full sm:w-80 group">
-                <Icon
-                  path="M8 4a4 4 0 100 8 4 4 0 000-8zM2 8a6 6 0 1110.89 3.476l4.817 4.817a1 1 0 01-1.414 1.414l-4.816-4.816A6 6 0 012 8z"
-                  className="absolute left-3 top-3 w-5 h-5 text-slate-400 group-focus-within:text-emerald-500 transition-colors"
-                />
-                <input
-                  ref={searchInputRef}
-                  placeholder={`Search ${activeService}...`}
-                  className="pl-10 pr-4 py-2.5 bg-white border border-emerald-200 rounded-xl w-full focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-transparent shadow-sm transition-all text-sm"
-                  onChange={(e) => setQuery(e.target.value)}
-                />
-              </div>
+              {debouncedSearch && (
+                <button
+                  onClick={handleReset}
+                  className="text-sm text-emerald-600 hover:text-emerald-700 font-medium 
+                    flex items-center gap-1"
+                >
+                  <X className="w-3 h-3" />
+                  Clear
+                </button>
+              )}
             </div>
 
-            {/* Cards grid */}
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 2xl:grid-cols-4 gap-6">
-              {loading && (
-                <>
-                  <CardSkeleton />
-                  <CardSkeleton />
-                  <CardSkeleton />
-                </>
+            {/* Results Grid */}
+            <div
+              className={cn(
+                "grid gap-4",
+                viewMode === "grid"
+                  ? "grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4"
+                  : "grid-cols-1"
+              )}
+            >
+              {/* Loading */}
+              {loading &&
+                [...Array(SKELETON_COUNT)].map((_, i) => <CardSkeleton key={i} />)}
+
+              {/* Error */}
+              {!loading && error && (
+                <ErrorState message={error} onRetry={handleRetry} />
               )}
 
-              {!loading && activeList.length === 0 && (
-                <div className="col-span-full flex flex-col items-center justify-center py-16 text-center">
-                  <div className="bg-emerald-100 p-4 rounded-full mb-3">
-                    <Icon
-                      path="M8 4a4 4 0 100 8 4 4 0 000-8zM2 8a6 6 0 1110.89 3.476l4.817 4.817a1 1 0 01-1.414 1.414l-4.816-4.816A6 6 0 012 8z"
-                      className="w-8 h-8 text-emerald-400"
-                    />
-                  </div>
-                  <h3 className="text-lg font-medium text-slate-900">
-                    No results found
-                  </h3>
-                  <p className="text-slate-500 text-sm">
-                    Try changing your search or filters.
-                  </p>
-                </div>
+              {/* Empty */}
+              {!loading && !error && activeList.length === 0 && (
+                <EmptyState service={activeService} onReset={handleReset} />
               )}
 
-              {/* Housing Cards */}
+              {/* Housing */}
               {!loading &&
+                !error &&
                 activeService === "housing" &&
-                filtered.housing.map((pg) => (
-                  <div
-                    key={pg.id}
-                    className="bg-white rounded-xl shadow-sm border border-emerald-100 overflow-hidden hover:shadow-lg hover:-translate-y-1 transition-all duration-300 flex flex-col group"
-                  >
-                    <div className="relative h-52">
-                      <ImageSlideshow
-                        images={pg.images}
-                        alt={pg.name}
-                        className="h-full w-full"
-                      />
-                      <div className="absolute top-3 right-3 bg-white/95 backdrop-blur-sm px-3 py-1.5 rounded-lg shadow-sm">
-                        <p className="text-sm font-bold text-emerald-700">
-                          ₹{pg.price}
-                          <span className="text-xs text-slate-500 font-normal">
-                            /mo
-                          </span>
-                        </p>
-                      </div>
-                      {pg.rating && (
-                        <div className="absolute top-3 left-3 bg-emerald-600/90 backdrop-blur-sm px-2 py-1 rounded-md shadow-sm flex items-center gap-1 text-white">
-                          <StarIcon />
-                          <span className="text-xs font-bold">
-                            {pg.rating}
-                          </span>
-                        </div>
-                      )}
-                    </div>
-
-                    <div className="p-5 flex flex-col flex-1">
-                      <div className="mb-3">
-                        <div className="flex justify-between items-start">
-                          <h4 className="font-bold text-lg text-slate-900 line-clamp-1 group-hover:text-emerald-600 transition-colors">
-                            {pg.name}
-                          </h4>
-                        </div>
-                        <p className="text-xs text-slate-500 uppercase tracking-wide font-semibold mt-0.5">
-                          {pg.type}
-                        </p>
-                      </div>
-
-                      <p className="text-sm text-slate-600 flex items-start gap-1.5 mb-4 line-clamp-1">
-                        <Icon
-                          path="M5.05 4.05a7 7 0 119.9 9.9L10 18.9l-4.95-4.95a7 7 0 010-9.9zM10 11a2 2 0 100-4 2 2 0 000 4z"
-                          className="w-4 h-4 text-emerald-400 mt-0.5 flex-shrink-0"
-                        />
-                        {pg.location}
-                      </p>
-
-                      <div className="mt-auto pt-4 border-t border-emerald-100 flex gap-3">
-                        <a
-                          href={`tel:${pg.contact}`}
-                          className="flex-1 bg-emerald-50 text-emerald-700 py-2.5 rounded-lg text-center text-sm font-semibold hover:bg-emerald-100 transition-colors border border-emerald-100"
-                        >
-                          Call
-                        </a>
-                        <Link
-                          to={`/services/pg/${pg.id}`}
-                          className="flex-1 bg-emerald-600 text-white py-2.5 rounded-lg text-center text-sm font-semibold hover:bg-emerald-700 transition-colors shadow-sm border border-emerald-500/20"
-                        >
-                          Details
-                        </Link>
-                      </div>
-                    </div>
-                  </div>
+                activeList.map((item) => (
+                  <HousingCard
+                    key={item.id}
+                    item={item}
+                    isFavorite={favorites.includes(item.id)}
+                    onFavorite={handleFavorite}
+                  />
                 ))}
 
-              {/* Mess Cards */}
+              {/* Mess */}
               {!loading &&
+                !error &&
                 activeService === "mess" &&
-                filtered.mess.map((mess) => {
-                  const calculatedAvg =
-                    mess.ratings && mess.ratings.length > 0
-                      ? mess.ratings.reduce(
-                          (sum, r) => sum + (r.stars || 0),
-                          0
-                        ) / mess.ratings.length
-                      : null;
-                  const avgRating = mess.averageRating ?? calculatedAvg;
+                activeList.map((item) => (
+                  <MessCard key={item._id} item={item} onClick={handleMessClick} />
+                ))}
 
-                  return (
-                    <div
-                      key={mess._id}
-                      className="bg-white rounded-xl shadow-sm border border-emerald-100 p-6 hover:shadow-lg hover:border-emerald-200 transition-all duration-300 flex flex-col relative"
-                    >
-                      <div className="absolute top-0 right-0 p-4">
-                        <span
-                          className={`text-[10px] font-bold uppercase tracking-wider px-2 py-1 rounded-md ${
-                            mess.type === "Veg"
-                              ? "bg-emerald-100 text-emerald-700"
-                              : "bg-red-50 text-red-700"
-                          }`}
-                        >
-                          {mess.type || "Mess"}
-                        </span>
-                      </div>
-
-                      <div className="mb-4 pr-8">
-                        <h4 className="font-bold text-lg text-slate-900 line-clamp-1">
-                          {mess.title || mess.name}
-                        </h4>
-                        <p className="text-sm text-slate-500 flex items-center gap-1 mt-1">
-                          <Icon
-                            path="M5.05 4.05a7 7 0 119.9 9.9L10 18.9l-4.95-4.95a7 7 0 010-9.9zM10 11a2 2 0 100-4 2 2 0 000 4z"
-                            className="w-3.5 h-3.5 text-emerald-400"
-                          />
-                          {mess.location}
-                        </p>
-                      </div>
-
-                      <div className="flex items-center gap-2 mb-4">
-                        <div className="flex bg-emerald-50 px-2 py-1 rounded-md">
-                          <StarIcon />
-                          {avgRating ? (
-                            <span className="text-xs font-bold text-emerald-700 ml-1">
-                              {avgRating.toFixed(1)}
-                            </span>
-                          ) : (
-                            <span className="text-xs text-slate-400 ml-1">
-                              New
-                            </span>
-                          )}
-                        </div>
-                        <span className="text-slate-300">|</span>
-                        <p className="text-lg font-bold text-slate-900">
-                          ₹{mess.price}
-                          <span className="text-xs font-normal text-slate-500">
-                            /mo
-                          </span>
-                        </p>
-                      </div>
-
-                      <button
-                        onClick={() => navigate(`/mess/${mess._id}`)}
-                        className="mt-auto w-full bg-white border-2 border-emerald-100 text-emerald-600 py-2.5 rounded-lg font-semibold hover:bg-emerald-600 hover:text-white hover:border-emerald-600 transition-all duration-200"
-                      >
-                        View Menu & Details
-                      </button>
-                    </div>
-                  );
-                })}
-
-              {/* Laundry Cards */}
+              {/* Laundry */}
               {!loading &&
+                !error &&
                 activeService === "laundry" &&
-                filtered.laundry.map((laundry) => (
-                  <div
-                    key={laundry.id}
-                    className="bg-white rounded-xl shadow-sm border border-emerald-100 p-6 hover:shadow-lg transition-all duration-300 flex flex-col"
-                  >
-                    <div className="flex justify-between items-start mb-2">
-                      <h4 className="font-bold text-lg text-slate-900">
-                        {laundry.name}
-                      </h4>
-                      <div className="flex items-center gap-1 bg-emerald-50 px-2 py-1 rounded text-sm font-semibold text-emerald-700">
-                        <StarIcon /> {laundry.rating}
-                      </div>
-                    </div>
-
-                    <p className="text-sm text-slate-500 mb-4 flex items-center gap-1">
-                      <Icon
-                        path="M5.05 4.05a7 7 0 119.9 9.9L10 18.9l-4.95-4.95a7 7 0 010-9.9zM10 11a2 2 0 100-4 2 2 0 000 4z"
-                        className="w-3.5 h-3.5 text-emerald-400"
-                      />
-                      {laundry.location}
-                    </p>
-
-                    <div className="flex flex-wrap gap-2 mb-5">
-                      {laundry.services.map((service, i) => (
-                        <span
-                          key={i}
-                          className="text-xs bg-emerald-50 text-emerald-700 border border-emerald-100 px-2.5 py-1 rounded-full font-medium"
-                        >
-                          {service}
-                        </span>
-                      ))}
-                    </div>
-
-                    <div className="mt-auto flex items-center justify-between border-t border-emerald-100 pt-4">
-                      <p className="text-lg font-bold text-slate-900">
-                        {laundry.price}
-                      </p>
-                      <button className="text-emerald-600 text-sm font-bold hover:underline">
-                        Contact
-                      </button>
-                    </div>
-                  </div>
+                activeList.map((item) => (
+                  <LaundryCard key={item.id} item={item} />
                 ))}
             </div>
           </div>
 
-          <Footer />
+          {/* Footer */}
+          <Suspense fallback={<div className="h-48 bg-gray-900" />}>
+            <Footer />
+          </Suspense>
         </main>
       </div>
     </div>
   );
 };
 
-export default StudentDashboard;
+export default memo(StudentDashboard);
