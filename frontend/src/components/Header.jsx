@@ -1,82 +1,335 @@
-import React, { useState, useEffect, useCallback, useMemo } from "react";
-import { useNavigate, Link } from "react-router-dom";
+import React, { useState, useEffect, useCallback, useMemo, useRef } from "react";
+import { useNavigate, Link, useLocation } from "react-router-dom";
 import { fetchNotifications, markAllNotificationsRead } from "../services/notificationService";
-import { requestFCMToken, deregisterTokenWithBackend } from "../services/fcm";
-import axios from "axios";
-import { Bell, ChevronRight, ChevronDown } from "lucide-react";
+import { deregisterTokenWithBackend } from "../services/fcm";
+import { 
+  Bell, 
+  ChevronRight, 
+  ChevronDown, 
+  Menu, 
+  User, 
+  LogOut, 
+  X,
+  Loader2,
+  WifiOff,
+  Settings
+} from "lucide-react";
 
-const NotificationItem = React.memo(({ notification, index }) => (
-  <Link
-    to={`/chat/${notification.chatUserId}`}
-    className="block border-b border-gray-100 py-3 px-3 hover:bg-gray-50 rounded-lg transition-all duration-200 last:border-b-0 group"
-  >
-    <div className="flex items-start gap-3">
-      <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-emerald-500 to-mint-600 flex items-center justify-center flex-shrink-0 shadow-sm">
-        <span className="text-white font-bold text-sm">
-          {notification.senderName?.[0]?.toUpperCase() || "U"}
-        </span>
-      </div>
-      <div className="flex-1 min-w-0">
-        <p className="text-sm font-semibold text-gray-900 truncate group-hover:text-emerald-600">
-          {notification.senderName || "System"}
-        </p>
-        <p className="text-xs text-gray-600 line-clamp-2 mt-1">
-          {notification.body}
-        </p>
-      </div>
-      {!notification.isRead && (
-        <div className="w-2 h-2 bg-emerald-500 rounded-full flex-shrink-0 mt-1 animate-pulse" />
-      )}
-    </div>
-  </Link>
-));
+// ============ Custom Hooks ============
 
-NotificationItem.displayName = 'NotificationItem';
-
-const Header = ({ onToggleSidebar }) => {
-  const navigate = useNavigate();
-  const [showDropdown, setShowDropdown] = useState(false);
-  const [showNotif, setShowNotif] = useState(false);
-  const [notifications, setNotifications] = useState([]);
-  const [notifCount, setNotifCount] = useState(0);
-  const [loading, setLoading] = useState(false);
-
-  const token = localStorage.getItem("token");
-  const username = token ? localStorage.getItem("username") : null;
-  const role = token ? localStorage.getItem("role") : null;
-
-  const unreadCount = useMemo(() =>
-    notifications.filter(n => !n.isRead).length,
-    [notifications]
-  );
+const useClickOutside = (handler, active = true) => {
+  const ref = useRef(null);
 
   useEffect(() => {
-    let mounted = true;
-    let interval;
+    if (!active) return;
 
-    const loadNotifications = async () => {
-      try {
-        const list = await fetchNotifications();
-        if (mounted) {
-          setNotifications(list || []);
-          setNotifCount(list.filter(n => !n.isRead).length);
-        }
-      } catch (error) {
-        console.error('Failed to fetch notifications:', error);
+    const handleClickOutside = (event) => {
+      if (ref.current && !ref.current.contains(event.target)) {
+        handler();
       }
     };
 
-    loadNotifications();
+    const handleEscape = (event) => {
+      if (event.key === "Escape") handler();
+    };
+
+    document.addEventListener("mousedown", handleClickOutside);
+    document.addEventListener("touchstart", handleClickOutside);
+    document.addEventListener("keydown", handleEscape);
+
+    return () => {
+      document.removeEventListener("mousedown", handleClickOutside);
+      document.removeEventListener("touchstart", handleClickOutside);
+      document.removeEventListener("keydown", handleEscape);
+    };
+  }, [handler, active]);
+
+  return ref;
+};
+
+const useOnlineStatus = () => {
+  const [isOnline, setIsOnline] = useState(navigator.onLine);
+
+  useEffect(() => {
+    const handleOnline = () => setIsOnline(true);
+    const handleOffline = () => setIsOnline(false);
+
+    window.addEventListener("online", handleOnline);
+    window.addEventListener("offline", handleOffline);
+
+    return () => {
+      window.removeEventListener("online", handleOnline);
+      window.removeEventListener("offline", handleOffline);
+    };
+  }, []);
+
+  return isOnline;
+};
+
+const useAuth = () => {
+  const token = localStorage.getItem("token");
+  
+  return useMemo(() => ({
+    isAuthenticated: !!token,
+    token,
+    username: token ? localStorage.getItem("username") : null,
+    role: token ? localStorage.getItem("role") : null,
+    userId: token ? localStorage.getItem("userId") : null,
+  }), [token]);
+};
+
+// ============ Sub Components ============
+
+const Avatar = React.memo(({ name, size = "md", showStatus = false, className = "" }) => {
+  const sizeClasses = {
+    sm: "w-8 h-8 text-sm",
+    md: "w-10 h-10 text-base",
+    lg: "w-12 h-12 text-lg",
+  };
+
+  const initial = name?.[0]?.toUpperCase() || "U";
+
+  return (
+    <div className={`relative ${className}`}>
+      <div
+        className={`${sizeClasses[size]} rounded-xl bg-gradient-to-br from-emerald-500 to-teal-600 
+          flex items-center justify-center shadow-lg`}
+      >
+        <span className="text-white font-bold">{initial}</span>
+      </div>
+      {showStatus && (
+        <span className="absolute bottom-0 right-0 w-3 h-3 bg-emerald-400 rounded-full border-2 border-white" />
+      )}
+    </div>
+  );
+});
+
+Avatar.displayName = "Avatar";
+
+const NotificationItem = React.memo(({ notification, onClick }) => {
+  const timeAgo = useMemo(() => {
+    if (!notification.createdAt) return "";
+    const seconds = Math.floor((Date.now() - new Date(notification.createdAt)) / 1000);
+    
+    if (seconds < 60) return "Just now";
+    if (seconds < 3600) return `${Math.floor(seconds / 60)}m ago`;
+    if (seconds < 86400) return `${Math.floor(seconds / 3600)}h ago`;
+    if (seconds < 604800) return `${Math.floor(seconds / 86400)}d ago`;
+    return new Date(notification.createdAt).toLocaleDateString();
+  }, [notification.createdAt]);
+
+  return (
+    <Link
+      to={notification.chatUserId ? `/chat/${notification.chatUserId}` : "#"}
+      onClick={onClick}
+      className={`block py-3 px-3 rounded-lg transition-all duration-200 group
+        ${notification.isRead 
+          ? "hover:bg-gray-50" 
+          : "bg-emerald-50/50 hover:bg-emerald-50"
+        }`}
+    >
+      <div className="flex items-start gap-3">
+        <Avatar name={notification.senderName} size="sm" />
+        
+        <div className="flex-1 min-w-0">
+          <div className="flex items-center justify-between gap-2">
+            <p className="text-sm font-semibold text-gray-900 truncate group-hover:text-emerald-600">
+              {notification.senderName || "System"}
+            </p>
+            {!notification.isRead && (
+              <span className="w-2 h-2 bg-emerald-500 rounded-full flex-shrink-0 animate-pulse" />
+            )}
+          </div>
+          <p className="text-xs text-gray-600 line-clamp-2 mt-0.5">
+            {notification.body}
+          </p>
+          {timeAgo && (
+            <p className="text-[10px] text-gray-400 mt-1">{timeAgo}</p>
+          )}
+        </div>
+      </div>
+    </Link>
+  );
+});
+
+NotificationItem.displayName = "NotificationItem";
+
+const NotificationSkeleton = () => (
+  <div className="flex items-start gap-3 p-3 animate-pulse">
+    <div className="w-10 h-10 rounded-xl bg-gray-200" />
+    <div className="flex-1 space-y-2">
+      <div className="h-4 bg-gray-200 rounded w-3/4" />
+      <div className="h-3 bg-gray-200 rounded w-full" />
+    </div>
+  </div>
+);
+
+const EmptyNotifications = () => (
+  <div className="text-center py-10 px-4">
+    <div className="w-16 h-16 bg-emerald-100 rounded-full flex items-center justify-center mx-auto mb-4">
+      <Bell className="w-8 h-8 text-emerald-300" />
+    </div>
+    <p className="text-gray-900 font-medium">No notifications yet</p>
+    <p className="text-gray-500 text-sm mt-1">We'll notify you when something arrives</p>
+  </div>
+);
+
+const DropdownMenu = React.memo(({ 
+  isOpen, 
+  onClose, 
+  children, 
+  className = "",
+  position = "right" 
+}) => {
+  const ref = useClickOutside(onClose, isOpen);
+
+  if (!isOpen) return null;
+
+  return (
+    <div
+      ref={ref}
+      className={`absolute top-full ${position === "right" ? "right-0" : "left-0"} mt-2 
+        bg-white rounded-2xl shadow-2xl border border-gray-100 
+        overflow-hidden z-50 animate-slideDown ${className}`}
+      role="menu"
+      aria-orientation="vertical"
+    >
+      {children}
+    </div>
+  );
+});
+
+DropdownMenu.displayName = "DropdownMenu";
+
+// ============ Main Header Component ============
+
+const Header = ({ onToggleSidebar }) => {
+  const navigate = useNavigate();
+  const location = useLocation();
+  const isOnline = useOnlineStatus();
+  const auth = useAuth();
+
+  // State
+  const [showDropdown, setShowDropdown] = useState(false);
+  const [showNotif, setShowNotif] = useState(false);
+  const [notifications, setNotifications] = useState([]);
+  const [loading, setLoading] = useState(false);
+  const [initialLoading, setInitialLoading] = useState(true);
+  const [isLoggingOut, setIsLoggingOut] = useState(false);
+  const [error, setError] = useState(null);
+
+  // Refs
+  const notifRef = useRef(null);
+  const dropdownRef = useRef(null);
+  const retryCountRef = useRef(0);
+
+  // Computed values
+  const unreadCount = useMemo(
+    () => notifications.filter((n) => !n.isRead).length,
+    [notifications]
+  );
+
+  const recentNotifications = useMemo(
+    () => notifications.slice(0, 5),
+    [notifications]
+  );
+
+  // Close dropdowns on route change
+  useEffect(() => {
+    setShowDropdown(false);
+    setShowNotif(false);
+  }, [location.pathname]);
+
+  // Click outside handlers
+  useEffect(() => {
+    const handleClickOutside = (event) => {
+      if (notifRef.current && !notifRef.current.contains(event.target)) {
+        setShowNotif(false);
+      }
+      if (dropdownRef.current && !dropdownRef.current.contains(event.target)) {
+        setShowDropdown(false);
+      }
+    };
+
+    const handleEscape = (event) => {
+      if (event.key === "Escape") {
+        setShowNotif(false);
+        setShowDropdown(false);
+      }
+    };
+
+    document.addEventListener("mousedown", handleClickOutside);
+    document.addEventListener("keydown", handleEscape);
+
+    return () => {
+      document.removeEventListener("mousedown", handleClickOutside);
+      document.removeEventListener("keydown", handleEscape);
+    };
+  }, []);
+
+  // Fetch notifications with retry logic
+  const loadNotifications = useCallback(async (showLoader = true) => {
+    if (!auth.isAuthenticated) return;
+
+    try {
+      if (showLoader) setInitialLoading(true);
+      setError(null);
+
+      const list = await fetchNotifications();
+      setNotifications(list || []);
+      retryCountRef.current = 0;
+    } catch (err) {
+      console.error("Failed to fetch notifications:", err);
+      setError("Failed to load notifications");
+
+      // Exponential backoff retry (max 3 retries)
+      if (retryCountRef.current < 3) {
+        const delay = Math.pow(2, retryCountRef.current) * 1000;
+        retryCountRef.current++;
+        setTimeout(() => loadNotifications(false), delay);
+      }
+    } finally {
+      setInitialLoading(false);
+    }
+  }, [auth.isAuthenticated]);
+
+  // Load notifications on mount and set up polling
+  useEffect(() => {
+    if (!auth.isAuthenticated) return;
+
+    let mounted = true;
+    let interval;
+
+    const load = async () => {
+      if (mounted) await loadNotifications();
+    };
+
+    load();
+
+    // Poll every 30 seconds
     interval = setInterval(() => {
-      if (mounted) loadNotifications();
+      if (mounted && document.visibilityState === "visible") {
+        loadNotifications(false);
+      }
     }, 30000);
+
+    // Refresh on visibility change
+    const handleVisibilityChange = () => {
+      if (document.visibilityState === "visible" && mounted) {
+        loadNotifications(false);
+      }
+    };
+
+    document.addEventListener("visibilitychange", handleVisibilityChange);
 
     return () => {
       mounted = false;
       clearInterval(interval);
+      document.removeEventListener("visibilitychange", handleVisibilityChange);
     };
-  }, []);
+  }, [auth.isAuthenticated, loadNotifications]);
 
+  // Toggle notifications dropdown
   const toggleNotifications = useCallback(async () => {
     if (showNotif) {
       setShowNotif(false);
@@ -84,214 +337,434 @@ const Header = ({ onToggleSidebar }) => {
     }
 
     setShowNotif(true);
+    setShowDropdown(false);
+
     if (unreadCount > 0) {
       setLoading(true);
       try {
         await markAllNotificationsRead();
-        setNotifications(prev => prev.map(n => ({ ...n, isRead: true })));
-        setNotifCount(0);
-      } catch (error) {
-        console.error('Failed to mark notifications as read:', error);
+        setNotifications((prev) =>
+          prev.map((n) => ({ ...n, isRead: true }))
+        );
+      } catch (err) {
+        console.error("Failed to mark notifications as read:", err);
       } finally {
         setLoading(false);
       }
     }
   }, [showNotif, unreadCount]);
 
+  // Toggle user dropdown
+  const toggleDropdown = useCallback(() => {
+    setShowDropdown((prev) => !prev);
+    setShowNotif(false);
+  }, []);
+
+  // Handle logout
   const handleLogout = useCallback(async () => {
+    if (isLoggingOut) return;
+
+    setIsLoggingOut(true);
+
     try {
-      //  Try to deregister FCM token from backend
       await deregisterTokenWithBackend();
     } catch (err) {
-      console.error("Error during FCM deregistration:", err);
+      console.error("FCM deregistration error:", err);
     } finally {
-      //  Clear all local data
-      localStorage.removeItem("token");
-      localStorage.removeItem("role");
-      localStorage.removeItem("username");
-      localStorage.removeItem("userId");
-      localStorage.removeItem("fcmToken");
+      // Clear all auth data
+      ["token", "role", "username", "userId", "fcmToken"].forEach((key) => {
+        localStorage.removeItem(key);
+      });
 
-      //  Redirect to login
+      setIsLoggingOut(false);
       navigate("/login", { replace: true });
     }
-  }, [navigate]);
+  }, [navigate, isLoggingOut]);
 
+  // Handle profile navigation
   const handleProfile = useCallback(() => {
     setShowDropdown(false);
-    navigate("/tenant/profile");
+    const profilePath = auth.role === "landlord" ? "/landlord/profile" : "/tenant/profile";
+    navigate(profilePath);
+  }, [navigate, auth.role]);
+
+  // Handle settings navigation
+  const handleSettings = useCallback(() => {
+    setShowDropdown(false);
+    navigate("/settings");
   }, [navigate]);
 
-  const recentNotifications = useMemo(() =>
-    notifications.slice(0, 5),
-    [notifications]
-  );
-
   return (
-    <header className="w-full bg-gradient-to-r from-emerald-50/90 via-emerald-50/90 to-mint-50/90 shadow-2xl 
-      px-4 sm:px-6 py-2 sm:py-2.5 flex items-center justify-between sticky top-0 z-50 backdrop-blur-sm border-b border-emerald-100">
-
-      <div className="flex items-center gap-3 sm:gap-4">
-        {onToggleSidebar && (
-          <button
-            onClick={onToggleSidebar}
-            className="inline-flex items-center justify-center p-2 rounded-lg bg-emerald-500/10 border border-emerald-400/20 hover:bg-emerald-500/20 transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-emerald-300/60 cursor-pointer hover:scale-105"
-            aria-label="Toggle sidebar"
-          >
-            <svg className="w-5 h-5 text-emerald-700" viewBox="0 0 24 24" fill="none" stroke="currentColor">
-              <path d="M4 6h16M4 12h16M4 18h16" strokeWidth="2" strokeLinecap="round" />
-            </svg>
-          </button>
-        )}
-
-        <Link
-          to="/"
-          className="flex items-center gap-3 p-2 hover:bg-emerald-100/50 rounded-xl transition-all duration-200 group"
-        >
-          <div className="bg-emerald-100/80 backdrop-blur-sm p-2 rounded-xl border border-emerald-200/50 group-hover:shadow-md transition-all">
-            <div className="w-8 h-8 bg-gradient-to-br from-emerald-500 to-mint-500 rounded-lg flex items-center justify-center shadow-lg">
-              <span className="text-white font-bold text-xl">Z</span>
-            </div>
-          </div>
-
-          <div className=" xs:block">
-            <h1 className="text-2xl sm:text-3xl font-bold text-slate-900 tracking-tight cursor-pointer hover:scale-105 transition-transform duration-200 group-hover:text-emerald-700">
-              Zip Nivasa
-            </h1>
-            <span className="block text-[10px] sm:text-xs font-normal text-emerald-600 tracking-wider mt-0.5">
-              Find. Connect. Live Better.
-            </span>
-          </div>
-        </Link>
-      </div>
-      <div className="flex items-center gap-3 sm:gap-4">
-        {token && (
-          <div className="relative">
+    <>
+      <header
+        className="w-full bg-gradient-to-r from-emerald-50/95 via-white/95 to-emerald-50/95 
+          backdrop-blur-md shadow-lg border-b border-emerald-100/50
+          px-4 sm:px-6 py-2.5 
+          flex items-center justify-between 
+          sticky top-0 z-50"
+        role="banner"
+      >
+        {/* Left Section - Logo & Toggle */}
+        <div className="flex items-center gap-3 sm:gap-4">
+          {onToggleSidebar && (
             <button
-              onClick={toggleNotifications}
-              disabled={loading}
-              className="relative p-2 rounded-full hover:bg-emerald-100/50 transition-all duration-200 hover:scale-105 flex items-center justify-center focus:outline-none focus:ring-2 focus:ring-emerald-200/40 border border-emerald-200/30"
-              aria-label="Notifications"
+              onClick={onToggleSidebar}
+              className="inline-flex items-center justify-center p-2.5 rounded-xl 
+                bg-emerald-100/80 border border-emerald-200/50 
+                hover:bg-emerald-200/80 hover:scale-105
+                transition-all duration-200 
+                focus:outline-none focus:ring-2 focus:ring-emerald-400/50"
+              aria-label="Toggle sidebar"
             >
-              <svg className="w-6 h-6 text-slate-800" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M15 17h5l-1.4-1.4c-.4-.8-.6-1.7-.6-2.6V9a6 6 0 10-12 0v4c0 .9-.2 1.8-.6 2.6L4 17h5m6 0a3 3 0 11-6 0" />
-              </svg>
-              {unreadCount > 0 && (
-                <span className="absolute -top-1 -right-1 bg-emerald-500 text-white text-xs min-w-[20px] h-[20px] rounded-full flex items-center justify-center font-bold shadow-lg animate-pulse border-2 border-white">
-                  {unreadCount > 99 ? '99+' : unreadCount}
-                </span>
-              )}
+              <Menu className="w-5 h-5 text-emerald-700" />
             </button>
+          )}
 
-            {showNotif && (
-              <div className="absolute right-0 mt-3 bg-white shadow-xl rounded-xl w-80 p-4 z-50 border border-emerald-100 max-h-96 overflow-hidden animate-fadeIn">
-                <div className="flex items-center justify-between mb-4 pb-2 border-b border-emerald-100">
-                  <h3 className="font-bold text-lg text-slate-900">Notifications</h3>
-                  <button
-                    onClick={() => navigate("/notifications")}
-                    className="text-emerald-600 hover:text-emerald-700 font-semibold text-sm flex items-center gap-1 hover:underline transition-all"
+          {/* Logo */}
+          <Link
+            to="/"
+            className="flex items-center gap-3 p-1.5 hover:bg-emerald-100/50 rounded-xl transition-all duration-200 group"
+            aria-label="Go to homepage"
+          >
+            <div className="relative bg-emerald-100/80 p-2 rounded-xl border border-emerald-200/50 group-hover:shadow-md transition-all">
+              <div className="w-8 h-8 sm:w-9 sm:h-9 bg-gradient-to-br from-emerald-500 to-teal-600 rounded-lg flex items-center justify-center shadow-lg">
+                <span className="text-white font-bold text-lg sm:text-xl">Z</span>
+              </div>
+              
+              {/* Online/Offline indicator */}
+              <span
+                className={`absolute -bottom-0.5 -right-0.5 w-3 h-3 rounded-full border-2 border-white
+                  ${isOnline ? "bg-emerald-400" : "bg-gray-400"}`}
+                title={isOnline ? "Online" : "Offline"}
+              />
+            </div>
+
+            <div className="hidden xs:block">
+              <h1 className="text-xl sm:text-2xl font-bold text-gray-900 tracking-tight group-hover:text-emerald-700 transition-colors">
+                Zip Nivasa
+              </h1>
+              <span className="block text-[10px] sm:text-xs font-medium text-emerald-600 tracking-wide">
+                Find. Connect. Live Better.
+              </span>
+            </div>
+          </Link>
+        </div>
+
+        {/* Right Section */}
+        <div className="flex items-center gap-2 sm:gap-3">
+          {/* Offline Indicator */}
+          {!isOnline && (
+            <div className="hidden sm:flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-amber-100 text-amber-700">
+              <WifiOff className="w-3.5 h-3.5" />
+              <span className="text-xs font-medium">Offline</span>
+            </div>
+          )}
+
+          {auth.isAuthenticated ? (
+            <>
+              {/* Notifications */}
+              <div ref={notifRef} className="relative">
+                <button
+                  onClick={toggleNotifications}
+                  disabled={loading}
+                  className="relative p-2.5 rounded-xl 
+                    hover:bg-emerald-100/80 
+                    transition-all duration-200 hover:scale-105 
+                    focus:outline-none focus:ring-2 focus:ring-emerald-400/50
+                    border border-emerald-200/30
+                    disabled:opacity-50 disabled:cursor-not-allowed"
+                  aria-label={`Notifications${unreadCount > 0 ? ` (${unreadCount} unread)` : ""}`}
+                  aria-expanded={showNotif}
+                  aria-haspopup="true"
+                >
+                  {loading ? (
+                    <Loader2 className="w-5 h-5 sm:w-6 sm:h-6 text-emerald-600 animate-spin" />
+                  ) : (
+                    <Bell className="w-5 h-5 sm:w-6 sm:h-6 text-gray-700" />
+                  )}
+                  
+                  {unreadCount > 0 && (
+                    <span className="absolute -top-1 -right-1 min-w-[20px] h-5 px-1.5
+                      bg-red-500 text-white text-xs font-bold rounded-full
+                      flex items-center justify-center
+                      shadow-lg border-2 border-white
+                      animate-pulse">
+                      {unreadCount > 99 ? "99+" : unreadCount}
+                    </span>
+                  )}
+                </button>
+
+                {/* Notifications Dropdown */}
+                {showNotif && (
+                  <div
+                    className="absolute right-0 mt-2 w-80 sm:w-96 
+                      bg-white rounded-2xl shadow-2xl 
+                      border border-gray-100 
+                      overflow-hidden z-50 
+                      animate-slideDown"
+                    role="menu"
                   >
-                    View all
-                    <ChevronRight className="w-4 h-4" />
-                  </button>
-                </div>
-                {recentNotifications.length === 0 ? (
-                  <div className="text-center py-8">
-                    <Bell className="w-12 h-12 text-emerald-200 mx-auto mb-3" />
-                    <p className="text-slate-500 text-sm font-medium">No notifications yet</p>
-                  </div>
-                ) : (
-                  <div className="space-y-1 max-h-72 overflow-y-auto">
-                    {recentNotifications.map((n, i) => (
-                      <NotificationItem key={n._id || i} notification={n} index={i} />
-                    ))}
+                    {/* Header */}
+                    <div className="flex items-center justify-between p-4 border-b border-gray-100 bg-gradient-to-r from-emerald-50/50 to-white">
+                      <h3 className="font-bold text-lg text-gray-900">Notifications</h3>
+                      <button
+                        onClick={() => {
+                          setShowNotif(false);
+                          navigate("/notifications");
+                        }}
+                        className="text-emerald-600 hover:text-emerald-700 font-semibold text-sm 
+                          flex items-center gap-1 hover:underline transition-all"
+                      >
+                        View all
+                        <ChevronRight className="w-4 h-4" />
+                      </button>
+                    </div>
+
+                    {/* Content */}
+                    <div className="max-h-[400px] overflow-y-auto overscroll-contain">
+                      {initialLoading ? (
+                        <div className="p-2 space-y-1">
+                          {[...Array(3)].map((_, i) => (
+                            <NotificationSkeleton key={i} />
+                          ))}
+                        </div>
+                      ) : error ? (
+                        <div className="text-center py-8 px-4">
+                          <p className="text-red-500 text-sm">{error}</p>
+                          <button
+                            onClick={() => loadNotifications()}
+                            className="mt-2 text-emerald-600 text-sm font-medium hover:underline"
+                          >
+                            Try again
+                          </button>
+                        </div>
+                      ) : recentNotifications.length === 0 ? (
+                        <EmptyNotifications />
+                      ) : (
+                        <div className="p-2 space-y-1">
+                          {recentNotifications.map((n) => (
+                            <NotificationItem
+                              key={n._id || n.id}
+                              notification={n}
+                              onClick={() => setShowNotif(false)}
+                            />
+                          ))}
+                        </div>
+                      )}
+                    </div>
+
+                    {/* Footer */}
+                    {recentNotifications.length > 0 && (
+                      <div className="p-2 border-t border-gray-100 bg-gray-50/50">
+                        <button
+                          onClick={() => {
+                            setShowNotif(false);
+                            navigate("/notifications");
+                          }}
+                          className="w-full py-2.5 text-center text-sm font-medium
+                            text-emerald-600 hover:text-emerald-700
+                            hover:bg-emerald-50 rounded-xl transition-colors"
+                        >
+                          See all notifications
+                        </button>
+                      </div>
+                    )}
                   </div>
                 )}
               </div>
-            )}
-          </div>
-        )}
-        {!token ? (
-          <div className="flex items-center gap-4">
-            <Link
-              to="/login"
-              className="group relative px-6 py-3 bg-white/95 backdrop-blur-sm text-slate-800 rounded-2xl text-sm font-semibold border border-slate-200 shadow-lg hover:shadow-xl hover:bg-white hover:border-emerald-100 hover:-translate-y-0.5 transition-all duration-300 overflow-hidden"
-            >
-              <span className="relative z-10 flex items-center gap-2">
-                Sign In
-              </span>
-              <div className="absolute inset-0 bg-gradient-to-r from-emerald-50/50 to-mint-50/50 -translate-x-full group-hover:translate-x-full transition-transform duration-700" />
-            </Link>
-          </div>
-        ) : (
-          <div
-            className="relative bg-emerald-100/80 backdrop-blur-md border border-emerald-200/50 rounded-2xl px-4 sm:px-5 py-2.5 hover:bg-emerald-200/60 transition-all duration-300 cursor-pointer shadow-lg group"
-            onClick={() => setShowDropdown(!showDropdown)}
-          >
-            <div className="flex items-center gap-3">
-              <div className="relative">
-                <svg
-                  className="w-8 h-8 sm:w-10 sm:h-10 text-slate-800 drop-shadow-lg group-hover:scale-110 transition-transform"
-                  fill="currentColor"
-                  viewBox="0 0 24 24"
+
+              {/* User Menu */}
+              <div ref={dropdownRef} className="relative">
+                <button
+                  onClick={toggleDropdown}
+                  className="flex items-center gap-2 sm:gap-3 p-2 sm:px-4 sm:py-2.5
+                    bg-emerald-100/80 backdrop-blur-md 
+                    border border-emerald-200/50 rounded-2xl 
+                    hover:bg-emerald-200/60 
+                    transition-all duration-200 
+                    shadow-md hover:shadow-lg
+                    focus:outline-none focus:ring-2 focus:ring-emerald-400/50"
+                  aria-label="User menu"
+                  aria-expanded={showDropdown}
+                  aria-haspopup="true"
                 >
-                  <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm0 3c1.66 0 3 1.34 3 3s-1.34 3-3 3-3-1.34-3-3 1.34-3 3-3zm0 14.2c-2.5 0-4.71-1.28-6-3.22.03-1.99 4-3.08 6-3.08 1.99 0 5.97 1.09 6 3.08-1.29 1.94-3.5 3.22-6 3.22z" />
-                </svg>
-                <div className="absolute bottom-0 right-0 w-3 h-3 bg-emerald-400 rounded-full border-2 border-white"></div>
-              </div>
+                  <Avatar name={auth.username} size="sm" showStatus />
 
-              <div className="text-left hidden sm:block">
-                <p className="text-sm font-bold text-emerald-700 capitalize flex items-center gap-2">
-                  {username}
-                  <ChevronDown className={`w-3 h-3 text-emerald-400 transition-transform duration-200 ${showDropdown ? "rotate-180" : ""}`} />
-                </p>
-                <p className="text-xs font-medium text-emerald-500 capitalize">{role}</p>
+                  <div className="text-left hidden sm:block">
+                    <p className="text-sm font-bold text-emerald-700 capitalize flex items-center gap-1.5">
+                      {auth.username}
+                      <ChevronDown
+                        className={`w-3.5 h-3.5 text-emerald-500 transition-transform duration-200 
+                          ${showDropdown ? "rotate-180" : ""}`}
+                      />
+                    </p>
+                    <p className="text-xs font-medium text-emerald-500 capitalize">
+                      {auth.role}
+                    </p>
+                  </div>
+                </button>
+
+                {/* User Dropdown */}
+                {showDropdown && (
+                  <div
+                    className="absolute right-0 mt-2 w-60
+                      bg-white rounded-2xl shadow-2xl 
+                      border border-gray-100 
+                      overflow-hidden z-50 
+                      animate-slideDown"
+                    role="menu"
+                  >
+                    {/* User Info Header */}
+                    <div className="p-4 bg-gradient-to-r from-emerald-50 to-teal-50 border-b border-gray-100">
+                      <div className="flex items-center gap-3">
+                        <Avatar name={auth.username} size="md" showStatus />
+                        <div className="flex-1 min-w-0">
+                          <p className="font-bold text-gray-900 capitalize truncate">
+                            {auth.username}
+                          </p>
+                          <p className="text-sm text-emerald-600 capitalize">
+                            {auth.role}
+                          </p>
+                        </div>
+                      </div>
+                    </div>
+
+                    {/* Menu Items */}
+                    <div className="p-2">
+                      <button
+                        onClick={handleProfile}
+                        className="w-full flex items-center gap-3 px-4 py-3 rounded-xl
+                          text-gray-700 hover:bg-emerald-50 
+                          transition-all duration-200 group"
+                        role="menuitem"
+                      >
+                        <User className="w-4 h-4 text-emerald-600 group-hover:scale-110 transition-transform" />
+                        <span className="text-sm font-medium">Profile</span>
+                      </button>
+
+                      <button
+                        onClick={handleSettings}
+                        className="w-full flex items-center gap-3 px-4 py-3 rounded-xl
+                          text-gray-700 hover:bg-emerald-50 
+                          transition-all duration-200 group"
+                        role="menuitem"
+                      >
+                        <Settings className="w-4 h-4 text-emerald-600 group-hover:scale-110 transition-transform" />
+                        <span className="text-sm font-medium">Settings</span>
+                      </button>
+                    </div>
+
+                    {/* Divider */}
+                    <div className="border-t border-gray-100 mx-2" />
+
+                    {/* Logout */}
+                    <div className="p-2">
+                      <button
+                        onClick={handleLogout}
+                        disabled={isLoggingOut}
+                        className="w-full flex items-center gap-3 px-4 py-3 rounded-xl
+                          text-red-600 hover:bg-red-50 
+                          transition-all duration-200 group
+                          disabled:opacity-50 disabled:cursor-not-allowed"
+                        role="menuitem"
+                      >
+                        {isLoggingOut ? (
+                          <Loader2 className="w-4 h-4 animate-spin" />
+                        ) : (
+                          <LogOut className="w-4 h-4 group-hover:scale-110 transition-transform" />
+                        )}
+                        <span className="text-sm font-medium">
+                          {isLoggingOut ? "Signing out..." : "Sign Out"}
+                        </span>
+                      </button>
+                    </div>
+                  </div>
+                )}
               </div>
+            </>
+          ) : (
+            // Auth Buttons for unauthenticated users
+            <div className="flex items-center gap-2 sm:gap-3">
+              <Link
+                to="/login"
+                className="px-4 sm:px-6 py-2.5
+                  text-gray-700 font-semibold text-sm
+                  bg-white/90 backdrop-blur-sm
+                  border border-gray-200 rounded-xl
+                  shadow-sm hover:shadow-md
+                  hover:border-emerald-200 hover:bg-white
+                  transition-all duration-200"
+              >
+                Sign In
+              </Link>
+
+              <Link
+                to="/register"
+                className="px-4 sm:px-6 py-2.5
+                  text-white font-semibold text-sm
+                  bg-gradient-to-r from-emerald-500 to-teal-600
+                  rounded-xl shadow-lg shadow-emerald-500/25
+                  hover:shadow-xl hover:shadow-emerald-500/30 
+                  hover:-translate-y-0.5
+                  transition-all duration-200"
+              >
+                Get Started
+              </Link>
             </div>
+          )}
+        </div>
+      </header>
 
-            {showDropdown && (
-              <div className="absolute top-full right-0 mt-3 w-56 bg-white rounded-xl shadow-2xl border border-emerald-100 overflow-hidden animate-fadeIn z-50">
-                <div className="p-4 bg-gradient-to-r from-emerald-50 to-mint-50 border-b border-emerald-100">
-                  <p className="text-sm font-bold text-slate-900 capitalize">{username}</p>
-                  <p className="text-xs text-slate-600 capitalize">{role}</p>
-                </div>
-                <div className="p-2">
-                  <button
-                    onClick={handleProfile}
-                    className="w-full text-left px-4 py-2.5 text-sm text-slate-700 hover:bg-emerald-50 rounded-lg transition-all flex items-center gap-3 hover:pl-5"
-                  >
-                    <svg className="w-4 h-4 text-emerald-600 flex-shrink-0" fill="currentColor" viewBox="0 0 24 24">
-                      <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm0 3c1.66 0 3 1.34 3 3s-1.34 3-3 3-3-1.34-3-3 1.34-3 3-3zm0 14.2c-2.5 0-4.71-1.28-6-3.22.03-1.99 4-3.08 6-3.08 1.99 0 5.97 1.09 6 3.08-1.29 1.94-3.5 3.22-6 3.22z" />
-                    </svg>
-                    Profile
-                  </button>
-
-                  <button
-                    onClick={handleLogout}
-                    className="w-full text-left px-4 py-2.5 text-sm text-red-600 hover:bg-red-50 rounded-lg transition-all flex items-center gap-3 hover:pl-5 font-medium"
-                  >
-                    <svg className="w-4 h-4 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20">
-                      <path fillRule="evenodd" d="M3 3a1 1 0 00-1 1v12a1 1 0 102 0V4a1 1 0 00-1-1zm10.293 9.293a1 1 0 001.414 1.414l3-3a1 1 0 000-1.414l-3-3a1 1 0 10-1.414 1.414L14.586 9H7a1 1 0 100 2h7.586l-1.293 1.293z" clipRule="evenodd" />
-                    </svg>
-                    Sign Out
-                  </button>
-                </div>
-              </div>
-            )}
-          </div>
-        )}
-      </div>
-
-      <style jsx>{`
-        @keyframes fadeIn {
-          from { opacity: 0; transform: translateY(-10px); }
-          to { opacity: 1; transform: translateY(0); }
+      {/* Global Styles */}
+      <style>{`
+        @keyframes slideDown {
+          from {
+            opacity: 0;
+            transform: translateY(-10px) scale(0.95);
+          }
+          to {
+            opacity: 1;
+            transform: translateY(0) scale(1);
+          }
         }
-        .animate-fadeIn {
-          animation: fadeIn 0.2s ease-out;
+
+        .animate-slideDown {
+          animation: slideDown 0.2s ease-out;
+        }
+
+        .line-clamp-2 {
+          display: -webkit-box;
+          -webkit-line-clamp: 2;
+          -webkit-box-orient: vertical;
+          overflow: hidden;
+        }
+
+        /* Custom scrollbar for notifications */
+        .overflow-y-auto::-webkit-scrollbar {
+          width: 6px;
+        }
+
+        .overflow-y-auto::-webkit-scrollbar-track {
+          background: transparent;
+        }
+
+        .overflow-y-auto::-webkit-scrollbar-thumb {
+          background: #d1d5db;
+          border-radius: 3px;
+        }
+
+        .overflow-y-auto::-webkit-scrollbar-thumb:hover {
+          background: #9ca3af;
+        }
+
+        /* Responsive breakpoint for xs */
+        @media (min-width: 475px) {
+          .xs\\:block {
+            display: block;
+          }
         }
       `}</style>
-    </header>
+    </>
   );
 };
 
