@@ -7,7 +7,7 @@ import { FaRupeeSign } from "react-icons/fa";
 import LocationAutosuggest from "../../components/LocationAutosuggest";
 import PinDropMap from "../../components/maps/PinDropMap";
 
-const API = "http://localhost:5000" || import.meta.env.VITE_API_URL;
+const API = import.meta.env.VITE_API_URL  || "http://localhost:5000";
 
 
 const HomeIcon = () => (
