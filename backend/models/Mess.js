@@ -43,6 +43,11 @@ const messSchema = new mongoose.Schema(
 
     latitude: { type: Number },
     longitude: { type: Number },
+    locationSource: {
+      type: String,
+      enum: ["auto", "manual"],
+      default: "auto",
+    },
 
     mapplsEloc: { type: String },
     mapplsAddress: { type: String },

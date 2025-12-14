@@ -15,6 +15,8 @@ import {
   Settings
 } from "lucide-react";
 
+import Profile from "../pages/profile/Profile";
+
 // ============ Custom Hooks ============
 
 const useClickOutside = (handler, active = true) => {
@@ -384,11 +386,11 @@ const Header = ({ onToggleSidebar }) => {
   }, [navigate, isLoggingOut]);
 
   // Handle profile navigation
-  const handleProfile = useCallback(() => {
-    setShowDropdown(false);
-    const profilePath = auth.role === "landlord" ? "/landlord/profile" : "/tenant/profile";
-    navigate(profilePath);
-  }, [navigate, auth.role]);
+const handleProfile = useCallback(() => {
+  setShowDropdown(false);
+  navigate("/profile");
+}, [navigate]);
+
 
   // Handle settings navigation
   const handleSettings = useCallback(() => {

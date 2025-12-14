@@ -28,7 +28,7 @@ import {
 } from "lucide-react";
 import Header from "../components/Header";
 import Footer from "../components/Footer";
-
+const role = localStorage.getItem("role");
 // Animation variants
 const containerVariants = {
   hidden: { opacity: 0 },
@@ -235,26 +235,61 @@ const OwnerCTASection = memo(function OwnerCTASection() {
               <h2 className="text-2xl md:text-3xl font-bold text-white mb-3">
                 Own a PG, Hostel or Mess?
               </h2>
+
               <p className="text-slate-400 mb-6 max-w-lg">
                 List your property and connect directly with students and
                 professionals. No middlemen, no hidden charges.
               </p>
 
               <div className="flex flex-col sm:flex-row gap-3 justify-center lg:justify-start">
-                <Link
-                  to="/dashboard/add-mess"
-                  className="inline-flex items-center justify-center gap-2 bg-emerald-500 hover:bg-emerald-400 text-white font-semibold py-3 px-6 rounded-xl transition-all duration-200"
-                >
-                  <FaUserCheck className="w-4 h-4" />
-                  Register Your Property
-                  <ChevronRight className="w-4 h-4" />
-                </Link>
-                <Link
-                  to="/login"
-                  className="inline-flex items-center justify-center gap-2 text-slate-300 hover:text-white font-medium py-3 px-6 rounded-xl border border-slate-600 hover:border-slate-500 transition-all duration-200"
-                >
-                  Already registered? Sign in
-                </Link>
+                {role === "messowner" && (
+                  <Link
+                    to="/dashboard/add-mess"
+                    className="inline-flex items-center justify-center gap-2 bg-emerald-500 hover:bg-emerald-400 text-white font-semibold py-3 px-6 rounded-xl transition-all duration-200"
+                  >
+                    <FaUserCheck className="w-4 h-4" />
+                    Add Mess Listing
+                    <ChevronRight className="w-4 h-4" />
+                  </Link>
+                )}
+                {role === "pgowner" && (
+                  <Link
+                    to="/dashboard/add-pg"
+                    className="inline-flex items-center justify-center gap-2 bg-emerald-500 hover:bg-emerald-400 text-white font-semibold py-3 px-6 rounded-xl transition-all duration-200"
+                  >
+                    <FaUserCheck className="w-4 h-4" />
+                    Add PG Listing
+                    <ChevronRight className="w-4 h-4" />
+                  </Link>
+                )}
+                {role === "tenant" && (
+                  <Link
+                    to="/register"
+                    className="inline-flex items-center justify-center gap-2 bg-emerald-500 hover:bg-emerald-400 text-white font-semibold py-3 px-6 rounded-xl transition-all duration-200"
+                  >
+                    <FaUserCheck className="w-4 h-4" />
+                    Register as Owner
+                    <ChevronRight className="w-4 h-4" />
+                  </Link>
+                )}
+                {!role && (
+                  <Link
+                    to="/register"
+                    className="inline-flex items-center justify-center gap-2 bg-emerald-500 hover:bg-emerald-400 text-white font-semibold py-3 px-6 rounded-xl transition-all duration-200"
+                  >
+                    <FaUserCheck className="w-4 h-4" />
+                    Register Your Property
+                    <ChevronRight className="w-4 h-4" />
+                  </Link>
+                )}
+                {!role && (
+                  <Link
+                    to="/login"
+                    className="inline-flex items-center justify-center gap-2 text-slate-300 hover:text-white font-medium py-3 px-6 rounded-xl border border-slate-600 hover:border-slate-500 transition-all duration-200"
+                  >
+                    Already registered? Sign in
+                  </Link>
+                )}
               </div>
             </div>
           </div>
@@ -419,14 +454,61 @@ const Home = () => {
 
             {/* Subtle Owner Link */}
             <div className="mt-4 pt-4 border-t border-slate-100 flex items-center justify-center gap-2 text-sm">
-              <span className="text-slate-500">Are you a property owner?</span>
-              <Link
-                to="/dashboard/add-mess"
-                className="text-emerald-600 hover:text-emerald-700 font-medium inline-flex items-center gap-1 hover:underline"
-              >
-                List your property
-                <FaArrowRight className="w-3 h-3" />
-              </Link>
+              {role === "messowner" && (
+                <>
+                  <span className="text-slate-500">You are a mess owner</span>
+                  <Link
+                    to="/dashboard/add-mess"
+                    className="text-emerald-600 hover:text-emerald-700 font-medium inline-flex items-center gap-1 hover:underline"
+                  >
+                    Add Mess Listing
+                    <FaArrowRight className="w-3 h-3" />
+                  </Link>
+                </>
+              )}
+
+              {role === "pgowner" && (
+                <>
+                  <span className="text-slate-500">You are a PG owner</span>
+                  <Link
+                    to="/dashboard/add-pg"
+                    className="text-emerald-600 hover:text-emerald-700 font-medium inline-flex items-center gap-1 hover:underline"
+                  >
+                    Add PG Listing
+                    <FaArrowRight className="w-3 h-3" />
+                  </Link>
+                </>
+              )}
+
+              {role === "tenant" && (
+                <>
+                  <span className="text-slate-500">
+                    You are registered as a tenant.
+                  </span>
+                  <Link
+                    to="/register"
+                    className="text-emerald-600 hover:text-emerald-700 font-medium inline-flex items-center gap-1 hover:underline"
+                  >
+                    Register as Owner
+                    <FaArrowRight className="w-3 h-3" />
+                  </Link>
+                </>
+              )}
+
+              {!role && (
+                <>
+                  <span className="text-slate-500">
+                    Want to list your property?
+                  </span>
+                  <Link
+                    to="/register"
+                    className="text-emerald-600 hover:text-emerald-700 font-medium inline-flex items-center gap-1 hover:underline"
+                  >
+                    Register Now
+                    <FaArrowRight className="w-3 h-3" />
+                  </Link>
+                </>
+              )}
             </div>
           </motion.form>
 

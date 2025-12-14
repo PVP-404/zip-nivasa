@@ -29,9 +29,14 @@ const pgSchema = new mongoose.Schema(
     available: { type: Boolean, default: true },
     latitude: { type: Number },
     longitude: { type: Number },
+    locationSource: {
+      type: String,
+      enum: ["auto", "manual"],
+      default: "auto",
+    },
 
-    mapplsEloc: { type: String },          
-    mapplsAddress: { type: String },       
+    mapplsEloc: { type: String },
+    mapplsAddress: { type: String },
   },
   { timestamps: true }
 );

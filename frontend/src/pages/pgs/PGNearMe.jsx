@@ -130,44 +130,73 @@ const useGeolocation = () => {
 
   const getLocation = useCallback(() => {
     if (!navigator.geolocation) {
-      setState((s) => ({ ...s, error: "Geolocation not supported" }));
+      setState({ loading: false, error: "Geolocation not supported", position: null });
       return;
     }
 
-    setState((s) => ({ ...s, loading: true, error: null }));
+    setState({ loading: true, error: null, position: null });
 
-    navigator.geolocation.getCurrentPosition(
-      (position) => {
-        setState({
-          loading: false,
-          error: null,
-          position: {
-            lat: position.coords.latitude,
-            lng: position.coords.longitude,
-          },
-        });
-      },
-      (error) => {
-        let message = "Unable to get location";
-        switch (error.code) {
-          case error.PERMISSION_DENIED:
-            message = "Location permission denied";
-            break;
-          case error.POSITION_UNAVAILABLE:
-            message = "Location unavailable";
-            break;
-          case error.TIMEOUT:
-            message = "Location request timed out";
-            break;
+    let didFinish = false;
+
+    // ---- SUCCESS HANDLER ----
+    const onSuccess = (position) => {
+      if (didFinish) return;
+      didFinish = true;
+
+      setState({
+        loading: false,
+        error: null,
+        position: {
+          lat: position.coords.latitude,
+          lng: position.coords.longitude,
+        },
+      });
+    };
+
+    // ---- ERROR HANDLER ----
+    const onError = (error) => {
+      if (didFinish) return;
+
+      //  FALLBACK: retry with LOW accuracy
+      navigator.geolocation.getCurrentPosition(
+        onSuccess,
+        () => {
+          didFinish = true;
+          let message = "Unable to get location";
+
+          switch (error.code) {
+            case error.PERMISSION_DENIED:
+              message = "Location permission denied";
+              break;
+            case error.POSITION_UNAVAILABLE:
+              message = "Location unavailable";
+              break;
+            case error.TIMEOUT:
+              message = "Location request timed out";
+              break;
+          }
+
+          setState({ loading: false, error: message, position: null });
+        },
+        {
+          enableHighAccuracy: false,
+          timeout: 15000,
+          maximumAge: 5 * 60 * 1000,
         }
-        setState({ loading: false, error: message, position: null });
-      },
-      { enableHighAccuracy: true, timeout: 10000, maximumAge: 60000 }
-    );
+      );
+    };
+
+    // ---- FIRST TRY: HIGH ACCURACY ----
+    navigator.geolocation.getCurrentPosition(onSuccess, onError, {
+      enableHighAccuracy: true,
+      timeout: 8000,
+      maximumAge: 0,
+    });
   }, []);
 
   return { ...state, getLocation };
 };
+
 
 const useLocalStorage = (key, initialValue) => {
   const [value, setValue] = useState(() => {
@@ -196,7 +225,6 @@ const useLocalStorage = (key, initialValue) => {
   return [value, setStoredValue];
 };
 
-// ============ Sub Components ============
 
 // Loading Overlay
 const LoadingOverlay = memo(({ message = "Loading..." }) => (

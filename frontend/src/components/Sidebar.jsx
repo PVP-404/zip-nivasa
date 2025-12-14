@@ -53,9 +53,9 @@ const Sidebar = ({ isOpen }) => {
       { icon: "pg", label: "Explore PGs", path: "/pgs/all" },
       { icon: "nearme", label: "PG Near Me", path: "/pgs/near-me" },
       { icon: "mess", label: "Mess Services", path: "/messes" },
-      { icon: "laundry", label: "Laundry", path: "/services/laundry" },
-      { icon: "wishlist", label: "Wishlist", path: "/student/wishlist" },
-      { icon: "profile", label: "Profile", path: "/tenant/profile" },
+      // { icon: "laundry", label: "Laundry", path: "/services/laundry" },
+      // { icon: "wishlist", label: "Wishlist", path: "/student/wishlist" },
+      { icon: "profile", label: "Profile", path: "/profile" },
       { icon: "messages", label: "Messages", path: "/messages" },
     ],
     pgowner: [

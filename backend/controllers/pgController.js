@@ -30,62 +30,61 @@ export const createPG = async (req, res) => {
       pincode,
       district,
       state,
+      latitude: manualLat,
+      longitude: manualLng,
     } = req.body;
 
     const location = `${district}, ${state}`;
 
     let images = [];
-
     if (req.files && req.files.length > 0) {
       images = await Promise.all(
         req.files.map((file) => uploadToCloudinary(file.buffer, "pgs"))
       );
     }
 
-
     const cleanedStreet = streetAddress;
-      // ? streetAddress
-      //   .replace(/S\.?No\.?\s*\d+/gi, "")
-      //   .replace(/Nr\s+/gi, "Near ")
-      //   .replace(/\s{2,}/g, " ")
-      //   .replace(/,\s*,/g, ", ")
-      //   .trim()
-      // : "";
 
     const geocodeQuery = {
       address: cleanedStreet || streetAddress,
-      // city: district,
-      // state: state,
-      // pincode: pincode,
+      city: district,
+      state,
+      pincode,
     };
-
-    console.log("FINAL CLEANED GEOCODE QUERY:", geocodeQuery);
 
     let latitude = null;
     let longitude = null;
     let mapplsEloc = null;
     let mapplsAddress = null;
 
-    const [ocRes, mapplsRes] = await Promise.allSettled([
-      geocodeAddress(geocodeQuery),
-      geocodeEloc(geocodeQuery),
-    ]);
-
-    if (mapplsRes.status === "fulfilled") {
-      mapplsEloc = mapplsRes.value.eLoc;
-      mapplsAddress = mapplsRes.value.formattedAddress;
-      console.log(" SAVED MAPPLS:", mapplsEloc, mapplsAddress);
+    // ✅ 1. USE MANUAL PIN FIRST
+    if (manualLat && manualLng) {
+      latitude = Number(manualLat);
+      longitude = Number(manualLng);
     } else {
-      console.log(" Mappls failed:", mapplsRes.reason);
+      // ✅ 2. FALLBACK TO OPENCAGE
+      try {
+        const coords = await geocodeAddress(geocodeQuery);
+        latitude = coords.lat;
+        longitude = coords.lng;
+      } catch {}
     }
 
-    if (ocRes.status === "fulfilled") {
-      latitude = ocRes.value.lat;
-      longitude = ocRes.value.lng;
-      console.log(" SAVED LAT/LNG:", latitude, longitude);
-    } else {
-      console.log(" OpenCage failed:", ocRes.reason);
+    // ❌ If still no coordinates → ask for pin drop
+    if (!latitude || !longitude) {
+      return res.status(400).json({
+        success: false,
+        requirePinDrop: true,
+        message: "Accurate location not found. Please drop a pin.",
+      });
     }
+
+    // ✅ Mappls ONLY for address / eLoc
+    try {
+      const mappls = await geocodeEloc(geocodeQuery);
+      mapplsEloc = mappls.eLoc;
+      mapplsAddress = mappls.formattedAddress;
+    } catch {}
 
     const pg = await PG.create({
       title,
@@ -106,17 +105,19 @@ export const createPG = async (req, res) => {
       owner: userId,
       latitude,
       longitude,
+      locationSource: manualLat && manualLng ? "manual" : "auto",
       mapplsEloc,
       mapplsAddress,
     });
 
     res.json({ success: true, pg });
-
   } catch (error) {
     console.error("PG CREATE ERROR:", error);
     res.status(500).json({ message: "Server Error" });
   }
 };
+
+
 
 
 

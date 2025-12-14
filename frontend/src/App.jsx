@@ -166,11 +166,11 @@ function App() {
         />
 
         <Route
-          path="/tenant/profile"
+          path="/profile"
           element={
-            <RoleProtectedRoute allowedRoles={["tenant"]}>
+            <ProtectedRoute>
               <Profile />
-            </RoleProtectedRoute>
+            </ProtectedRoute>
           }
         />
 
