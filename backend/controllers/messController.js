@@ -16,15 +16,15 @@ export const addMess = async (req, res) => {
 
     const user = await User.findById(userId);
     if (!user || user.role !== "messowner") {
-      return res
-        .status(403)
-        .json({ success: false, message: "Only mess owners can add mess listings" });
+      return res.status(403).json({
+        success: false,
+        message: "Only mess owners can add mess listings",
+      });
     }
-
     let imagePaths = [];
-    if (req.files && req.files.length > 0) {
+    if (req.files?.length) {
       imagePaths = await Promise.all(
-        req.files.map((file) => uploadToCloudinary(file.buffer, "messes"))
+        req.files.map((f) => uploadToCloudinary(f.buffer, "messes"))
       );
     }
 
@@ -40,6 +40,8 @@ export const addMess = async (req, res) => {
       contact,
       menu,
       specialToday,
+      latitude: manualLat,
+      longitude: manualLng,
     } = req.body;
 
     if (!title || !streetAddress || !pincode || !district || !state || !price) {
@@ -52,74 +54,67 @@ export const addMess = async (req, res) => {
 
     let parsedMenu = [];
     if (menu) {
-      if (typeof menu === "string") {
-        try {
-          parsedMenu = JSON.parse(menu);
-        } catch (e) {
-          console.warn("Invalid menu JSON, falling back to []");
-          parsedMenu = [];
-        }
-      } else if (Array.isArray(menu)) {
-        parsedMenu = menu;
+      try {
+        parsedMenu = typeof menu === "string" ? JSON.parse(menu) : menu;
+      } catch {
+        parsedMenu = [];
       }
     }
 
     let parsedSpecial = {};
     if (specialToday) {
-      if (typeof specialToday === "string") {
-        try {
-          parsedSpecial = JSON.parse(specialToday);
-        } catch (e) {
-          console.warn("Invalid specialToday JSON, ignoring");
-        }
-      } else if (typeof specialToday === "object") {
-        parsedSpecial = specialToday;
-      }
+      try {
+        parsedSpecial =
+          typeof specialToday === "string"
+            ? JSON.parse(specialToday)
+            : specialToday;
+      } catch {}
     }
 
-    const {
-      lunch = "",
-      dinner = "",
-      imageUrl = "",
-    } = parsedSpecial || {};
+    const { lunch = "", dinner = "", imageUrl = "" } = parsedSpecial;
 
-    // 📍 Geocode (lat/lng + Mappls eLoc)
     let latitude = null;
     let longitude = null;
     let mapplsEloc = null;
     let mapplsAddress = null;
+    let locationSource = "auto";
 
-    if (streetAddress && district && state && pincode) {
-      const geocodeQuery = {
+    if (manualLat && manualLng) {
+      latitude = Number(manualLat);
+      longitude = Number(manualLng);
+      locationSource = "manual";
+    } else {
+      const geoQuery = {
         address: streetAddress,
         city: district,
         state,
         pincode,
       };
+      try {
+        const coords = await geocodeAddress(geoQuery);
+        latitude = coords.lat;
+        longitude = coords.lng;
+      } catch {}
 
       try {
-        const [coords, mappls] = await Promise.all([
-          geocodeAddress(geocodeQuery),
-          geocodeEloc(geocodeQuery),
-        ]);
+        const mappls = await geocodeEloc(geoQuery);
+        mapplsEloc = mappls.eLoc;
+        mapplsAddress = mappls.formattedAddress;
+      } catch {}
+    }
 
-        if (coords) {
-          latitude = coords.lat;
-          longitude = coords.lng;
-        }
-        if (mappls) {
-          mapplsEloc = mappls.eLoc;
-          mapplsAddress = mappls.formattedAddress;
-        }
-      } catch (e) {
-        console.error("Mess geocode error:", e.message);
-      }
+    if (!latitude || !longitude) {
+      return res.status(200).json({
+        success: false,
+        requirePinDrop: true,
+        message: "Unable to determine accurate location, please drop pin",
+      });
     }
 
     const location =
-      req.body.location || `${district || ""}, ${state || ""}`.trim();
+      req.body.location || `${district}, ${state}`.trim();
 
-    const newMess = new Mess({
+    const mess = await Mess.create({
       messOwnerId: userId,
       title,
       description,
@@ -141,16 +136,15 @@ export const addMess = async (req, res) => {
       images: imagePaths,
       latitude,
       longitude,
+      locationSource,
       mapplsEloc,
       mapplsAddress,
     });
 
-    const savedMess = await newMess.save();
-
     res.status(201).json({
       success: true,
       message: "Mess added successfully!",
-      mess: savedMess,
+      mess,
     });
   } catch (err) {
     console.error("ADD MESS ERROR:", err);

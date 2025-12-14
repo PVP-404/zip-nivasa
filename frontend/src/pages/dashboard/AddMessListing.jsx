@@ -5,6 +5,7 @@ import Footer from "../../components/Footer";
 import Sidebar from "../../components/Sidebar";
 import LocationAutosuggest from "../../components/LocationAutosuggest";
 import { FaRupeeSign } from "react-icons/fa";
+import PinDropMap from "../../components/maps/PinDropMap";
 const API_BASE = import.meta.env.VITE_API_URL || "http://localhost:5000";
 
 const UploadIcon = () => (
@@ -50,6 +51,9 @@ const initialDailyMenu = {
 const AddMessListing = () => {
   const [currentStep, setCurrentStep] = useState(1);
   const [loading, setLoading] = useState(false);
+  const [showPinMap, setShowPinMap] = useState(false);
+  const [manualCoords, setManualCoords] = useState(null);
+
 
   const [pincodeLookupLoading, setPincodeLookupLoading] = useState(false);
   const [pincodeError, setPincodeError] = useState(null);
@@ -239,16 +243,13 @@ const AddMessListing = () => {
       fd.append("type", formData.messType || "Veg");
       fd.append("contact", formData.contactNumber);
 
-      // menu: flatten weekly menu into array of strings
       const flatMenu = Object.values(formData.dailyMenu)
         .flatMap((day) => [day.lunch, day.dinner])
         .filter(Boolean);
       fd.append("menu", JSON.stringify(flatMenu));
 
-      // subscriptions
       fd.append("subscriptions", JSON.stringify(formData.subscriptions));
 
-      // specialToday (use Monday as base sample)
       fd.append(
         "specialToday",
         JSON.stringify({
@@ -257,7 +258,12 @@ const AddMessListing = () => {
         })
       );
 
-      // images
+      //  ADD: manual pin-drop coords if available
+      if (manualCoords) {
+        fd.append("latitude", manualCoords.lat);
+        fd.append("longitude", manualCoords.lng);
+      }
+
       formData.images.forEach((img) => fd.append("images", img));
 
       const res = await fetch(`${API_BASE}/api/mess/add`, {
@@ -269,6 +275,13 @@ const AddMessListing = () => {
       });
 
       const data = await res.json();
+
+      //  ADD: backend requests pin drop
+      if (data.requirePinDrop) {
+        setShowPinMap(true);
+        setLoading(false);
+        return;
+      }
 
       if (!res.ok || !data.success) {
         throw new Error(data.message || "Failed to save mess listing");
@@ -298,6 +311,7 @@ const AddMessListing = () => {
       setLoading(false);
     }
   };
+
 
   // ---------- Step Views ----------
   const renderStep = () => {
@@ -676,18 +690,16 @@ const AddMessListing = () => {
                 {steps.map((step) => (
                   <div key={step.id} className="relative z-10 flex flex-col items-center">
                     <div
-                      className={`w-10 h-10 rounded-full flex items-center justify-center text-xs font-bold border-4 transition-all ${
-                        currentStep >= step.id
-                          ? "bg-emerald-500 border-emerald-300 text-white shadow-lg"
-                          : "bg-emerald-100 border-emerald-200 text-emerald-600"
-                      }`}
+                      className={`w-10 h-10 rounded-full flex items-center justify-center text-xs font-bold border-4 transition-all ${currentStep >= step.id
+                        ? "bg-emerald-500 border-emerald-300 text-white shadow-lg"
+                        : "bg-emerald-100 border-emerald-200 text-emerald-600"
+                        }`}
                     >
                       {step.id}
                     </div>
                     <span
-                      className={`mt-2 text-[10px] font-semibold uppercase tracking-wide text-center ${
-                        currentStep >= step.id ? "text-emerald-700" : "text-emerald-400"
-                      }`}
+                      className={`mt-2 text-[10px] font-semibold uppercase tracking-wide text-center ${currentStep >= step.id ? "text-emerald-700" : "text-emerald-400"
+                        }`}
                     >
                       {step.name}
                     </span>
@@ -720,11 +732,10 @@ const AddMessListing = () => {
                     type="button"
                     onClick={handleNext}
                     disabled={!isStepValid}
-                    className={`px-8 py-3 rounded-lg font-bold text-white shadow-md flex items-center gap-2 ${
-                      isStepValid
-                        ? "bg-gradient-to-r from-emerald-500 to-emerald-600 hover:from-emerald-600 hover:to-emerald-700 hover:shadow-lg"
-                        : "bg-emerald-200 cursor-not-allowed border border-emerald-300"
-                    }`}
+                    className={`px-8 py-3 rounded-lg font-bold text-white shadow-md flex items-center gap-2 ${isStepValid
+                      ? "bg-gradient-to-r from-emerald-500 to-emerald-600 hover:from-emerald-600 hover:to-emerald-700 hover:shadow-lg"
+                      : "bg-emerald-200 cursor-not-allowed border border-emerald-300"
+                      }`}
                   >
                     Next Step
                     <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -735,11 +746,10 @@ const AddMessListing = () => {
                   <button
                     type="submit"
                     disabled={!isStepValid || loading}
-                    className={`px-8 py-3 rounded-lg font-bold text-white shadow-md flex items-center gap-2 ${
-                      isStepValid && !loading
-                        ? "bg-gradient-to-r from-emerald-600 to-emerald-700 hover:from-emerald-700 hover:to-emerald-800 hover:shadow-lg"
-                        : "bg-emerald-200 cursor-not-allowed border border-emerald-300"
-                    }`}
+                    className={`px-8 py-3 rounded-lg font-bold text-white shadow-md flex items-center gap-2 ${isStepValid && !loading
+                      ? "bg-gradient-to-r from-emerald-600 to-emerald-700 hover:from-emerald-700 hover:to-emerald-800 hover:shadow-lg"
+                      : "bg-emerald-200 cursor-not-allowed border border-emerald-300"
+                      }`}
                   >
                     {loading ? (
                       <>
@@ -756,6 +766,25 @@ const AddMessListing = () => {
           </div>
         </main>
       </div>
+
+      {showPinMap && (
+        <div className="fixed inset-0 bg-black/40 z-50 flex items-center justify-center">
+          <div className="bg-white rounded-xl p-4 w-[90%] max-w-xl">
+            <h3 className="font-bold text-emerald-700 mb-2">
+              Confirm Exact Location
+            </h3>
+
+            <PinDropMap
+              onConfirm={(pos) => {
+                setManualCoords(pos);
+                setShowPinMap(false);
+                setTimeout(() => handleSubmit(new Event("submit")), 0);
+              }}
+            />
+          </div>
+        </div>
+      )}
+
 
       <Footer />
     </div>

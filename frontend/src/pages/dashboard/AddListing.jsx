@@ -2,10 +2,12 @@ import React, { useState, useEffect, useMemo } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import Header from "../../components/Header";
 import Footer from "../../components/Footer";
-import Sidebar from "../../components/Sidebar"; 
+import Sidebar from "../../components/Sidebar";
 import { FaRupeeSign } from "react-icons/fa";
 import LocationAutosuggest from "../../components/LocationAutosuggest";
-const API = import.meta.env.VITE_API_URL || "http://localhost:5000";
+import PinDropMap from "../../components/maps/PinDropMap";
+
+const API = "http://localhost:5000" || import.meta.env.VITE_API_URL;
 
 
 const HomeIcon = () => (
@@ -42,6 +44,8 @@ const AddListing = () => {
 
   const [pincodeLookupLoading, setPincodeLookupLoading] = useState(false);
   const [pincodeError, setPincodeError] = useState(null);
+  const [showPinMap, setShowPinMap] = useState(false);
+  const [manualCoords, setManualCoords] = useState(null);
 
   const [formData, setFormData] = useState({
     title: "",
@@ -184,6 +188,7 @@ const AddListing = () => {
     if (!isStepValid) return;
 
     setLoading(true);
+
     try {
       const submitData = new FormData();
 
@@ -205,7 +210,7 @@ const AddListing = () => {
         const customList = formData.customAmenities
           .split(",")
           .map((item) => item.trim())
-          .filter((item) => item !== "");
+          .filter(Boolean);
         finalAmenities = [...finalAmenities, ...customList];
       }
       submitData.append("amenities", JSON.stringify(finalAmenities));
@@ -213,6 +218,12 @@ const AddListing = () => {
       formData.images.forEach((image) => {
         submitData.append("images", image);
       });
+
+      //  ADD PIN DROP COORDS (SAFE)
+      if (manualCoords) {
+        submitData.append("latitude", manualCoords.lat);
+        submitData.append("longitude", manualCoords.lng);
+      }
 
       const response = await fetch(`${API}/api/pgs`, {
         method: "POST",
@@ -224,18 +235,36 @@ const AddListing = () => {
 
       if (!response.ok) {
         const errorData = await response.json();
+
+        if (errorData.requirePinDrop) {
+          setShowPinMap(true);
+          setLoading(false);
+          return;
+        }
+
         throw new Error(errorData.message || "Failed to submit listing");
       }
+
 
       alert("Listing submitted successfully!");
 
       setFormData({
-        title: "", propertyType: "", streetAddress: "", pincode: "", district: "", state: "",
-        monthlyRent: "", deposit: "", occupancyType: "",
-        amenities: [], customAmenities: "", description: "", images: [],
+        title: "",
+        propertyType: "",
+        streetAddress: "",
+        pincode: "",
+        district: "",
+        state: "",
+        monthlyRent: "",
+        deposit: "",
+        occupancyType: "",
+        amenities: [],
+        customAmenities: "",
+        description: "",
+        images: [],
       });
-      setCurrentStep(1);
 
+      setCurrentStep(1);
     } catch (error) {
       console.error("Error submitting listing:", error);
       alert(`Failed to submit: ${error.message}`);
@@ -243,6 +272,7 @@ const AddListing = () => {
       setLoading(false);
     }
   };
+
 
   const occupancyOptions = [
     { value: "single", label: "Single" },
@@ -459,8 +489,8 @@ const AddListing = () => {
                   <label
                     key={option.value}
                     className={`flex flex-col items-center justify-center cursor-pointer p-4 rounded-xl border-2 ${formData.occupancyType === option.value
-                        ? "bg-emerald-50 border-emerald-600 text-emerald-700 shadow-md"
-                        : "border-emerald-200 hover:border-emerald-300 text-emerald-600 hover:bg-emerald-50/50"
+                      ? "bg-emerald-50 border-emerald-600 text-emerald-700 shadow-md"
+                      : "border-emerald-200 hover:border-emerald-300 text-emerald-600 hover:bg-emerald-50/50"
                       } transition-all duration-200`}
                   >
                     <input
@@ -486,8 +516,8 @@ const AddListing = () => {
                   <label
                     key={amenity}
                     className={`flex items-center cursor-pointer px-3 py-2.5 rounded-lg border ${formData.amenities.includes(amenity)
-                        ? "bg-emerald-50 border-emerald-500 text-emerald-800 shadow-sm"
-                        : "border-emerald-200 text-emerald-600 hover:bg-emerald-50 hover:border-emerald-300"
+                      ? "bg-emerald-50 border-emerald-500 text-emerald-800 shadow-sm"
+                      : "border-emerald-200 text-emerald-600 hover:bg-emerald-50 hover:border-emerald-300"
                       } transition duration-200`}
                   >
                     <input
@@ -637,8 +667,8 @@ const AddListing = () => {
                   <div key={step.id} className="relative z-10 flex flex-col items-center">
                     <div
                       className={`w-12 h-12 rounded-full flex items-center justify-center transition-all duration-300 border-4 ${currentStep >= step.id
-                          ? "bg-emerald-500 border-emerald-400 text-white shadow-lg scale-110"
-                          : "bg-emerald-100 border-emerald-200 text-emerald-500"
+                        ? "bg-emerald-500 border-emerald-400 text-white shadow-lg scale-110"
+                        : "bg-emerald-100 border-emerald-200 text-emerald-500"
                         }`}
                     >
                       {step.icon}
@@ -675,8 +705,8 @@ const AddListing = () => {
                     onClick={handleNext}
                     disabled={!isStepValid}
                     className={`px-8 py-3 rounded-lg font-bold text-white shadow-md transition-all flex items-center gap-2 ${isStepValid
-                        ? "bg-gradient-to-r from-emerald-500 to-emerald-600 hover:from-emerald-600 hover:to-emerald-700 hover:shadow-lg transform hover:-translate-y-0.5"
-                        : "bg-emerald-200 cursor-not-allowed border border-emerald-300"
+                      ? "bg-gradient-to-r from-emerald-500 to-emerald-600 hover:from-emerald-600 hover:to-emerald-700 hover:shadow-lg transform hover:-translate-y-0.5"
+                      : "bg-emerald-200 cursor-not-allowed border border-emerald-300"
                       }`}
                   >
                     Next Step
@@ -687,8 +717,8 @@ const AddListing = () => {
                     type="submit"
                     disabled={!isStepValid || loading}
                     className={`px-8 py-3 rounded-lg font-bold text-white shadow-md transition-all flex items-center gap-2 ${isStepValid && !loading
-                        ? "bg-gradient-to-r from-emerald-600 to-emerald-700 hover:from-emerald-700 hover:to-emerald-800 hover:shadow-lg transform hover:-translate-y-0.5"
-                        : "bg-emerald-200 cursor-not-allowed border border-emerald-300"
+                      ? "bg-gradient-to-r from-emerald-600 to-emerald-700 hover:from-emerald-700 hover:to-emerald-800 hover:shadow-lg transform hover:-translate-y-0.5"
+                      : "bg-emerald-200 cursor-not-allowed border border-emerald-300"
                       }`}
                   >
                     {loading ? (
@@ -709,6 +739,24 @@ const AddListing = () => {
           </div>
         </main>
       </div>
+
+      {showPinMap && (
+        <div className="fixed inset-0 bg-black/40 z-50 flex items-center justify-center">
+          <div className="bg-white rounded-xl p-4 w-[90%] max-w-xl">
+            <h3 className="font-bold text-emerald-700 mb-2">
+              Confirm Exact Location
+            </h3>
+
+            <PinDropMap
+              onConfirm={(pos) => {
+                setManualCoords(pos);
+                setShowPinMap(false);
+              }}
+            />
+          </div>
+        </div>
+      )}
+
       <Footer />
     </div>
 
