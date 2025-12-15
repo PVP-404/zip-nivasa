@@ -1,9 +1,10 @@
 import React from "react";
-import { useParams } from "react-router-dom";
+import { useParams, useNavigate } from "react-router-dom";
 import ChatPage from "./ChatPage";
 
 export default function ChatPageWrapper() {
-  const { id } = useParams(); 
-  return <ChatPage receiverId={id} />;
-}
+  const { id } = useParams();
+  const navigate = useNavigate();
 
+  return <ChatPage receiverId={id} onBack={() => navigate("/messages")} />;
+}

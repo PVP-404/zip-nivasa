@@ -4,7 +4,7 @@ const tenantSchema = new mongoose.Schema(
   {
     userId: { type: mongoose.Schema.Types.ObjectId, ref: "User" },
 
-    professionType: { type: String, enum: ["student", "job"], required: true },
+    professionType: { type: String, enum: ["student", "job"], required: false },
 
     collegeName: String,
     course: String,
