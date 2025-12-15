@@ -268,7 +268,7 @@ const OwnerCTASection = memo(function OwnerCTASection() {
                     className="inline-flex items-center justify-center gap-2 bg-emerald-500 hover:bg-emerald-400 text-white font-semibold py-3 px-6 rounded-xl transition-all duration-200"
                   >
                     <FaUserCheck className="w-4 h-4" />
-                    Register as Owner
+                    Post Your Service/Property
                     <ChevronRight className="w-4 h-4" />
                   </Link>
                 )}
@@ -471,7 +471,7 @@ const Home = () => {
                 <>
                   <span className="text-slate-500">You are a PG owner</span>
                   <Link
-                    to="/dashboard/add-pg"
+                    to="/dashboard/add-listing"
                     className="text-emerald-600 hover:text-emerald-700 font-medium inline-flex items-center gap-1 hover:underline"
                   >
                     Add PG Listing
